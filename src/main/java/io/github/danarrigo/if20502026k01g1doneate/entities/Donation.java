@@ -11,24 +11,22 @@ public class Donation {
     @Id
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.UUID)
     private UUID donationId;
-    private boolean taken ;
+    private boolean taken = false;
     @ManyToOne
     private Dish dish;
     private LocalTime timeAdded;
     private LocalTime timeCooked;
-    private boolean ongoing;
+    private boolean ongoing = false;
     private String status;
     @ManyToOne
     private Donator donator;
     public Donation() {
     }
 
-    public Donation( boolean taken, Dish dish, LocalTime timeAdded, LocalTime timeCooked, boolean ongoing, String status, Donator donator) {
-        this.taken = taken;
+    public Donation( Dish dish, LocalTime timeAdded, LocalTime timeCooked,String status, Donator donator) {
         this.dish = dish;
         this.timeAdded = timeAdded;
         this.timeCooked = timeCooked;
-        this.ongoing = ongoing;
         this.status = status;
         this.donator = donator;
     }
