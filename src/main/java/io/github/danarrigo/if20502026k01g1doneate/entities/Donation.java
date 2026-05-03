@@ -10,25 +10,25 @@ import java.util.UUID;
 public class Donation {
     @Id
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.UUID)
-    private UUID donationID;
+    private UUID donationId;
     private boolean taken ;
     @ManyToOne
     private Dish dish;
     private LocalTime timeAdded;
     private LocalTime timeCooked;
-    private boolean onGoing;
+    private boolean ongoing;
     private String status;
     @ManyToOne
     private Donator donator;
     public Donation() {
     }
 
-    public Donation( boolean taken, Dish dish, LocalTime timeAdded, LocalTime timeCooked, boolean onGoing, String status, Donator donator) {
+    public Donation( boolean taken, Dish dish, LocalTime timeAdded, LocalTime timeCooked, boolean ongoing, String status, Donator donator) {
         this.taken = taken;
         this.dish = dish;
         this.timeAdded = timeAdded;
         this.timeCooked = timeCooked;
-        this.onGoing = onGoing;
+        this.ongoing = ongoing;
         this.status = status;
         this.donator = donator;
     }
@@ -38,21 +38,21 @@ public class Donation {
         String added = (timeAdded == null) ? "null" : timeAdded.toString();
         String cooked = (timeCooked == null) ? "null" : timeCooked.toString();
 
-        return "donationId:" + donationID
+        return "donationId:" + donationId
                 + ", taken:" + taken
                 + ", dish:" + dishInfo
                 + ", timeAdded:" + added
                 + ", timeCooked:" + cooked
-                + ", onGoing:" + onGoing
+                + ", onGoing:" + ongoing
                 + ", status:" + (status == null ? "null" : status);
     }
 
     public UUID getDonationID() {
-        return donationID;
+        return donationId;
     }
 
     public void setDonationID(UUID donationID) {
-        this.donationID = donationID;
+        this.donationId = donationID;
     }
 
     public boolean isTaken() {
@@ -87,12 +87,12 @@ public class Donation {
         this.timeCooked = timeCooked;
     }
 
-    public boolean isOnGoing() {
-        return onGoing;
+    public boolean isOngoing() {
+        return ongoing;
     }
 
-    public void setOnGoing(boolean onGoing) {
-        this.onGoing = onGoing;
+    public void setOngoing(boolean onGoing) {
+        this.ongoing = onGoing;
     }
 
     public String getStatus() {
