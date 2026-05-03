@@ -2,9 +2,9 @@ spring:
   application:
     name: IF-2050
   datasource:
-    url: jdbc:postgresql://localhost:5432/${DB_NAME:DONEATEdb}
-    username: ${DB_USERNAME:admin}
-    password: ${DB_PASSWORD:password}
+    url: jdbc:postgresql://localhost:5433/DONEATEdb
+    username: admin
+    password: password123 # Hardcoded. No brackets, no variables.
 
   jpa:
     hibernate:
