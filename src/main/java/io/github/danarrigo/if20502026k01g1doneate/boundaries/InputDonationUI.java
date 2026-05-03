@@ -1,6 +1,6 @@
-package boundaries;
+package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
-import entities.User;
+import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 
 public class InputDonationUI extends UI{
     public InputDonationUI(User user) {

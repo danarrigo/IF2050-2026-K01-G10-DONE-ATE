@@ -1,4 +1,4 @@
-package entities;
+package io.github.danarrigo.if20502026k01g1doneate.entities;
 
 import jakarta.persistence.*;
 

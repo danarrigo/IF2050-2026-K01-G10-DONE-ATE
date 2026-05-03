@@ -1,7 +1,7 @@
-package boundaries;
+package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
-import entities.Donation;
-import entities.User;
+import io.github.danarrigo.if20502026k01g1doneate.entities.Donation;
+import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 
 import java.util.List;
 

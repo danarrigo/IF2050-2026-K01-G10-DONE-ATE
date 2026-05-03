@@ -1,6 +1,6 @@
-package entities;
+package io.github.danarrigo.if20502026k01g1doneate.entities;
 
-import enums.RecipientType;
+import io.github.danarrigo.if20502026k01g1doneate.enums.RecipientType;
 import jakarta.persistence.*;
 
 import java.time.LocalTime;

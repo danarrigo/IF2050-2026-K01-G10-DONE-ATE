@@ -1,6 +1,6 @@
-package entities;
+package io.github.danarrigo.if20502026k01g1doneate.entities;
 
-import enums.DonatorType;
+import io.github.danarrigo.if20502026k01g1doneate.enums.DonatorType;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
