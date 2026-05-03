@@ -3,11 +3,14 @@ package io.github.danarrigo.if20502026k01g1doneate.services;
 
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donation;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.DonationRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
+@Transactional
 public class DonationService {
     private final DonationRepository donationRepository;
 
@@ -15,11 +18,49 @@ public class DonationService {
         this.donationRepository = donationRepository;
     }
 
+    //CREATE
+    public Donation createDonation(Donation donation){
+        return donationRepository.save(donation);
+    }
+
+    //READ
     public List<Donation> getAllDonations(){
         return donationRepository.findAll();
     }
 
-    public Donation createDonation(Donation donation){
-        return donationRepository.save(donation);
+    public List<Donation> getDonationsByOngoing(boolean ongoing){
+        return donationRepository.findByOngoing(ongoing);
     }
+
+    public Donation getDonationById(UUID id){
+        return donationRepository.findById(id).orElseThrow(()->new RuntimeException("Donation not found with id: " + id));
+    }
+
+    //UPDATE
+
+    public Donation updateDonation(UUID id, Donation donation){
+        Donation existingDonation = donationRepository.findById(id).orElseThrow(()->new RuntimeException("Donation not found with id: " + id));
+        existingDonation.setTaken(donation.isTaken());
+        existingDonation.setDish(donation.getDish());
+        existingDonation.setTimeAdded(donation.getTimeAdded());
+        existingDonation.setTimeCooked(donation.getTimeCooked());
+        existingDonation.setOngoing(donation.isOngoing());
+        existingDonation.setStatus(donation.getStatus());
+        return donationRepository.save(existingDonation);
+
+    }
+
+
+    //DELETE
+    public void deleteDonations (){
+        donationRepository.deleteAll();
+    }
+
+    public void deleteDonationByUuid(UUID uuid){
+        donationRepository.deleteById(uuid);
+    }
+
+
+
+
 }
