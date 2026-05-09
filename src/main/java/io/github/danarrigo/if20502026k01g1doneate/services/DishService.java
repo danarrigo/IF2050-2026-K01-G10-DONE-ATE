@@ -4,6 +4,11 @@ import io.github.danarrigo.if20502026k01g1doneate.entities.Dish;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.DishRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+
+import io.github.danarrigo.if20502026k01g1doneate.repositories.DonationRepository;
+import io.github.danarrigo.if20502026k01g1doneate.entities.Donation;
+import io.github.danarrigo.if20502026k01g1doneate.dtos.QCFormData;
 
 import java.util.List;
 import java.util.UUID;
@@ -12,9 +17,26 @@ import java.util.UUID;
 @Transactional
 public class DishService {
     public final DishRepository dishRepository;
+    public final DonationRepository donationRepository;
 
-    public DishService(DishRepository dishRepository) {
+    public DishService(DishRepository dishRepository, DonationRepository donationRepository) {
         this.dishRepository = dishRepository;
+        this.donationRepository = donationRepository;
+    }
+
+    public boolean dishQualityControl(QCFormData body) {
+        Donation donation = donationRepository.findByDish_DishId(body.getDishId())
+                .orElseThrow(() -> new RuntimeException("Donation not found for dish id: " + body.getDishId()));
+        
+        if (body.isPassed()) {
+            donation.setOngoing(true);
+            donation.setStatus("QC Passed");
+        } else {
+            donation.setOngoing(false);
+            donation.setStatus("QC Failed");
+        }
+        donationRepository.save(donation);
+        return body.isPassed();
     }
 
     //CREATE
