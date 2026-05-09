@@ -45,11 +45,11 @@ public class Donation {
                 + ", status:" + (status == null ? "null" : status);
     }
 
-    public UUID getDonationID() {
+    public UUID getDonationId() {
         return donationId;
     }
 
-    public void setDonationID(UUID donationID) {
+    public void setDonationId(UUID donationID) {
         this.donationId = donationID;
     }
 
