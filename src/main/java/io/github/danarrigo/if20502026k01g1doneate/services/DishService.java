@@ -4,7 +4,6 @@ import io.github.danarrigo.if20502026k01g1doneate.entities.Dish;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.DishRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
 
 import io.github.danarrigo.if20502026k01g1doneate.repositories.DonationRepository;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donation;
@@ -27,7 +26,7 @@ public class DishService {
     public boolean dishQualityControl(QCFormData body) {
         Donation donation = donationRepository.findByDish_DishId(body.getDishId())
                 .orElseThrow(() -> new RuntimeException("Donation not found for dish id: " + body.getDishId()));
-        
+
         if (body.isPassed()) {
             donation.setOngoing(true);
             donation.setStatus("QC Passed");
@@ -39,34 +38,35 @@ public class DishService {
         return body.isPassed();
     }
 
-    //CREATE
-    public Dish createDish(Dish dish){
+    // CREATE
+    public Dish createDish(Dish dish) {
         return dishRepository.save(dish);
     }
 
-    //READ
-    public List<Dish> getAllDishes(){
+    // READ
+    public List<Dish> getAllDishes() {
         return dishRepository.findAll();
     }
 
-    public Dish getDishById(UUID id){
-        return dishRepository.findById(id).orElseThrow(()->new RuntimeException("Donation not found with id: " + id));
+    public Dish getDishById(UUID id) {
+        return dishRepository.findById(id).orElseThrow(() -> new RuntimeException("Dish not found with id: " + id));
     }
 
-    //UPDATE
-    public Dish updateDish(Dish newDish,UUID id){
-        Dish oldDish = dishRepository.findById(id).orElseThrow(()->new RuntimeException("Donation not found with id: " + id));
+    // UPDATE
+    public Dish updateDish(Dish newDish, UUID id) {
+        Dish oldDish = dishRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Dish not found with id: " + id));
         oldDish.setName(newDish.getName());
         oldDish.setImagePath(newDish.getImagePath());
         return dishRepository.save(oldDish);
     }
 
-    //DELETE
-    public void deleteDishes(){
+    // DELETE
+    public void deleteDishes() {
         dishRepository.deleteAll();
     }
 
-    public void deleteDishById(UUID id){
+    public void deleteDishById(UUID id) {
         dishRepository.deleteById(id);
     }
 }
