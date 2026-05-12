@@ -98,7 +98,7 @@ class AuthServiceTest {
 
         assertEquals("newdonator", result.get("username"));
         assertEquals("DONATOR", result.get("role"));
-        verify(userRepository, times(1)).save(any(User.class));
+        verify(userRepository, times(1)).save(any(Donator.class));
     }
 
     @Test
