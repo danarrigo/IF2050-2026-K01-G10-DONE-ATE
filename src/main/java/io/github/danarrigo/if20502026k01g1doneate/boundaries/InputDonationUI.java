@@ -97,42 +97,58 @@ public class InputDonationUI extends UI {
 
         HBox imageInputBox = new HBox(10);
         imageInputBox.setAlignment(Pos.CENTER_LEFT);
-        
+
         TextField imagePathField = new TextField();
         imagePathField.setPromptText("Belum ada gambar yang dipilih...");
         imagePathField.setEditable(false);
         styleTextField(imagePathField);
         HBox.setHgrow(imagePathField, Priority.ALWAYS);
-        
+
         Button browseBtn = new Button("Pilih File");
-        browseBtn.setStyle("-fx-background-color: " + DARK_GREEN + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 6px; -fx-cursor: hand;");
+        browseBtn.setStyle("-fx-background-color: " + DARK_GREEN
+                + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 6px; -fx-cursor: hand;");
         browseBtn.setOnAction(e -> {
             javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
             fileChooser.setTitle("Pilih Gambar Makanan");
             fileChooser.getExtensionFilters().addAll(
-                new javafx.stage.FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg")
-            );
+                    new javafx.stage.FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg"));
             java.io.File selectedFile = fileChooser.showOpenDialog(stage);
             if (selectedFile != null) {
                 imagePathField.setText(selectedFile.getAbsolutePath());
             }
         });
-        
+
         imageInputBox.getChildren().addAll(imagePathField, browseBtn);
 
         TextField expiresField = new TextField();
         expiresField.setPromptText("Kedaluwarsa dalam (contoh: 24)");
         styleTextField(expiresField);
 
+        HBox timeCookedBox = new HBox(10);
+        timeCookedBox.setAlignment(Pos.CENTER_LEFT);
+
         TextField timeCookedField = new TextField();
         timeCookedField.setPromptText("Waktu Dimasak (contoh: 2026-05-12 18:00)");
         styleTextField(timeCookedField);
+        HBox.setHgrow(timeCookedField, Priority.ALWAYS);
+
+        Button nowBtn = new Button("Sekarang");
+        nowBtn.setStyle("-fx-background-color: " + LIGHT_GREEN + "; -fx-text-fill: " + DARK_GREEN
+                + "; -fx-font-weight: bold; -fx-background-radius: 6px; -fx-cursor: hand;");
+        nowBtn.setOnAction(e -> {
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter
+                    .ofPattern("yyyy-MM-dd HH:mm");
+            timeCookedField.setText(now.format(formatter));
+        });
+
+        timeCookedBox.getChildren().addAll(timeCookedField, nowBtn);
 
         card1.getChildren().addAll(
                 new Label("Nama Makanan"), nameField,
                 new Label("Gambar Makanan"), imageInputBox,
                 new Label("Kedaluwarsa dalam (jam)"), expiresField,
-                new Label("Waktu Dimasak (yyyy-MM-dd HH:mm)"), timeCookedField);
+                new Label("Waktu Dimasak (yyyy-MM-dd HH:mm)"), timeCookedBox);
 
         leftCol.getChildren().add(card1);
 
@@ -167,10 +183,10 @@ public class InputDonationUI extends UI {
             String timeCooked = timeCookedField.getText();
 
             if (dishName == null || dishName.trim().isEmpty() ||
-                imagePath == null || imagePath.trim().isEmpty() ||
-                expiresIn == null || expiresIn.trim().isEmpty() ||
-                timeCooked == null || timeCooked.trim().isEmpty()) {
-                
+                    imagePath == null || imagePath.trim().isEmpty() ||
+                    expiresIn == null || expiresIn.trim().isEmpty() ||
+                    timeCooked == null || timeCooked.trim().isEmpty()) {
+
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Validasi Gagal");
                 alert.setHeaderText(null);
@@ -201,18 +217,21 @@ public class InputDonationUI extends UI {
         }
 
         // Animations
-        javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(javafx.util.Duration.millis(600), root);
+        javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(javafx.util.Duration.millis(600),
+                root);
         ft.setFromValue(0.0);
         ft.setToValue(1.0);
         ft.play();
 
-        javafx.animation.TranslateTransition tt = new javafx.animation.TranslateTransition(javafx.util.Duration.millis(600), root);
+        javafx.animation.TranslateTransition tt = new javafx.animation.TranslateTransition(
+                javafx.util.Duration.millis(600), root);
         tt.setFromY(30);
         tt.setToY(0);
         tt.play();
     }
 
-    private void showDigitalQCScene(Stage stage, String dishName, String imagePath, String expiresIn, String timeCooked) {
+    private void showDigitalQCScene(Stage stage, String dishName, String imagePath, String expiresIn,
+            String timeCooked) {
         VBox root = new VBox(30);
         root.setPadding(new Insets(50, 80, 50, 80));
         root.setStyle("-fx-background-color: " + BG_COLOR + ";");
@@ -221,7 +240,7 @@ public class InputDonationUI extends UI {
         Label title = new Label("✔ QC DIGITAL");
         title.setFont(Font.font("System", FontWeight.BOLD, 24));
         title.setTextFill(Color.web(DARK_GREEN));
-        
+
         Label subtitle1 = new Label("Validasi Kelayakan");
         subtitle1.setFont(Font.font("System", FontWeight.BOLD, 18));
         Label subtitle2 = new Label("Pastikan donasi Anda memenuhi standar kualitas sebelum diproses oleh kurir kami.");
@@ -240,7 +259,7 @@ public class InputDonationUI extends UI {
         HBox.setHgrow(leftCol, Priority.ALWAYS);
 
         VBox card1 = createCard("Daftar Periksa Keamanan");
-        
+
         // Match backend fields exactly
         CheckBox[] checkBoxes = new CheckBox[10];
         String[] descriptions = {
@@ -295,7 +314,22 @@ public class InputDonationUI extends UI {
         imgPlaceholder.setPrefHeight(200);
         imgPlaceholder.setStyle("-fx-background-color: #EAEAEA; -fx-border-radius: 8px; -fx-background-radius: 8px;");
 
-        Label soonLabel = new Label("Fitur unggah foto bukti visual akan datang nanti.");
+        try {
+            java.io.File imgFile = new java.io.File(imagePath);
+            if (imgFile.exists()) {
+                String imageUri = imgFile.toURI().toString();
+                javafx.scene.image.Image img = new javafx.scene.image.Image(imageUri);
+                javafx.scene.image.ImageView imgView = new javafx.scene.image.ImageView(img);
+                imgView.setFitHeight(180);
+                imgView.setPreserveRatio(true);
+                imgPlaceholder.getChildren().add(imgView);
+                imgPlaceholder.setStyle("-fx-background-color: transparent;");
+            }
+        } catch (Exception ex) {
+            System.out.println("Gagal memuat gambar QC: " + ex.getMessage());
+        }
+
+        Label soonLabel = new Label("Bukti Foto Yang Diunggah");
         soonLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
         soonLabel.setTextFill(Color.web(TEXT_GRAY));
         soonLabel.setAlignment(Pos.CENTER);
@@ -330,22 +364,25 @@ public class InputDonationUI extends UI {
                 // Menembak endpoint lokal Spring Boot via REST API
                 try {
                     java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
-                    
+
                     // 1. Create Dish
                     // Escape characters for valid JSON
                     String safeImagePath = imagePath.replace("\\", "\\\\").replace("\"", "\\\"");
                     String safeDishName = dishName.replace("\\", "\\\\").replace("\"", "\\\"");
-                    
+
                     // Convert "24" to "PT24H" for Duration
-                    String dishJson = "{\"name\":\"" + safeDishName + "\", \"imagePath\":\"" + safeImagePath + "\", \"expiresIn\":\"PT" + expiresIn.trim() + "H\"}";
+                    String dishJson = "{\"name\":\"" + safeDishName + "\", \"imagePath\":\"" + safeImagePath
+                            + "\", \"expiresIn\":\"PT" + expiresIn.trim() + "H\"}";
                     java.net.http.HttpRequest dishReq = java.net.http.HttpRequest.newBuilder()
                             .uri(java.net.URI.create("http://localhost:8080/api/dishes"))
                             .header("Content-Type", "application/json")
                             .POST(java.net.http.HttpRequest.BodyPublishers.ofString(dishJson))
                             .build();
-                    java.net.http.HttpResponse<String> dishRes = client.send(dishReq, java.net.http.HttpResponse.BodyHandlers.ofString());
-                    if (dishRes.statusCode() >= 400) throw new RuntimeException("Gagal buat Dish: " + dishRes.body());
-                    
+                    java.net.http.HttpResponse<String> dishRes = client.send(dishReq,
+                            java.net.http.HttpResponse.BodyHandlers.ofString());
+                    if (dishRes.statusCode() >= 400)
+                        throw new RuntimeException("Gagal buat Dish: " + dishRes.body());
+
                     // Extract dishId from the newly created Dish
                     String body = dishRes.body();
                     String dishIdStr = "";
@@ -354,7 +391,7 @@ public class InputDonationUI extends UI {
                         dishIdStr = body.substring(idx + 10, body.indexOf("\"", idx + 10));
                     }
                     form.setDishId(java.util.UUID.fromString(dishIdStr));
-                    
+
                     // 2. Create Donation
                     // Convert "2026-05-12 18:00" to "2026-05-12T18:00"
                     String timeCookedFormatted = timeCooked.trim().replace(" ", "T");
@@ -376,9 +413,11 @@ public class InputDonationUI extends UI {
                             .header("Content-Type", "application/json")
                             .POST(java.net.http.HttpRequest.BodyPublishers.ofString(donationJson))
                             .build();
-                    java.net.http.HttpResponse<String> donRes = client.send(donReq, java.net.http.HttpResponse.BodyHandlers.ofString());
-                    if (donRes.statusCode() >= 400) throw new RuntimeException("Gagal buat Donation: " + donRes.body());
-                    
+                    java.net.http.HttpResponse<String> donRes = client.send(donReq,
+                            java.net.http.HttpResponse.BodyHandlers.ofString());
+                    if (donRes.statusCode() >= 400)
+                        throw new RuntimeException("Gagal buat Donation: " + donRes.body());
+
                     // 3. Submit QC Form
                     String qcJson = "{"
                             + "\"dishId\":\"" + dishIdStr + "\","
@@ -398,8 +437,10 @@ public class InputDonationUI extends UI {
                             .header("Content-Type", "application/json")
                             .POST(java.net.http.HttpRequest.BodyPublishers.ofString(qcJson))
                             .build();
-                    java.net.http.HttpResponse<String> qcRes = client.send(qcReq, java.net.http.HttpResponse.BodyHandlers.ofString());
-                    if (qcRes.statusCode() >= 400) throw new RuntimeException("Gagal submit QC: " + qcRes.body());
+                    java.net.http.HttpResponse<String> qcRes = client.send(qcReq,
+                            java.net.http.HttpResponse.BodyHandlers.ofString());
+                    if (qcRes.statusCode() >= 400)
+                        throw new RuntimeException("Gagal submit QC: " + qcRes.body());
 
                     System.out.println("Memproses Donasi: " + dishName + " | Waktu: " + timeCooked);
                     success("Donasi berhasil disubmit ke server! (QC Lulus)");
@@ -433,12 +474,14 @@ public class InputDonationUI extends UI {
         }
 
         // Animations
-        javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(javafx.util.Duration.millis(600), root);
+        javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(javafx.util.Duration.millis(600),
+                root);
         ft.setFromValue(0.0);
         ft.setToValue(1.0);
         ft.play();
 
-        javafx.animation.TranslateTransition tt = new javafx.animation.TranslateTransition(javafx.util.Duration.millis(600), root);
+        javafx.animation.TranslateTransition tt = new javafx.animation.TranslateTransition(
+                javafx.util.Duration.millis(600), root);
         tt.setFromX(50);
         tt.setToX(0);
         tt.play();
