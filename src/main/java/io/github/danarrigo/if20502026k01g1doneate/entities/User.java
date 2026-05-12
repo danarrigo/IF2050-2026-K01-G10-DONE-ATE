@@ -14,11 +14,8 @@ public abstract class User {
     private String address;
     private String phoneNumber;
     private String email;
-    @ElementCollection
-    private List<String> notificationList;
 
-
-    public User(String username, String password, String address, String phoneNumber, String email, List<String> notificationList) {
+    public User(String username, String password, String address, String phoneNumber, String email) {
         this.username = username;
         this.password = password;
         this.address = address;
@@ -71,11 +68,4 @@ public abstract class User {
         this.email = email;
     }
 
-    public List<String> getNotificationList() {
-        return notificationList;
-    }
-
-    public void setNotificationList(List<String> notificationList) {
-        this.notificationList = notificationList;
-    }
 }
