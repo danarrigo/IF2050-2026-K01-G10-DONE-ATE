@@ -26,7 +26,7 @@ public class Recipient extends User {
     private RecipientType recipientType;
 
     public Recipient(String username, String password, String address, String phoneNumber, String email, List<String> notificationList, UUID recipientID, String fullName, LocalTime operationalTimeStart, LocalTime operationalTimeEnd, RecipientType recipientType) {
-        super(username, password, address, phoneNumber, email, notificationList);
+        super(username, password, address, phoneNumber, email);
         this.recipientID = recipientID;
         this.fullName = fullName;
         this.operationalTimeStart = operationalTimeStart;

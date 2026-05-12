@@ -1,12 +1,13 @@
 package io.github.danarrigo.if20502026k01g1doneate.entities;
 
-import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import java.util.List;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name="users")
 @Inheritance(strategy = InheritanceType.JOINED)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public abstract class User {
     @Id
     private String username;
@@ -14,17 +15,13 @@ public abstract class User {
     private String address;
     private String phoneNumber;
     private String email;
-    @ElementCollection
-    private List<String> notificationList;
 
-
-    public User(String username, String password, String address, String phoneNumber, String email, List<String> notificationList) {
+    public User(String username, String password, String address, String phoneNumber, String email) {
         this.username = username;
         this.password = password;
         this.address = address;
         this.phoneNumber = phoneNumber;
         this.email = email;
-        this.notificationList = notificationList;
     }
 
     public User() {
@@ -71,11 +68,4 @@ public abstract class User {
         this.email = email;
     }
 
-    public List<String> getNotificationList() {
-        return notificationList;
-    }
-
-    public void setNotificationList(List<String> notificationList) {
-        this.notificationList = notificationList;
-    }
 }

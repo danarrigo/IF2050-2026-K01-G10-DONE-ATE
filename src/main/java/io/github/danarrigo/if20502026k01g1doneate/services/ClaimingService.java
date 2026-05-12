@@ -3,6 +3,7 @@ package io.github.danarrigo.if20502026k01g1doneate.services;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donation;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Transaction;
+import io.github.danarrigo.if20502026k01g1doneate.enums.NotificationType;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.DonationRepository;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.RecipientRepository;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.TransactionRepository;
@@ -62,9 +63,15 @@ public class ClaimingService {
 
         transactionRepository.save(transaction);
 
-        // Send notification to donator
+        // Send notification to donator (MENGGUNAKAN FORMAT BARU)
         if (donation.getDonator() != null) {
-            notificationService.sendNotification(donation.getDonator().getUsername(), "Donasi Anda telah diklaim");
+            notificationService.sendNotification(
+                    donation.getDonator(),
+                    "Klaim Donasi",
+                    "Donasi Anda telah diklaim oleh penerima",
+                    donation.getDonationId(),
+                    NotificationType.DONASI
+            );
         }
 
         return "success";
@@ -95,8 +102,15 @@ public class ClaimingService {
             donation.setTaken(false);
             donationRepository.save(donation);
             
+            // Mengirim notifikasi pembatalan dengan format baru
             if (transaction.getDonator() != null) {
-                notificationService.sendNotification(transaction.getDonator().getUsername(), "Klaim donasi dibatalkan");
+                notificationService.sendNotification(
+                        transaction.getDonator(),
+                        "Pembatalan Klaim",
+                        "Klaim donasi dibatalkan",
+                        donation.getDonationId(),
+                        NotificationType.DONASI
+                );
             }
             return "success";
         } else {

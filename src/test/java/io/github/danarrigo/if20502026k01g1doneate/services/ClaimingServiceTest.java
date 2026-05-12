@@ -4,6 +4,7 @@ import io.github.danarrigo.if20502026k01g1doneate.entities.Donation;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Transaction;
+import io.github.danarrigo.if20502026k01g1doneate.enums.NotificationType;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.DonationRepository;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.RecipientRepository;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.TransactionRepository;
@@ -16,8 +17,6 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.Optional;
 import java.util.UUID;
-import java.time.LocalDateTime;
-import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -68,11 +67,13 @@ class ClaimingServiceTest {
         String result = claimingService.validateClaimability(recipientUsername, donationId);
 
         assertEquals("success", result);
-        assertTrue(donation.isTaken()); // Pastikan field taken berubah jadi true
+        assertTrue(donation.isTaken());
         
         verify(donationRepository, times(1)).save(donation);
         verify(transactionRepository, times(1)).save(any(Transaction.class));
-        verify(notificationService, times(1)).sendNotification(donatorUsername, "Donasi Anda telah diklaim");
+        
+        // Verifikasi disesuaikan dengan parameter lengkap
+        verify(notificationService, times(1)).sendNotification(donator, "Klaim Donasi", "Donasi Anda telah diklaim oleh penerima", donationId, NotificationType.DONASI);
     }
 
     @Test
@@ -120,6 +121,7 @@ class ClaimingServiceTest {
         assertEquals("Gagal: Recipient tidak ditemukan", result);
         verify(transactionRepository, never()).save(any(Transaction.class));
     }
+
     @Test
     void cancelClaim_Success() {
         Integer transactionCode = 123456;
@@ -131,18 +133,15 @@ class ClaimingServiceTest {
         transaction.setDonator(donator);
 
         Dish dish = new Dish();
-        dish.setExpiresIn(java.time.Duration.ofHours(3)); // kadaluarsa dalam 3 jam
+        dish.setExpiresIn(java.time.Duration.ofHours(3)); 
         
         Donation donation = new Donation();
+        UUID donationId = UUID.randomUUID();
+        donation.setDonationId(donationId); // Memastikan UUID terisi untuk mock test
         donation.setDish(dish);
-        // Dimasak 1 jam yang lalu
         donation.setTimeCooked(java.time.LocalDateTime.now().minusHours(1));
         donation.setTaken(true);
         transaction.setDonation(donation);
-
-        // Batas waktu = sekarang - 1 jam + 3 jam = sekarang + 2 jam
-        // Batas toleransi = batas waktu - 1 jam = sekarang + 1 jam
-        // Waktu sekarang masih sebelum batas toleransi (valid)
 
         when(transactionRepository.findByTransactionCode(transactionCode)).thenReturn(java.util.Optional.of(transaction));
 
@@ -152,7 +151,9 @@ class ClaimingServiceTest {
         assertFalse(donation.isTaken());
         verify(transactionRepository, times(1)).delete(transaction);
         verify(donationRepository, times(1)).save(donation);
-        verify(notificationService, times(1)).sendNotification("restoran_b", "Klaim donasi dibatalkan");
+        
+        // Verifikasi disesuaikan dengan parameter lengkap
+        verify(notificationService, times(1)).sendNotification(donator, "Pembatalan Klaim", "Klaim donasi dibatalkan", donationId, NotificationType.DONASI);
     }
 
     @Test
@@ -177,12 +178,8 @@ class ClaimingServiceTest {
         
         Donation donation = new Donation();
         donation.setDish(dish);
-        // Dimasak 3 jam yang lalu
         donation.setTimeCooked(java.time.LocalDateTime.now().minusHours(3));
         transaction.setDonation(donation);
-
-        // Batas waktu = sekarang - 3 jam + 2 jam = sekarang - 1 jam
-        // Pembatalan ditolak karena donasi ini saja sudah kadaluarsa (melewati batas)
 
         when(transactionRepository.findByTransactionCode(transactionCode)).thenReturn(java.util.Optional.of(transaction));
 
@@ -192,5 +189,3 @@ class ClaimingServiceTest {
         verify(transactionRepository, never()).delete(any(Transaction.class));
     }
 }
-
-    

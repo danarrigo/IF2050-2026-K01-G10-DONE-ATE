@@ -17,7 +17,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 
@@ -46,7 +45,6 @@ class AuthServiceTest {
                 "Jl. Mawar 1",
                 "08123",
                 "donator@example.com",
-                new ArrayList<>(),
                 DonatorType.RESTAURANT
         );
     }
