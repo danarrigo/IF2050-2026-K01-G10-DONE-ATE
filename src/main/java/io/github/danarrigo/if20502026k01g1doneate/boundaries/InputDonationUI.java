@@ -11,7 +11,6 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.util.UUID;
@@ -20,7 +19,6 @@ public class InputDonationUI extends UI {
 
     private static boolean jfxInitialized = false;
 
-    // Colors matching Figma
     private final String DARK_GREEN = "#0F5B21";
     private final String LIGHT_GREEN = "#D2F4D6";
     private final String LIGHT_RED = "#FADBD8";
@@ -54,7 +52,7 @@ public class InputDonationUI extends UI {
     private void createAndShowStage() {
         Stage stage = new Stage();
         stage.setTitle("DONE-ATE - Input Donasi");
-        stage.setMaximized(true); // Fit to fullscreen
+        stage.setMaximized(true);
         showInputDonationScene(stage);
         stage.show();
     }
@@ -64,7 +62,6 @@ public class InputDonationUI extends UI {
         root.setPadding(new Insets(50, 80, 50, 80));
         root.setStyle("-fx-background-color: " + BG_COLOR + ";");
 
-        // Header
         Label backBtn = new Label("<- Kembali");
         backBtn.setTextFill(Color.web(DARK_GREEN));
         backBtn.setStyle("-fx-cursor: hand;");
@@ -80,15 +77,12 @@ public class InputDonationUI extends UI {
 
         VBox header = new VBox(10, backBtn, title, subtitle);
 
-        // Layout: Two Columns centered and growing
         HBox columns = new HBox(50);
         columns.setAlignment(Pos.TOP_LEFT);
 
-        // --- Left Column ---
         VBox leftCol = new VBox(20);
-        HBox.setHgrow(leftCol, Priority.ALWAYS); // Grow to fill left side
+        HBox.setHgrow(leftCol, Priority.ALWAYS);
 
-        // Card 1: Informasi Makanan (Mapped strictly to backend entities)
         VBox card1 = createCard("Informasi Makanan");
 
         TextField nameField = new TextField();
@@ -152,11 +146,9 @@ public class InputDonationUI extends UI {
 
         leftCol.getChildren().add(card1);
 
-        // --- Right Column ---
         VBox rightCol = new VBox(30);
-        rightCol.setPrefWidth(450); // Fixed width for right side panel
+        rightCol.setPrefWidth(450);
 
-        // Info Box
         VBox infoBox = new VBox(10);
         infoBox.setPadding(new Insets(25));
         infoBox.setStyle(
@@ -170,7 +162,6 @@ public class InputDonationUI extends UI {
         infoDesc.setFont(Font.font(14));
         infoBox.getChildren().addAll(infoTitle, infoDesc);
 
-        // Button
         Button nextBtn = new Button("Lanjut ke Digital QC ->");
         nextBtn.setStyle("-fx-background-color: " + DARK_GREEN
                 + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16px; -fx-background-radius: 8px; -fx-cursor: hand;");
@@ -206,7 +197,6 @@ public class InputDonationUI extends UI {
         ScrollPane scroll = new ScrollPane(root);
         scroll.setFitToWidth(true);
 
-        // Replace Scene root to prevent exiting maximized state
         Scene scene = stage.getScene();
         if (scene == null) {
             scene = new Scene(scroll);
@@ -216,7 +206,6 @@ public class InputDonationUI extends UI {
             scene.setRoot(scroll);
         }
 
-        // Animations
         javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(javafx.util.Duration.millis(600),
                 root);
         ft.setFromValue(0.0);
@@ -236,7 +225,6 @@ public class InputDonationUI extends UI {
         root.setPadding(new Insets(50, 80, 50, 80));
         root.setStyle("-fx-background-color: " + BG_COLOR + ";");
 
-        // Header
         Label title = new Label("✔ QC DIGITAL");
         title.setFont(Font.font("System", FontWeight.BOLD, 24));
         title.setTextFill(Color.web(DARK_GREEN));
@@ -250,17 +238,14 @@ public class InputDonationUI extends UI {
 
         VBox header = new VBox(5, title, subtitle1, subtitle2);
 
-        // Layout: Two Columns
         HBox columns = new HBox(50);
         columns.setAlignment(Pos.TOP_LEFT);
 
-        // --- Left Column ---
         VBox leftCol = new VBox(20);
         HBox.setHgrow(leftCol, Priority.ALWAYS);
 
         VBox card1 = createCard("Daftar Periksa Keamanan");
 
-        // Match backend fields exactly
         CheckBox[] checkBoxes = new CheckBox[10];
         String[] descriptions = {
                 "Apakah hidangan berbau segar dan normal?",
@@ -286,7 +271,6 @@ public class InputDonationUI extends UI {
             card1.getChildren().add(cbContainer);
         }
 
-        // Error Box (Hidden by default)
         VBox errorBox = new VBox(5);
         errorBox.setPadding(new Insets(20));
         errorBox.setStyle("-fx-background-color: " + LIGHT_RED
@@ -304,7 +288,6 @@ public class InputDonationUI extends UI {
 
         leftCol.getChildren().addAll(card1, errorBox);
 
-        // --- Right Column ---
         VBox rightCol = new VBox(20);
         rightCol.setPrefWidth(450);
 
@@ -344,7 +327,7 @@ public class InputDonationUI extends UI {
         submitBtn.setPrefHeight(60);
         submitBtn.setOnAction(e -> {
             QCFormData form = new QCFormData();
-            form.setDishId(UUID.randomUUID()); // Sementara UUID random
+            form.setDishId(UUID.randomUUID());
 
             form.setFreshScent(checkBoxes[0].isSelected());
             form.setNoSpoilage(checkBoxes[1].isSelected());
@@ -360,19 +343,15 @@ public class InputDonationUI extends UI {
             if (form.isPassed()) {
                 errorBox.setVisible(false);
 
-                // --- CARA MAP KE API ---
-                // Menembak endpoint lokal Spring Boot via REST API
                 try {
                     java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
 
-                    // 1. Create Dish
-                    // Escape characters for valid JSON
                     String safeImagePath = imagePath.replace("\\", "\\\\").replace("\"", "\\\"");
                     String safeDishName = dishName.replace("\\", "\\\\").replace("\"", "\\\"");
 
-                    // Convert "24" to "PT24H" for Duration
                     String dishJson = "{\"name\":\"" + safeDishName + "\", \"imagePath\":\"" + safeImagePath
                             + "\", \"expiresIn\":\"PT" + expiresIn.trim() + "H\"}";
+
                     java.net.http.HttpRequest dishReq = java.net.http.HttpRequest.newBuilder()
                             .uri(java.net.URI.create("http://localhost:8080/api/dishes"))
                             .header("Content-Type", "application/json")
@@ -383,7 +362,6 @@ public class InputDonationUI extends UI {
                     if (dishRes.statusCode() >= 400)
                         throw new RuntimeException("Gagal buat Dish: " + dishRes.body());
 
-                    // Extract dishId from the newly created Dish
                     String body = dishRes.body();
                     String dishIdStr = "";
                     int idx = body.indexOf("\"dishId\":\"");
@@ -392,8 +370,6 @@ public class InputDonationUI extends UI {
                     }
                     form.setDishId(java.util.UUID.fromString(dishIdStr));
 
-                    // 2. Create Donation
-                    // Convert "2026-05-12 18:00" to "2026-05-12T18:00"
                     String timeCookedFormatted = timeCooked.trim().replace(" ", "T");
                     if (timeCookedFormatted.length() == 16) {
                         timeCookedFormatted += ":00";
@@ -418,7 +394,6 @@ public class InputDonationUI extends UI {
                     if (donRes.statusCode() >= 400)
                         throw new RuntimeException("Gagal buat Donation: " + donRes.body());
 
-                    // 3. Submit QC Form
                     String qcJson = "{"
                             + "\"dishId\":\"" + dishIdStr + "\","
                             + "\"freshScent\":" + form.isFreshScent() + ","
@@ -463,7 +438,6 @@ public class InputDonationUI extends UI {
         ScrollPane scroll = new ScrollPane(root);
         scroll.setFitToWidth(true);
 
-        // Swap root instead of setting new Scene to maintain Fullscreen state
         Scene scene = stage.getScene();
         if (scene == null) {
             scene = new Scene(scroll);
@@ -473,7 +447,6 @@ public class InputDonationUI extends UI {
             scene.setRoot(scroll);
         }
 
-        // Animations
         javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(javafx.util.Duration.millis(600),
                 root);
         ft.setFromValue(0.0);
