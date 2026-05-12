@@ -8,7 +8,7 @@ import io.github.danarrigo.if20502026k01g1doneate.repositories.DonationRepositor
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,9 +21,9 @@ public class DonationService {
         this.donationRepository = donationRepository;
     }
 
-    public void processDonation(String dishName, String dishPath, LocalTime timeCooked, Donator donator) {
+    public void processDonation(String dishName, String dishPath, LocalDateTime timeCooked, Donator donator) {
         Dish dish = new Dish(dishName,dishPath);
-        Donation donation = new Donation(dish, LocalTime.now(),timeCooked,"Waiting for QC",donator);
+        Donation donation = new Donation(dish, LocalDateTime.now(),timeCooked,"Waiting for QC",donator);
         createDonation(donation);
         System.out.println("Donation processed, now waiting for QC");
     }

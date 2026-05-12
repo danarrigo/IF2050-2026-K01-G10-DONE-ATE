@@ -11,7 +11,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -41,14 +41,14 @@ class DonationServiceTest {
         donator = new Donator();
         donationId = UUID.randomUUID();
 
-        donation = new Donation(dish, LocalTime.now(), LocalTime.now().minusHours(1), "Waiting for QC", donator);
+        donation = new Donation(dish, LocalDateTime.now(), LocalDateTime.now().minusHours(1), "Waiting for QC", donator);
     }
 
     @Test
     void testProcessDonation() {
         when(donationRepository.save(any(Donation.class))).thenAnswer(i -> i.getArguments()[0]);
 
-        donationService.processDonation("Pasta", "path/to/pasta", LocalTime.now().minusHours(1), donator);
+        donationService.processDonation("Pasta", "path/to/pasta", LocalDateTime.now().minusHours(1), donator);
 
         verify(donationRepository, times(1)).save(any(Donation.class));
     }
@@ -102,7 +102,7 @@ class DonationServiceTest {
         when(donationRepository.findById(donationId)).thenReturn(Optional.of(donation));
         when(donationRepository.save(any(Donation.class))).thenReturn(donation);
 
-        Donation updatedInfo = new Donation(dish, LocalTime.now(), LocalTime.now(), "Approved", donator);
+        Donation updatedInfo = new Donation(dish, LocalDateTime.now(), LocalDateTime.now(), "Approved", donator);
         updatedInfo.setOngoing(false);
 
         Donation result = donationService.updateDonation(donationId, updatedInfo);
