@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 
 @RestController
@@ -31,16 +32,23 @@ public class DonationController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Donation> getDonationById(@PathVariable String id){
-        Donation donation = donationService.getDonationById(java.util.UUID.fromString(id));
+    public ResponseEntity<Donation> getDonationById(@PathVariable UUID id) {
+        Donation donation = donationService.getDonationById(id);
         return ResponseEntity.ok(donation);
     }
 
     //PUT
     @PutMapping("/{id}")
-    public ResponseEntity<Donation> updateDonation(@PathVariable String id, @RequestBody Donation donation){
-        Donation updatedDonation = donationService.updateDonation(java.util.UUID.fromString(id), donation);
+    public ResponseEntity<Donation> updateDonation(@PathVariable UUID id, @RequestBody Donation donation) {
+        Donation updatedDonation = donationService.updateDonation(id, donation);
         return ResponseEntity.ok(updatedDonation);
+    }
+
+    //PATCH
+    @PatchMapping("/{id}/remove")
+    public ResponseEntity<Void> removeDonation(@PathVariable UUID id) {
+        donationService.removeDonation(id);
+        return ResponseEntity.noContent().build();
     }
 
     //POST
@@ -59,8 +67,8 @@ public class DonationController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDonationByUuid(@PathVariable String id){
-        donationService.deleteDonationByUuid(java.util.UUID.fromString(id));
+    public ResponseEntity<Void> deleteDonationByUuid(@PathVariable UUID id) {
+        donationService.deleteDonationByUuid(id);
         return ResponseEntity.noContent().build();
     }
 

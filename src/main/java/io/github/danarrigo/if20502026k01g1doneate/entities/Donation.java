@@ -2,7 +2,7 @@ package io.github.danarrigo.if20502026k01g1doneate.entities;
 
 import jakarta.persistence.*;
 
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -14,8 +14,8 @@ public class Donation {
     private boolean taken = false;
     @ManyToOne
     private Dish dish;
-    private LocalTime timeAdded;
-    private LocalTime timeCooked;
+    private LocalDateTime timeAdded;
+    private LocalDateTime timeCooked;
     private boolean ongoing = false;
     private String status;
     @ManyToOne
@@ -23,7 +23,7 @@ public class Donation {
     public Donation() {
     }
 
-    public Donation( Dish dish, LocalTime timeAdded, LocalTime timeCooked,String status, Donator donator) {
+    public Donation( Dish dish, LocalDateTime timeAdded, LocalDateTime timeCooked,String status, Donator donator) {
         this.dish = dish;
         this.timeAdded = timeAdded;
         this.timeCooked = timeCooked;
@@ -69,19 +69,19 @@ public class Donation {
         this.dish = dish;
     }
 
-    public LocalTime getTimeAdded() {
+    public LocalDateTime getTimeAdded() {
         return timeAdded;
     }
 
-    public void setTimeAdded(LocalTime timeAdded) {
+    public void setTimeAdded(LocalDateTime timeAdded) {
         this.timeAdded = timeAdded;
     }
 
-    public LocalTime getTimeCooked() {
+    public LocalDateTime getTimeCooked() {
         return timeCooked;
     }
 
-    public void setTimeCooked(LocalTime timeCooked) {
+    public void setTimeCooked(LocalDateTime timeCooked) {
         this.timeCooked = timeCooked;
     }
 

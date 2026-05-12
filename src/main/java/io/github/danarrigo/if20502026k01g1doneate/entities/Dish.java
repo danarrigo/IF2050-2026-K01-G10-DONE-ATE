@@ -2,6 +2,7 @@ package io.github.danarrigo.if20502026k01g1doneate.entities;
 
 import jakarta.persistence.*;
 
+import java.time.Duration;
 import java.util.UUID;
 
 @Entity
@@ -12,6 +13,13 @@ public class Dish {
     private UUID dishId ;
     private String name;
     private String imagePath;
+    private Duration expiresIn;
+
+    public Dish(String name, String imagePath, Duration expiresIn) {
+        this.name = name;
+        this.imagePath = imagePath;
+        this.expiresIn = expiresIn;
+    }
 
     public Dish(String name, String imagePath) {
         this.name = name;
@@ -25,7 +33,8 @@ public class Dish {
     public String getDetails(){
         return "Dish ID: " + dishId + "\n" +
                 "Name: " + name + "\n" +
-                "Image Path: " + imagePath;
+                "Image Path: " + imagePath + "\n" +
+                "Expires In: " + (expiresIn == null ? "not set" : expiresIn);
     }
 
     public UUID getDishId() {
@@ -50,5 +59,13 @@ public class Dish {
 
     public void setImagePath(String imagePath) {
         this.imagePath = imagePath;
+    }
+
+    public Duration getExpiresIn() {
+        return expiresIn;
+    }
+
+    public void setExpiresIn(Duration expiresIn) {
+        this.expiresIn = expiresIn;
     }
 }
