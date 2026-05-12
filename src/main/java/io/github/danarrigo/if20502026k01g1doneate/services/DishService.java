@@ -15,8 +15,8 @@ import java.util.UUID;
 @Service
 @Transactional
 public class DishService {
-    public final DishRepository dishRepository;
-    public final DonationRepository donationRepository;
+    private final DishRepository dishRepository;
+    private final DonationRepository donationRepository;
 
     public DishService(DishRepository dishRepository, DonationRepository donationRepository) {
         this.dishRepository = dishRepository;
@@ -58,6 +58,7 @@ public class DishService {
                 .orElseThrow(() -> new RuntimeException("Dish not found with id: " + id));
         oldDish.setName(newDish.getName());
         oldDish.setImagePath(newDish.getImagePath());
+        oldDish.setExpiresIn(newDish.getExpiresIn());
         return dishRepository.save(oldDish);
     }
 

@@ -11,7 +11,14 @@ import java.util.UUID;
 @Table(name="recipients")
 public class Recipient extends User {
     @Column(unique = true, nullable = false)
-    private UUID recipientID = UUID.randomUUID();
+    private UUID recipientID;
+
+    @PrePersist
+    private void prePersist() {
+        if (recipientID == null) {
+            recipientID = UUID.randomUUID();
+        }
+    }
     private String fullName;
     private LocalTime operationalTimeStart;
     private LocalTime operationalTimeEnd;

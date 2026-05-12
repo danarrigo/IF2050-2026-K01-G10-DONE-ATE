@@ -24,7 +24,6 @@ public class NotificationService {
         this.notificationRepository = notificationRepository;
     }
 
-    // UPDATE
     public Notification sendNotification(User user, String title, String messageBody, UUID relatedDonationId, NotificationType type) {
         Notification notification = new Notification();
         notification.setUser(user);
@@ -38,7 +37,6 @@ public class NotificationService {
         return notificationRepository.save(notification);
     }
 
-    // UPDATE
     public Slice<Notification> getUserNotifications(String username, String filter, Pageable pageable) {
         if ("UNREAD".equalsIgnoreCase(filter)) {
             return notificationRepository.findByUser_UsernameAndIsReadFalseOrderByTimeStampDesc(username, pageable);

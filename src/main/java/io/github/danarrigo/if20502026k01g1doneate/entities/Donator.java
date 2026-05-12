@@ -11,7 +11,14 @@ import java.util.UUID;
 @Table(name="donators")
 public class Donator extends User{
     @Column(unique = true, nullable = false)
-    private UUID donatorId = UUID.randomUUID();
+    private UUID donatorId;
+
+    @PrePersist
+    private void prePersist() {
+        if (donatorId == null) {
+            donatorId = UUID.randomUUID();
+        }
+    }
     @Enumerated(EnumType.STRING)
     private DonatorType donatorType;
     @OneToMany(mappedBy = "donator", cascade = CascadeType.ALL)
