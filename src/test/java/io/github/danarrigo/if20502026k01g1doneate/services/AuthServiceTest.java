@@ -83,13 +83,7 @@ class AuthServiceTest {
 
     @Test
     void testRegisterDonatorSuccess() {
-        DonatorRegistrationRequest request = new DonatorRegistrationRequest();
-        request.setUsername("newdonator");
-        request.setPassword("pass123");
-        request.setAddress("Jl. Melati 2");
-        request.setPhoneNumber("08111");
-        request.setEmail("newdonator@example.com");
-        request.setDonatorType(DonatorType.CAFE);
+        DonatorRegistrationRequest request = createDonatorRequest("newdonator");
 
         when(userRepository.existsByUsername("newdonator")).thenReturn(false);
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -103,8 +97,7 @@ class AuthServiceTest {
 
     @Test
     void testRegisterDonatorDuplicateUsername() {
-        DonatorRegistrationRequest request = new DonatorRegistrationRequest();
-        request.setUsername("existing");
+        DonatorRegistrationRequest request = createDonatorRequest("existing");
 
         when(userRepository.existsByUsername("existing")).thenReturn(true);
 
@@ -117,16 +110,7 @@ class AuthServiceTest {
 
     @Test
     void testRegisterRecipientSuccess() {
-        RecipientRegistrationRequest request = new RecipientRegistrationRequest();
-        request.setUsername("newrecipient");
-        request.setPassword("pass321");
-        request.setAddress("Jl. Anggrek 3");
-        request.setPhoneNumber("08222");
-        request.setEmail("recipient@example.com");
-        request.setFullName("Recipient Name");
-        request.setOperationalTimeStart(LocalTime.of(8, 0));
-        request.setOperationalTimeEnd(LocalTime.of(16, 0));
-        request.setRecipientType(RecipientType.ORGANIZATION);
+        RecipientRegistrationRequest request = createRecipientRequest("newrecipient");
 
         when(userRepository.existsByUsername("newrecipient")).thenReturn(false);
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -140,8 +124,7 @@ class AuthServiceTest {
 
     @Test
     void testRegisterRecipientDuplicateUsername() {
-        RecipientRegistrationRequest request = new RecipientRegistrationRequest();
-        request.setUsername("existingrecipient");
+        RecipientRegistrationRequest request = createRecipientRequest("existingrecipient");
 
         when(userRepository.existsByUsername("existingrecipient")).thenReturn(true);
 
@@ -150,5 +133,30 @@ class AuthServiceTest {
 
         assertEquals("Username already taken", exception.getMessage());
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    private DonatorRegistrationRequest createDonatorRequest(String username) {
+        DonatorRegistrationRequest request = new DonatorRegistrationRequest();
+        request.setUsername(username);
+        request.setPassword("pass123");
+        request.setAddress("Jl. Melati 2");
+        request.setPhoneNumber("08111");
+        request.setEmail("newdonator@example.com");
+        request.setDonatorType(DonatorType.CAFE);
+        return request;
+    }
+
+    private RecipientRegistrationRequest createRecipientRequest(String username) {
+        RecipientRegistrationRequest request = new RecipientRegistrationRequest();
+        request.setUsername(username);
+        request.setPassword("pass321");
+        request.setAddress("Jl. Anggrek 3");
+        request.setPhoneNumber("08222");
+        request.setEmail("recipient@example.com");
+        request.setFullName("Recipient Name");
+        request.setOperationalTimeStart(LocalTime.of(8, 0));
+        request.setOperationalTimeEnd(LocalTime.of(16, 0));
+        request.setRecipientType(RecipientType.ORGANIZATION);
+        return request;
     }
 }

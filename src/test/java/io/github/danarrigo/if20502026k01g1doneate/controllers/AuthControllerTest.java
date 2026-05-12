@@ -68,13 +68,7 @@ class AuthControllerTest {
 
     @Test
     void testRegisterDonatorSuccess() throws Exception {
-        DonatorRegistrationRequest request = new DonatorRegistrationRequest();
-        request.setUsername("newdonator");
-        request.setPassword("password");
-        request.setAddress("Alamat");
-        request.setPhoneNumber("08123");
-        request.setEmail("donator@example.com");
-        request.setDonatorType(DonatorType.CAFE);
+        DonatorRegistrationRequest request = createDonatorRequest("newdonator");
 
         when(authService.registerDonator(any(DonatorRegistrationRequest.class)))
                 .thenReturn(Map.of("username", "newdonator", "role", "DONATOR"));
@@ -89,8 +83,7 @@ class AuthControllerTest {
 
     @Test
     void testRegisterDonatorFailureDuplicateUsername() throws Exception {
-        DonatorRegistrationRequest request = new DonatorRegistrationRequest();
-        request.setUsername("existing");
+        DonatorRegistrationRequest request = createDonatorRequest("existing");
 
         when(authService.registerDonator(any(DonatorRegistrationRequest.class)))
                 .thenThrow(new RuntimeException("Username already taken"));
@@ -104,16 +97,7 @@ class AuthControllerTest {
 
     @Test
     void testRegisterRecipientSuccess() throws Exception {
-        RecipientRegistrationRequest request = new RecipientRegistrationRequest();
-        request.setUsername("newrecipient");
-        request.setPassword("password");
-        request.setAddress("Alamat");
-        request.setPhoneNumber("08222");
-        request.setEmail("recipient@example.com");
-        request.setFullName("Recipient Name");
-        request.setOperationalTimeStart(LocalTime.of(8, 0));
-        request.setOperationalTimeEnd(LocalTime.of(16, 0));
-        request.setRecipientType(RecipientType.ORGANIZATION);
+        RecipientRegistrationRequest request = createRecipientRequest("newrecipient");
 
         when(authService.registerRecipient(any(RecipientRegistrationRequest.class)))
                 .thenReturn(Map.of("username", "newrecipient", "role", "RECIPIENT"));
@@ -128,8 +112,7 @@ class AuthControllerTest {
 
     @Test
     void testRegisterRecipientFailureDuplicateUsername() throws Exception {
-        RecipientRegistrationRequest request = new RecipientRegistrationRequest();
-        request.setUsername("existingrecipient");
+        RecipientRegistrationRequest request = createRecipientRequest("existingrecipient");
 
         when(authService.registerRecipient(any(RecipientRegistrationRequest.class)))
                 .thenThrow(new RuntimeException("Username already taken"));
@@ -139,5 +122,30 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Username already taken"));
+    }
+
+    private DonatorRegistrationRequest createDonatorRequest(String username) {
+        DonatorRegistrationRequest request = new DonatorRegistrationRequest();
+        request.setUsername(username);
+        request.setPassword("password");
+        request.setAddress("Alamat");
+        request.setPhoneNumber("08123");
+        request.setEmail("donator@example.com");
+        request.setDonatorType(DonatorType.CAFE);
+        return request;
+    }
+
+    private RecipientRegistrationRequest createRecipientRequest(String username) {
+        RecipientRegistrationRequest request = new RecipientRegistrationRequest();
+        request.setUsername(username);
+        request.setPassword("password");
+        request.setAddress("Alamat");
+        request.setPhoneNumber("08222");
+        request.setEmail("recipient@example.com");
+        request.setFullName("Recipient Name");
+        request.setOperationalTimeStart(LocalTime.of(8, 0));
+        request.setOperationalTimeEnd(LocalTime.of(16, 0));
+        request.setRecipientType(RecipientType.ORGANIZATION);
+        return request;
     }
 }
