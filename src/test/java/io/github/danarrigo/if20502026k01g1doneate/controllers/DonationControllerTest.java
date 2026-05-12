@@ -12,7 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -43,7 +43,7 @@ class DonationControllerTest {
         donationId = UUID.randomUUID();
         Dish dish = new Dish("Pasta", "path/to/pasta");
         Donator donator = new Donator();
-        donation = new Donation(dish, LocalTime.now(), LocalTime.now().minusHours(1), "Waiting for QC", donator);
+        donation = new Donation(dish, LocalDateTime.now(), LocalDateTime.now().minusHours(1), "Waiting for QC", donator);
     }
 
     @Test

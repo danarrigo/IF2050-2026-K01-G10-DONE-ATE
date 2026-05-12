@@ -11,14 +11,21 @@ import java.util.UUID;
 @Table(name="donators")
 public class Donator extends User{
     @Column(unique = true, nullable = false)
-    private UUID donatorId = UUID.randomUUID();
+    private UUID donatorId;
+
+    @PrePersist
+    private void prePersist() {
+        if (donatorId == null) {
+            donatorId = UUID.randomUUID();
+        }
+    }
     @Enumerated(EnumType.STRING)
     private DonatorType donatorType;
     @OneToMany(mappedBy = "donator", cascade = CascadeType.ALL)
     private List<Donation> donations = new ArrayList<>();
 
-    public Donator(String username, String password, String address, String phoneNumber, String email, List<String> notificationList, DonatorType donatorType) {
-        super(username, password, address, phoneNumber, email, notificationList);
+    public Donator(String username, String password, String address, String phoneNumber, String email, DonatorType donatorType) {
+        super(username, password, address, phoneNumber, email);
         this.donatorType = donatorType;
     }
 

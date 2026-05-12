@@ -2,70 +2,63 @@ package io.github.danarrigo.if20502026k01g1doneate.entities;
 
 import jakarta.persistence.*;
 import java.time.LocalTime;
+import java.util.UUID;
 
 @Entity
-@Table(name="transactions")
+@Table(name = "tb_transaction")
 public class Transaction {
-    
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer transactionId;
-    
-    private int transactionCode;
-    private String recipientUserName;
-    private String donatorUserName;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID transactionId;
+
+    @Column(nullable = false, unique = true)
+    private Integer transactionCode;
+
+    @ManyToOne
+    @JoinColumn(name = "recipient_username", referencedColumnName = "username")
+    private Recipient recipient;
+
+    @ManyToOne
+    @JoinColumn(name = "donator_username", referencedColumnName = "username")
+    private Donator donator;
+
+    @ManyToOne
+    @JoinColumn(name = "donation_id", referencedColumnName = "donationId")
+    private Donation donation;
+
     private LocalTime transactionTime;
+
     private String status;
 
-    public Transaction() {
-    }
+    public Transaction() {}
 
-    // Getters and Setters
-    public Integer getTransactionId() {
-        return transactionId;
-    }
-
-    public void setTransactionId(Integer transactionId) {
-        this.transactionId = transactionId;
-    }
-
-    public int getTransactionCode() {
-        return transactionCode;
-    }
-
-    public void setTransactionCode(int transactionCode) {
+    public Transaction(Integer transactionCode, Recipient recipient, Donator donator, Donation donation, LocalTime transactionTime, String status) {
         this.transactionCode = transactionCode;
-    }
-
-    public String getRecipientUserName() {
-        return recipientUserName;
-    }
-
-    public void setRecipientUserName(String recipientUserName) {
-        this.recipientUserName = recipientUserName;
-    }
-
-    public String getDonatorUserName() {
-        return donatorUserName;
-    }
-
-    public void setDonatorUserName(String donatorUserName) {
-        this.donatorUserName = donatorUserName;
-    }
-
-    public LocalTime getTransactionTime() {
-        return transactionTime;
-    }
-
-    public void setTransactionTime(LocalTime transactionTime) {
+        this.recipient = recipient;
+        this.donator = donator;
+        this.donation = donation;
         this.transactionTime = transactionTime;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
         this.status = status;
     }
+
+    public UUID getTransactionId() { return transactionId; }
+    public void setTransactionId(UUID transactionId) { this.transactionId = transactionId; }
+
+    public Integer getTransactionCode() { return transactionCode; }
+    public void setTransactionCode(Integer transactionCode) { this.transactionCode = transactionCode; }
+
+    public Recipient getRecipient() { return recipient; }
+    public void setRecipient(Recipient recipient) { this.recipient = recipient; }
+
+    public Donator getDonator() { return donator; }
+    public void setDonator(Donator donator) { this.donator = donator; }
+
+    public Donation getDonation() { return donation; }
+    public void setDonation(Donation donation) { this.donation = donation; }
+
+    public LocalTime getTransactionTime() { return transactionTime; }
+    public void setTransactionTime(LocalTime transactionTime) { this.transactionTime = transactionTime; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }

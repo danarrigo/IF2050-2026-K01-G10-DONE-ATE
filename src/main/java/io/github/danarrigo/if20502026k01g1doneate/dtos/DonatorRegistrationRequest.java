@@ -1,31 +1,16 @@
-package io.github.danarrigo.if20502026k01g1doneate.entities;
+package io.github.danarrigo.if20502026k01g1doneate.dtos;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.github.danarrigo.if20502026k01g1doneate.enums.DonatorType;
 
-import jakarta.persistence.*;
-
-@Entity
-@Table(name="users")
-@Inheritance(strategy = InheritanceType.JOINED)
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-public abstract class User {
-    @Id
+public class DonatorRegistrationRequest {
     private String username;
     private String password;
     private String address;
     private String phoneNumber;
     private String email;
+    private DonatorType donatorType;
 
-    public User(String username, String password, String address, String phoneNumber, String email) {
-        this.username = username;
-        this.password = password;
-        this.address = address;
-        this.phoneNumber = phoneNumber;
-        this.email = email;
-    }
-
-    public User() {
-
+    public DonatorRegistrationRequest() {
     }
 
     public String getUsername() {
@@ -68,4 +53,11 @@ public abstract class User {
         this.email = email;
     }
 
+    public DonatorType getDonatorType() {
+        return donatorType;
+    }
+
+    public void setDonatorType(DonatorType donatorType) {
+        this.donatorType = donatorType;
+    }
 }
