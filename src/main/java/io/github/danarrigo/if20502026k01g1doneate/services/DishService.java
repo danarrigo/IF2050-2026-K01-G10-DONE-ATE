@@ -58,6 +58,7 @@ public class DishService {
                 .orElseThrow(() -> new RuntimeException("Dish not found with id: " + id));
         oldDish.setName(newDish.getName());
         oldDish.setImagePath(newDish.getImagePath());
+        oldDish.setExpiresIn(newDish.getExpiresIn());
         return dishRepository.save(oldDish);
     }
 
