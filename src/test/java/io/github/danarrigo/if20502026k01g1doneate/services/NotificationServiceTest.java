@@ -2,6 +2,7 @@ package io.github.danarrigo.if20502026k01g1doneate.services;
 
 import io.github.danarrigo.if20502026k01g1doneate.entities.Notification;
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
+import io.github.danarrigo.if20502026k01g1doneate.enums.NotificationType;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.NotificationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,18 +10,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,51 +49,61 @@ class NotificationServiceTest {
         notificationId = UUID.randomUUID();
         donationId = UUID.randomUUID();
         
-        mockNotification = new Notification("Donasi Anda telah diklaim!", LocalDateTime.now(), mockUser);
+        // UPDATE: Penyesuaian pembuatan mock object karena ada tambahan atribut Title
+        mockNotification = new Notification();
         mockNotification.setNotificationId(notificationId);
+        mockNotification.setTitle("Donasi Diterima"); // Tambahan title
+        mockNotification.setMessageBody("Donasi Anda telah diklaim!");
+        mockNotification.setTimeStamp(LocalDateTime.now());
+        mockNotification.setUser(mockUser);
         mockNotification.setRelatedDonationId(donationId);
+        mockNotification.setType(NotificationType.SISTEM);
     }
 
-    // (1) Uji Skenario Berhasil Mengirim Notifikasi
     @Test
     void testSendNotification() {
         when(notificationRepository.save(any(Notification.class))).thenReturn(mockNotification);
 
-        Notification result = notificationService.sendNotification(mockUser, "Donasi Anda telah diklaim!", donationId);
+        // UPDATE: Parameter method ditambah 'title' sesuai refactor sebelumnya
+        Notification result = notificationService.sendNotification(mockUser, "Donasi Diterima", "Donasi Anda telah diklaim!", donationId, NotificationType.SISTEM);
 
         assertNotNull(result);
+        assertEquals("Donasi Diterima", result.getTitle()); // Cek kelancaran title
         assertEquals("Donasi Anda telah diklaim!", result.getMessageBody());
         assertEquals(donationId, result.getRelatedDonationId());
         assertFalse(result.isRead());
         verify(notificationRepository, times(1)).save(any(Notification.class));
     }
 
-    // (2) Uji SKPL: Skenario Normal (Menampilkan daftar notifikasi)
     @Test
     void testGetUserNotifications_NormalScenario() {
-        when(notificationRepository.findByUser_UsernameOrderByTimeStampDesc("Diddybluds"))
-            .thenReturn(Arrays.asList(mockNotification));
+        Pageable pageable = PageRequest.of(0, 10);
+        Slice<Notification> mockSlice = new SliceImpl<>(Collections.singletonList(mockNotification));
+        
+        when(notificationRepository.findByUser_UsernameOrderByTimeStampDesc(eq("Diddybluds"), any(Pageable.class)))
+            .thenReturn(mockSlice);
 
-        List<Notification> results = notificationService.getUserNotifications("Diddybluds");
+        Slice<Notification> results = notificationService.getUserNotifications("Diddybluds", "ALL", pageable);
 
-        assertFalse(results.isEmpty());
-        assertEquals(1, results.size());
-        assertEquals("Diddybluds", results.get(0).getUser().getUsername());
+        assertFalse(results.getContent().isEmpty());
+        assertEquals(1, results.getContent().size());
+        assertEquals("Diddybluds", results.getContent().get(0).getUser().getUsername());
     }
 
-    // (3) Uji SKPL: Skenario Alternatif (Kotak Masuk Kosong)
     @Test
     void testGetUserNotifications_AlternativeScenario_EmptyInbox() {
-        when(notificationRepository.findByUser_UsernameOrderByTimeStampDesc("UserKosong"))
-            .thenReturn(Collections.emptyList());
+        Pageable pageable = PageRequest.of(0, 10);
+        Slice<Notification> emptySlice = new SliceImpl<>(Collections.emptyList());
+        
+        when(notificationRepository.findByUser_UsernameOrderByTimeStampDesc(eq("UserKosong"), any(Pageable.class)))
+            .thenReturn(emptySlice);
 
-        List<Notification> results = notificationService.getUserNotifications("UserKosong");
+        Slice<Notification> results = notificationService.getUserNotifications("UserKosong", "ALL", pageable);
 
-        assertTrue(results.isEmpty());
-        assertEquals(0, results.size());
+        assertTrue(results.getContent().isEmpty());
+        assertEquals(0, results.getContent().size());
     }
 
-    // (4) Uji Skenario Gagal: Error Handling saat ID Notifikasi Tidak Ditemukan
     @Test
     void testMarkAsRead_FailureScenario_NotFound() {
         UUID fakeId = UUID.randomUUID();
@@ -103,7 +117,6 @@ class NotificationServiceTest {
         verify(notificationRepository, never()).save(any());
     }
 
-    // (5) Uji Skenario Berhasil: Tandai sudah dibaca
     @Test
     void testMarkAsRead_SuccessScenario() {
         when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(mockNotification));

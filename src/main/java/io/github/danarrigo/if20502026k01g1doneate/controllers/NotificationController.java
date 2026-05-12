@@ -2,10 +2,11 @@ package io.github.danarrigo.if20502026k01g1doneate.controllers;
 
 import io.github.danarrigo.if20502026k01g1doneate.entities.Notification;
 import io.github.danarrigo.if20502026k01g1doneate.services.NotificationService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -18,10 +19,16 @@ public class NotificationController {
         this.notificationService = notificationService;
     }
 
-    //GET
+    //GET /api/notifications/user/{username}?filter=DONASI&page=0&size=10
     @GetMapping("/user/{username}")
-    public ResponseEntity<List<Notification>> getUserNotifications(@PathVariable String username) {
-        List<Notification> notifications = notificationService.getUserNotifications(username);
+    public ResponseEntity<Slice<Notification>> getUserNotifications(
+            @PathVariable String username,
+            @RequestParam(required = false, defaultValue = "ALL") String filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        // Memanggil service dengan PageRequest
+        Slice<Notification> notifications = notificationService.getUserNotifications(username, filter, PageRequest.of(page, size));
         return ResponseEntity.ok(notifications);
     }
 

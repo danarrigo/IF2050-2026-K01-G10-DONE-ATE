@@ -1,16 +1,24 @@
 package io.github.danarrigo.if20502026k01g1doneate.entities;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import io.github.danarrigo.if20502026k01g1doneate.enums.NotificationType;
+
 @Entity
 @Table(name="notifications")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Notification {
     
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID notificationId;
+
+    @Column(name = "title")
+    private String title;
     
     private String messageBody;
     
@@ -20,8 +28,12 @@ public class Notification {
 
     private UUID relatedDonationId;
 
+    @Enumerated(EnumType.STRING)
+    private NotificationType type;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_username")
+    @JsonIgnore
     private User user;
 
     public Notification() {
@@ -79,5 +91,21 @@ public class Notification {
     
     public void setRelatedDonationId(UUID relatedDonationId) { 
         this.relatedDonationId = relatedDonationId; 
+    }
+
+    public NotificationType getType() {
+        return type;
+    }
+
+    public void setType(NotificationType type) {
+        this.type = type;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 }
