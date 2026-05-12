@@ -11,7 +11,6 @@ import io.github.danarrigo.if20502026k01g1doneate.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.Map;
 
 @Service
@@ -42,8 +41,7 @@ public class AuthService {
                 request.getAddress(),
                 request.getPhoneNumber(),
                 request.getEmail(),
-                new ArrayList<>(),
-                request.getDonatorType()
+                request.getDonatorType() // Menghapus ArrayList yang sudah usang
         );
         userRepository.save(donator);
         return Map.of("username", donator.getUsername(), "role", UserRole.DONATOR.name());
@@ -59,7 +57,6 @@ public class AuthService {
         recipient.setAddress(request.getAddress());
         recipient.setPhoneNumber(request.getPhoneNumber());
         recipient.setEmail(request.getEmail());
-        recipient.setNotificationList(new ArrayList<>());
         recipient.setFullName(request.getFullName());
         recipient.setOperationalTimeStart(request.getOperationalTimeStart());
         recipient.setOperationalTimeEnd(request.getOperationalTimeEnd());

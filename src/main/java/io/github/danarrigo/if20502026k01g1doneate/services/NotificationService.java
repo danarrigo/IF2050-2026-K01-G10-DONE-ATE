@@ -37,6 +37,11 @@ public class NotificationService {
         return notificationRepository.save(notification);
     }
 
+    //Untuk notif sistem tanpa ID onasi
+    public Notification sendNotification(User user, String title, String messageBody, NotificationType type) {
+        return sendNotification(user, title, messageBody, null, type);
+    }
+
     public Slice<Notification> getUserNotifications(String username, String filter, Pageable pageable) {
         if ("UNREAD".equalsIgnoreCase(filter)) {
             return notificationRepository.findByUser_UsernameAndIsReadFalseOrderByTimeStampDesc(username, pageable);
