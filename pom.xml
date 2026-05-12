@@ -87,7 +87,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <mainClass>io.github.danarrigo.if20502026k01g1doneate.boundaries.LoginUI</mainClass>
+                <mainClass>io.github.danarrigo.if20502026k01g1doneate.boundaries.TransactionUI</mainClass>
                 </configuration>
             </plugin>
         </plugins>
