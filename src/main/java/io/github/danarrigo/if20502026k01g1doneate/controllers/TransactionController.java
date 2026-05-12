@@ -1,27 +1,44 @@
 package io.github.danarrigo.if20502026k01g1doneate.controllers;
 
+import io.github.danarrigo.if20502026k01g1doneate.dtos.TransactionCreateRequest;
+import io.github.danarrigo.if20502026k01g1doneate.entities.Transaction;
+import io.github.danarrigo.if20502026k01g1doneate.services.TransactionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalTime;
 
 @RestController
 @RequestMapping("/api/transactions")
 public class TransactionController {
 
-    @GetMapping("/user-data")
-    public ResponseEntity<String> loadUserData() {
-        // Placeholder for user data loading logic
-        return ResponseEntity.ok("User data loaded");
+    private final TransactionService transactionService;
+
+    public TransactionController(TransactionService transactionService) {
+        this.transactionService = transactionService;
     }
 
-    @PostMapping("/confirm")
-    public ResponseEntity<String> confirmTransaction() {
-        // Placeholder for transaction confirmation logic
-        return ResponseEntity.ok("Transaction confirmed successfully!");
+    @PostMapping
+    public ResponseEntity<Transaction> createTransaction(@RequestBody TransactionCreateRequest request) {
+        Transaction createdTransaction = transactionService.createTransaction(request);
+        return ResponseEntity.ok(createdTransaction);
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<String> handleLogoutAction() {
-        // Placeholder for logout logic
-        return ResponseEntity.ok("Logout successful");
+    @GetMapping("/{id}")
+    public ResponseEntity<Transaction> getTransactionData(@PathVariable Integer id) {
+        Transaction transaction = transactionService.getTransactionData(id);
+        return ResponseEntity.ok(transaction);
+    }
+
+    @GetMapping("/{id}/time")
+    public ResponseEntity<LocalTime> getTransactionTime(@PathVariable Integer id) {
+        LocalTime transactionTime = transactionService.getTransactionTime(id);
+        return ResponseEntity.ok(transactionTime);
+    }
+
+    @GetMapping("/{id}/cancellation-limit")
+    public ResponseEntity<LocalTime> getCancellationTimeLimit(@PathVariable Integer id) {
+        LocalTime limitTime = transactionService.getCancellationTimeLimit(id);
+        return ResponseEntity.ok(limitTime);
     }
 }
