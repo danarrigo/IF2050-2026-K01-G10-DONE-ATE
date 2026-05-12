@@ -25,4 +25,15 @@ public class ClaimingController {
             return ResponseEntity.badRequest().body(result);
         }
     }
+
+    @DeleteMapping("/cancel/{transactionCode}")
+    public ResponseEntity<String> cancelClaim(@PathVariable Integer transactionCode) {
+        String result = claimingService.cancelClaim(transactionCode);
+        
+        if ("success".equals(result)) {
+            return ResponseEntity.ok("Pembatalan klaim berhasil.");
+        } else {
+            return ResponseEntity.badRequest().body(result);
+        }
+    }
 }
