@@ -1,0 +1,154 @@
+package io.github.danarrigo.if20502026k01g1doneate.services;
+
+import io.github.danarrigo.if20502026k01g1doneate.dtos.DonatorRegistrationRequest;
+import io.github.danarrigo.if20502026k01g1doneate.dtos.LoginRequest;
+import io.github.danarrigo.if20502026k01g1doneate.dtos.RecipientRegistrationRequest;
+import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
+import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
+import io.github.danarrigo.if20502026k01g1doneate.entities.User;
+import io.github.danarrigo.if20502026k01g1doneate.enums.DonatorType;
+import io.github.danarrigo.if20502026k01g1doneate.enums.RecipientType;
+import io.github.danarrigo.if20502026k01g1doneate.repositories.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class AuthServiceTest {
+
+    @Mock
+    private UserRepository userRepository;
+
+    @InjectMocks
+    private AuthService authService;
+
+    private LoginRequest loginRequest;
+    private Donator donator;
+
+    @BeforeEach
+    void setUp() {
+        loginRequest = new LoginRequest("donator1", "password123");
+        donator = new Donator(
+                "donator1",
+                "password123",
+                "Jl. Mawar 1",
+                "08123",
+                "donator@example.com",
+                new ArrayList<>(),
+                DonatorType.RESTAURANT
+        );
+    }
+
+    @Test
+    void testLoginSuccess() {
+        when(userRepository.findByUsername("donator1")).thenReturn(Optional.of(donator));
+
+        Map<String, String> result = authService.login(loginRequest);
+
+        assertEquals("donator1", result.get("username"));
+        assertEquals("DONATOR", result.get("role"));
+    }
+
+    @Test
+    void testLoginInvalidPassword() {
+        when(userRepository.findByUsername("donator1")).thenReturn(Optional.of(donator));
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> authService.login(new LoginRequest("donator1", "wrong-password")));
+
+        assertEquals("Invalid username or password", exception.getMessage());
+    }
+
+    @Test
+    void testLoginUserNotFound() {
+        when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> authService.login(new LoginRequest("unknown", "password123")));
+
+        assertEquals("Invalid username or password", exception.getMessage());
+    }
+
+    @Test
+    void testRegisterDonatorSuccess() {
+        DonatorRegistrationRequest request = new DonatorRegistrationRequest();
+        request.setUsername("newdonator");
+        request.setPassword("pass123");
+        request.setAddress("Jl. Melati 2");
+        request.setPhoneNumber("08111");
+        request.setEmail("newdonator@example.com");
+        request.setDonatorType(DonatorType.CAFE);
+
+        when(userRepository.existsByUsername("newdonator")).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Map<String, String> result = authService.registerDonator(request);
+
+        assertEquals("newdonator", result.get("username"));
+        assertEquals("DONATOR", result.get("role"));
+        verify(userRepository, times(1)).save(any(User.class));
+    }
+
+    @Test
+    void testRegisterDonatorDuplicateUsername() {
+        DonatorRegistrationRequest request = new DonatorRegistrationRequest();
+        request.setUsername("existing");
+
+        when(userRepository.existsByUsername("existing")).thenReturn(true);
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> authService.registerDonator(request));
+
+        assertEquals("Username already taken", exception.getMessage());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void testRegisterRecipientSuccess() {
+        RecipientRegistrationRequest request = new RecipientRegistrationRequest();
+        request.setUsername("newrecipient");
+        request.setPassword("pass321");
+        request.setAddress("Jl. Anggrek 3");
+        request.setPhoneNumber("08222");
+        request.setEmail("recipient@example.com");
+        request.setFullName("Recipient Name");
+        request.setOperationalTimeStart(LocalTime.of(8, 0));
+        request.setOperationalTimeEnd(LocalTime.of(16, 0));
+        request.setRecipientType(RecipientType.ORGANIZATION);
+
+        when(userRepository.existsByUsername("newrecipient")).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Map<String, String> result = authService.registerRecipient(request);
+
+        assertEquals("newrecipient", result.get("username"));
+        assertEquals("RECIPIENT", result.get("role"));
+        verify(userRepository, times(1)).save(any(Recipient.class));
+    }
+
+    @Test
+    void testRegisterRecipientDuplicateUsername() {
+        RecipientRegistrationRequest request = new RecipientRegistrationRequest();
+        request.setUsername("existingrecipient");
+
+        when(userRepository.existsByUsername("existingrecipient")).thenReturn(true);
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> authService.registerRecipient(request));
+
+        assertEquals("Username already taken", exception.getMessage());
+        verify(userRepository, never()).save(any(User.class));
+    }
+}
