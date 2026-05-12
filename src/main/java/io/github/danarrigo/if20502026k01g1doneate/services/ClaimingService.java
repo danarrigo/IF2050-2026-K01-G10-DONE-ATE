@@ -9,6 +9,7 @@ import io.github.danarrigo.if20502026k01g1doneate.repositories.TransactionReposi
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Random;
 import java.util.UUID;
@@ -71,5 +72,35 @@ public class ClaimingService {
 
     private Integer generateTransactionCode() {
         return 100000 + new Random().nextInt(900000); // Generates a 6 digit code
+    }
+
+    @Transactional
+    public String cancelClaim(Integer transactionCode) {
+        Transaction transaction = transactionRepository.findByTransactionCode(transactionCode).orElse(null);
+        if (transaction == null) {
+            return "Gagal: Transaksi tidak ditemukan";
+        }
+
+        Donation donation = transaction.getDonation();
+        if (donation == null || donation.getDish() == null || donation.getTimeCooked() == null || donation.getDish().getExpiresIn() == null) {
+            return "Gagal: Data donasi tidak lengkap untuk menghitung batas waktu";
+        }
+
+        LocalDateTime batasWaktu = donation.getTimeCooked().plus(donation.getDish().getExpiresIn());
+        LocalDateTime currentTime = LocalDateTime.now();
+
+        if (currentTime.isBefore(batasWaktu.minusHours(1)) || currentTime.isEqual(batasWaktu.minusHours(1))) {
+            transactionRepository.delete(transaction);
+            
+            donation.setTaken(false);
+            donationRepository.save(donation);
+            
+            if (transaction.getDonator() != null) {
+                notificationService.sendNotification(transaction.getDonator().getUsername(), "Klaim donasi dibatalkan");
+            }
+            return "success";
+        } else {
+            return "Gagal: Opsi pembatalan terkunci karena melewati batas waktu toleransi";
+        }
     }
 }
