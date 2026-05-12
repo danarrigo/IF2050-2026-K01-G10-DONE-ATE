@@ -6,8 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-public interface DonatorRepository extends JpaRepository<Donator, String> {
+public interface DonatorRepository extends JpaRepository<Donator, UUID> {
     Optional<Donator> findByUsername(String username);
     List<Donator> findByDonatorType(DonatorType donatorType);
 }
