@@ -15,8 +15,8 @@ import java.util.UUID;
 @Service
 @Transactional
 public class DishService {
-    public final DishRepository dishRepository;
-    public final DonationRepository donationRepository;
+    private final DishRepository dishRepository;
+    private final DonationRepository donationRepository;
 
     public DishService(DishRepository dishRepository, DonationRepository donationRepository) {
         this.dishRepository = dishRepository;
