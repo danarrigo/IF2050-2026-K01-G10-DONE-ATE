@@ -15,6 +15,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
+import javafx.animation.FadeTransition;
+import javafx.util.Duration;
+import javafx.scene.Parent;
 
 import java.net.URI;
 import java.net.http.*;
@@ -66,15 +69,47 @@ public class RegisterUI extends UI {
     }
 
     public void start(Stage stage) {
-        HBox root = new HBox();
-        root.setPrefSize(1920, 1080);
-        root.getChildren().addAll(buildLeftPanel(), buildRightPanel(stage));
-
-        Scene scene = new Scene(root, 1920, 1080);
+        Scene scene = new Scene(new Pane(), 1920, 1080); // Placeholder
         stage.setTitle("DONE-ATE — Daftar");
         stage.setScene(scene);
         stage.setResizable(false);
+        stage.setFullScreen(true);
+        stage.setFullScreenExitHint("");
         stage.show();
+
+        showWithAnimation(stage, createContent(stage));
+    }
+
+    public Parent createContent(Stage stage) {
+        HBox root = new HBox();
+        root.setPrefSize(1920, 1080);
+        root.getChildren().addAll(buildLeftPanel(), buildRightPanel(stage));
+        return root;
+    }
+
+    private void showWithAnimation(Stage stage, Parent newRoot) {
+        Parent oldRoot = stage.getScene().getRoot();
+        if (oldRoot != null && oldRoot instanceof Pane && !((Pane) oldRoot).getChildren().isEmpty()) {
+            FadeTransition out = new FadeTransition(Duration.millis(300), oldRoot);
+            out.setFromValue(1.0);
+            out.setToValue(0.0);
+            out.setOnFinished(e -> {
+                stage.getScene().setRoot(newRoot);
+                newRoot.setOpacity(0);
+                FadeTransition in = new FadeTransition(Duration.millis(300), newRoot);
+                in.setFromValue(0.0);
+                in.setToValue(1.0);
+                in.play();
+            });
+            out.play();
+        } else {
+            stage.getScene().setRoot(newRoot);
+            newRoot.setOpacity(0);
+            FadeTransition in = new FadeTransition(Duration.millis(300), newRoot);
+            in.setFromValue(0.0);
+            in.setToValue(1.0);
+            in.play();
+        }
     }
 
     // ─── Left Panel (Branding) ─────────────────────────────────────────────────
@@ -437,9 +472,8 @@ public class RegisterUI extends UI {
                 "-fx-font-weight: bold; -fx-border-color: transparent; -fx-padding: 0;"
         );
         loginLink.setOnAction(e -> {
-            stage.close();
-            Stage loginStage = new Stage();
-            new LoginUI().start(loginStage);
+            LoginUI loginUI = new LoginUI();
+            showWithAnimation(stage, loginUI.createContent(stage));
         });
 
         footer.getChildren().addAll(text, loginLink);
@@ -539,8 +573,8 @@ public class RegisterUI extends UI {
             try { Thread.sleep(1500); } catch (InterruptedException ignored) {}
             Platform.runLater(() -> {
                 Stage currentStage = (Stage) registerButton.getScene().getWindow();
-                currentStage.close();
-                new LoginUI().start(new Stage());
+                LoginUI loginUI = new LoginUI();
+                showWithAnimation(currentStage, loginUI.createContent(currentStage));
             });
         }).start();
     }
