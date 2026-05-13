@@ -11,6 +11,7 @@ import jakarta.persistence.*;
 public abstract class User {
     @Id
     private String username;
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String password;
     private String address;
     private String phoneNumber;
