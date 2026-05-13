@@ -363,6 +363,7 @@ public class InputDonationUI extends UI {
                     }
                     String donationJson = "{"
                             + "\"dish\":{\"dishId\":\"" + dishIdStr + "\"},"
+                            + "\"donator\":{\"username\":\"" + getUser().getUsername() + "\"},"
                             + "\"timeCooked\":\"" + timeCookedFormatted + "\","
                             + "\"timeAdded\":\"" + timeAddedFormatted + "\","
                             + "\"status\":\"Pending QC\""

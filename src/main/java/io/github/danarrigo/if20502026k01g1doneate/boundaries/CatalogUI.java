@@ -3,6 +3,7 @@ package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
+import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
 import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.geometry.Insets;
@@ -18,17 +19,20 @@ import javafx.stage.Stage;
 import java.net.URI;
 import java.net.http.*;
 import java.nio.charset.StandardCharsets;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.*;
 
 public class CatalogUI extends UI {
 
-
-    private static final String DARK_GREEN   = "#0F5B21";
-    private static final String LIGHT_GREEN  = "#D2F4D6";
-    private static final String LIGHT_RED    = "#FADBD8";
-    private static final String TEXT_GRAY    = "#555555";
+    private static final String DARK_GREEN = "#0F5B21";
+    private static final String LIGHT_GREEN = "#D2F4D6";
+    private static final String LIGHT_RED = "#FADBD8";
+    private static final String TEXT_GRAY = "#555555";
     private static final String BORDER_COLOR = "#E0E0E0";
-    private static final String BG_COLOR     = "#FAFAFA";
-    private static final String BASE_URL     = "http://localhost:8080";
+    private static final String BG_COLOR = "#FAFAFA";
+    private static final String BASE_URL = "http://localhost:8080";
 
     private VBox catalogList;
     private Label statusLabel;
@@ -50,11 +54,15 @@ public class CatalogUI extends UI {
         root.setStyle("-fx-background-color: " + BG_COLOR + ";");
 
         // Header
-        Label title = new Label("Katalog Donasi Saya");
+        String titleTxt = (getUser() instanceof Recipient) ? "Katalog Donasi Tersedia" : "Katalog Donasi Saya";
+        Label title = new Label(titleTxt);
         title.setFont(Font.font("System", FontWeight.BOLD, 36));
 
         String username = getUser() != null ? getUser().getUsername() : "-";
-        Label subtitle = new Label("Kelola daftar donasi yang telah Anda posting sebagai " + username + ".");
+        String subTxt = (getUser() instanceof Recipient)
+                ? "Temukan makanan layak konsumsi yang dibagikan oleh donator terverifikasi."
+                : "Kelola daftar donasi yang telah Anda posting sebagai " + username + ".";
+        Label subtitle = new Label(subTxt);
         subtitle.setTextFill(Color.web(TEXT_GRAY));
         subtitle.setFont(Font.font("System", 16));
         subtitle.setWrapText(true);
@@ -86,12 +94,11 @@ public class CatalogUI extends UI {
         Button addBtn = new Button("+ Tambah Donasi Baru");
         addBtn.setStyle(
                 "-fx-background-color: " + DARK_GREEN + ";" +
-                "-fx-text-fill: white;" +
-                "-fx-font-weight: bold;" +
-                "-fx-font-size: 15px;" +
-                "-fx-background-radius: 8px;" +
-                "-fx-cursor: hand;"
-        );
+                        "-fx-text-fill: white;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-font-size: 15px;" +
+                        "-fx-background-radius: 8px;" +
+                        "-fx-cursor: hand;");
         addBtn.setPrefWidth(Double.MAX_VALUE);
         addBtn.setPrefHeight(52);
         addBtn.setOnAction(e -> Navigator.navigate(stage, new InputDonationUI(getUser())));
@@ -100,22 +107,23 @@ public class CatalogUI extends UI {
         infoBox.setPadding(new Insets(20));
         infoBox.setStyle(
                 "-fx-background-color: " + LIGHT_GREEN + ";" +
-                "-fx-background-radius: 8px;"
-        );
+                        "-fx-background-radius: 8px;");
         Label infoTitle = new Label("Status Donasi");
         infoTitle.setFont(Font.font("System", FontWeight.BOLD, 15));
         infoTitle.setTextFill(Color.web(DARK_GREEN));
         Label infoDesc = new Label(
                 "QC Passed  — Donasi aktif dan bisa diklaim.\n" +
-                "QC Pending — Menunggu pemeriksaan kualitas.\n" +
-                "QC Failed  — Donasi tidak lolos QC.\n" +
-                "Removed    — Donasi telah dihapus."
-        );
+                        "QC Pending — Menunggu pemeriksaan kualitas.\n" +
+                        "QC Failed  — Donasi tidak lolos QC.\n" +
+                        "Removed    — Donasi telah dihapus.");
         infoDesc.setFont(Font.font("System", 13));
         infoDesc.setWrapText(true);
         infoBox.getChildren().addAll(infoTitle, infoDesc);
 
-        rightCol.getChildren().addAll(addBtn, infoBox);
+        if (getUser() instanceof Donator) {
+            rightCol.getChildren().add(addBtn);
+        }
+        rightCol.getChildren().add(infoBox);
         columns.getChildren().addAll(leftCol, rightCol);
         root.getChildren().addAll(header, columns);
 
@@ -130,7 +138,7 @@ public class CatalogUI extends UI {
 
         playAnimation(root);
         loadCatalog(username);
-        
+
         return scroll;
     }
 
@@ -138,7 +146,7 @@ public class CatalogUI extends UI {
         Stage stage = new Stage();
         stage.setTitle("DONE-ATE - Katalog Donasi");
         stage.setMaximized(true);
-        
+
         Scene scene = new Scene(getSceneContent(stage));
         stage.setScene(scene);
         stage.setFullScreen(true);
@@ -150,9 +158,15 @@ public class CatalogUI extends UI {
     private void loadCatalog(String username) {
         new Thread(() -> {
             try {
+                String token = SessionManager.getInstance().getToken();
                 HttpClient client = HttpClient.newHttpClient();
+                String url = (getUser() instanceof Recipient)
+                        ? BASE_URL + "/api/catalog"
+                        : BASE_URL + "/api/catalog/donator/" + username;
+
                 HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(BASE_URL + "/api/catalog/donator/" + username))
+                        .uri(URI.create(url))
+                        .header("Authorization", "Bearer " + token)
                         .GET()
                         .build();
 
@@ -174,58 +188,52 @@ public class CatalogUI extends UI {
     }
 
     private void parseAndRenderCatalog(String json) {
-        // Minimal JSON parsing — split by donationId entries
-        if (json.equals("[]") || json.isEmpty()) {
-            Label empty = new Label("Belum ada donasi dalam katalog Anda.");
-            empty.setTextFill(Color.web(TEXT_GRAY));
-            empty.setFont(Font.font("System", 15));
-            catalogList.getChildren().add(empty);
-            return;
-        }
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            List<Map<String, Object>> items = mapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
+            
+            for (Map<String, Object> item : items) {
+                String donationId = String.valueOf(item.get("donationId"));
+                String dishName   = String.valueOf(item.get("dishName"));
+                String status     = String.valueOf(item.get("status"));
+                String timeAdded  = String.valueOf(item.get("timeAdded"));
+                String expiresIn  = String.valueOf(item.get("expiresInMinutes"));
+                boolean taken     = (boolean) item.getOrDefault("taken", false);
 
-        String[] entries = json.split("\\{\"donationId\":");
-        for (int i = 1; i < entries.length; i++) {
-            String entry = "{\"donationId\":" + entries[i];
-            if (entry.endsWith(",")) entry = entry.substring(0, entry.length() - 1);
-            if (entry.endsWith("]")) entry = entry.substring(0, entry.length() - 1);
-
-            String donationId  = extractValue(entry, "donationId");
-            String dishName    = extractValue(entry, "dishName");
-            String status      = extractValue(entry, "status");
-            String timeAdded   = extractValue(entry, "timeAdded");
-            String expiresIn   = extractValue(entry, "expiresInMinutes");
-            boolean taken      = entry.contains("\"taken\":true");
-
-            catalogList.getChildren().add(
-                    buildCatalogCard(donationId, dishName, status, timeAdded, expiresIn, taken)
-            );
+                catalogList.getChildren().add(
+                        buildCatalogCard(donationId, dishName, status, timeAdded, expiresIn, taken));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            showStatus("Gagal memproses data katalog.", true);
         }
     }
 
     private VBox buildCatalogCard(String donationId, String dishName, String status,
-                                  String timeAdded, String expiresIn, boolean taken) {
+            String timeAdded, String expiresIn, boolean taken) {
         VBox card = new VBox(12);
         card.setPadding(new Insets(20));
         card.setStyle(
                 "-fx-background-color: white;" +
-                "-fx-border-color: " + BORDER_COLOR + ";" +
-                "-fx-border-radius: 8px;" +
-                "-fx-background-radius: 8px;"
-        );
+                        "-fx-border-color: " + BORDER_COLOR + ";" +
+                        "-fx-border-radius: 8px;" +
+                        "-fx-background-radius: 8px;");
 
         Label nameLabel = new Label(dishName != null ? dishName : "-");
         nameLabel.setFont(Font.font("System", FontWeight.BOLD, 17));
 
         String statusColor = switch (status != null ? status : "") {
-            case "QC Passed"  -> "#1a7a1a";
-            case "QC Failed"  -> "#c62828";
-            case "Removed"    -> "#888";
-            default           -> "#e67e00";
+            case "QC Passed" -> "#1a7a1a";
+            case "QC Failed" -> "#c62828";
+            case "Removed" -> "#888";
+            default -> "#e67e00";
         };
         Label statusLabel = new Label("Status: " + (status != null ? status : "-"));
         statusLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: " + statusColor + "; -fx-font-weight: bold;");
 
-        Label timeLabel = new Label("Ditambahkan: " + (timeAdded != null ? timeAdded.replace("T", " ").substring(0, Math.min(16, timeAdded.length())) : "-"));
+        Label timeLabel = new Label("Ditambahkan: "
+                + (timeAdded != null ? timeAdded.replace("T", " ").substring(0, Math.min(16, timeAdded.length()))
+                        : "-"));
         timeLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: " + TEXT_GRAY + ";");
 
         Label expiresLabel = new Label("Kedaluwarsa: " + expiresIn + " menit");
@@ -241,23 +249,21 @@ public class CatalogUI extends UI {
         Button editBtn = new Button("Edit");
         editBtn.setStyle(
                 "-fx-background-color: " + LIGHT_GREEN + ";" +
-                "-fx-text-fill: " + DARK_GREEN + ";" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 6px;" +
-                "-fx-cursor: hand;" +
-                "-fx-padding: 8 20 8 20;"
-        );
+                        "-fx-text-fill: " + DARK_GREEN + ";" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-background-radius: 6px;" +
+                        "-fx-cursor: hand;" +
+                        "-fx-padding: 8 20 8 20;");
         editBtn.setOnAction(e -> showEditDialog(donationId, dishName, expiresIn));
 
         Button removeBtn = new Button("Hapus");
         removeBtn.setStyle(
                 "-fx-background-color: " + LIGHT_RED + ";" +
-                "-fx-text-fill: #c62828;" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 6px;" +
-                "-fx-cursor: hand;" +
-                "-fx-padding: 8 20 8 20;"
-        );
+                        "-fx-text-fill: #c62828;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-background-radius: 6px;" +
+                        "-fx-cursor: hand;" +
+                        "-fx-padding: 8 20 8 20;");
         removeBtn.setOnAction(e -> removeDonation(donationId));
 
         actions.getChildren().addAll(editBtn, removeBtn);
@@ -292,9 +298,11 @@ public class CatalogUI extends UI {
         styleTextField(timeCookedField);
 
         Button nowBtn = new Button("Sekarang");
-        nowBtn.setStyle("-fx-background-color: " + LIGHT_GREEN + "; -fx-text-fill: " + DARK_GREEN + "; -fx-font-weight: bold; -fx-background-radius: 6px; -fx-cursor: hand;");
+        nowBtn.setStyle("-fx-background-color: " + LIGHT_GREEN + "; -fx-text-fill: " + DARK_GREEN
+                + "; -fx-font-weight: bold; -fx-background-radius: 6px; -fx-cursor: hand;");
         nowBtn.setOnAction(e -> {
-            String now = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+            String now = java.time.LocalDateTime.now()
+                    .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
             timeCookedField.setText(now);
         });
 
@@ -304,18 +312,17 @@ public class CatalogUI extends UI {
         Button saveBtn = new Button("Simpan Perubahan");
         saveBtn.setStyle(
                 "-fx-background-color: " + DARK_GREEN + ";" +
-                "-fx-text-fill: white;" +
-                "-fx-font-weight: bold;" +
-                "-fx-font-size: 14px;" +
-                "-fx-background-radius: 8px;" +
-                "-fx-cursor: hand;"
-        );
+                        "-fx-text-fill: white;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-background-radius: 8px;" +
+                        "-fx-cursor: hand;");
         saveBtn.setPrefWidth(Double.MAX_VALUE);
         saveBtn.setPrefHeight(46);
         saveBtn.setOnAction(e -> {
-            String name        = nameField.getText().trim();
-            String expires     = expiresField.getText().trim();
-            String timeCooked  = timeCookedField.getText().trim();
+            String name = nameField.getText().trim();
+            String expires = expiresField.getText().trim();
+            String timeCooked = timeCookedField.getText().trim();
 
             if (name.isEmpty() || expires.isEmpty() || timeCooked.isEmpty()) {
                 showStatus("Harap isi semua field.", true);
@@ -324,12 +331,12 @@ public class CatalogUI extends UI {
             }
 
             String timeCookedFormatted = timeCooked.replace(" ", "T");
-            if (timeCookedFormatted.length() == 16) timeCookedFormatted += ":00";
+            if (timeCookedFormatted.length() == 16)
+                timeCookedFormatted += ":00";
 
             String body = String.format(
                     "{\"dishName\":\"%s\",\"imagePath\":\"\",\"expiresInMinutes\":%s,\"timeCooked\":\"%s\"}",
-                    esc(name), expires, timeCookedFormatted
-            );
+                    esc(name), expires, timeCookedFormatted);
 
             updateDonation(donationId, body);
             dialog.close();
@@ -340,8 +347,7 @@ public class CatalogUI extends UI {
                 new Label("Nama Makanan"), nameField,
                 new Label("Kedaluwarsa (menit)"), expiresField,
                 new Label("Waktu Dimasak"), timeCookedBox,
-                saveBtn
-        );
+                saveBtn);
 
         dialog.setScene(new Scene(content));
         dialog.show();
@@ -415,14 +421,16 @@ public class CatalogUI extends UI {
     private String extractValue(String json, String key) {
         String search = "\"" + key + "\":";
         int idx = json.indexOf(search);
-        if (idx == -1) return null;
+        if (idx == -1)
+            return null;
         int start = idx + search.length();
         if (json.charAt(start) == '"') {
             int end = json.indexOf('"', start + 1);
             return json.substring(start + 1, end);
         } else {
             int end = json.indexOf(',', start);
-            if (end == -1) end = json.indexOf('}', start);
+            if (end == -1)
+                end = json.indexOf('}', start);
             return json.substring(start, end).trim();
         }
     }
@@ -434,20 +442,21 @@ public class CatalogUI extends UI {
     private void styleTextField(TextField tf) {
         tf.setStyle(
                 "-fx-background-radius: 6px;" +
-                "-fx-border-color: " + BORDER_COLOR + ";" +
-                "-fx-border-radius: 6px;" +
-                "-fx-padding: 12px;" +
-                "-fx-font-size: 14px;"
-        );
+                        "-fx-border-color: " + BORDER_COLOR + ";" +
+                        "-fx-border-radius: 6px;" +
+                        "-fx-padding: 12px;" +
+                        "-fx-font-size: 14px;");
     }
 
     private void playAnimation(VBox root) {
-        javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(javafx.util.Duration.millis(600), root);
+        javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(javafx.util.Duration.millis(600),
+                root);
         ft.setFromValue(0.0);
         ft.setToValue(1.0);
         ft.play();
 
-        javafx.animation.TranslateTransition tt = new javafx.animation.TranslateTransition(javafx.util.Duration.millis(600), root);
+        javafx.animation.TranslateTransition tt = new javafx.animation.TranslateTransition(
+                javafx.util.Duration.millis(600), root);
         tt.setFromY(30);
         tt.setToY(0);
         tt.play();
