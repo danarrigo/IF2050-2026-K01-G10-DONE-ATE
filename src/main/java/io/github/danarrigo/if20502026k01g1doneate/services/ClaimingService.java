@@ -120,7 +120,7 @@ public class ClaimingService {
         transaction.setRecipient(recipient);
         transaction.setDonator(donation.getDonator());
         transaction.setDonation(donation);
-        transaction.setTransactionTime(LocalTime.now());
+        transaction.setTransactionTime(LocalDateTime.now());
         transaction.setStatus(TransactionStatus.ACTIVE.name());
         transactionRepository.save(transaction);
 

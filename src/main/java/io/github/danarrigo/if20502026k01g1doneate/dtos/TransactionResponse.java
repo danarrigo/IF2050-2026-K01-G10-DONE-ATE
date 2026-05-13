@@ -2,7 +2,7 @@ package io.github.danarrigo.if20502026k01g1doneate.dtos;
 
 import io.github.danarrigo.if20502026k01g1doneate.entities.Transaction;
 
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record TransactionResponse(
@@ -11,7 +11,7 @@ public record TransactionResponse(
         String recipientUsername,
         String donatorUsername,
         UUID donationId,
-        LocalTime transactionTime,
+        LocalDateTime transactionTime,
         String status
 ) {
     public static TransactionResponse from(Transaction transaction) {

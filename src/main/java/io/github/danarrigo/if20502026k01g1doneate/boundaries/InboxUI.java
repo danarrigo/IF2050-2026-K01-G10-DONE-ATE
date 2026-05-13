@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import io.github.danarrigo.if20502026k01g1doneate.entities.Donation;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Notification;
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 import io.github.danarrigo.if20502026k01g1doneate.enums.NotificationType;
@@ -104,6 +105,7 @@ public class InboxUI extends UI {
 
         Scene scene = new Scene(root, 600, 700);
         stage.setScene(scene);
+        stage.setFullScreen(true);
         stage.show();
     }
 
@@ -311,10 +313,42 @@ public class InboxUI extends UI {
 
         dialog.showAndWait();
 
-        // TODO: Redirect to DonationDetailUI when ready
         if (notification.getRelatedDonationId() != null) {
-            System.out.println("Membuka halaman donasi untuk ID: " + notification.getRelatedDonationId());
+            fetchDonationAndOpenDetail(notification.getRelatedDonationId());
         }
+    }
+
+    private void fetchDonationAndOpenDetail(java.util.UUID donationId) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                String token = SessionManager.getInstance().getToken();
+                HttpClient client = HttpClient.newHttpClient();
+                String url = "http://localhost:8080/api/donations/" + donationId;
+
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .header("Authorization", "Bearer " + token)
+                        .GET()
+                        .build();
+
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                if (response.statusCode() == 200) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    mapper.registerModule(new JavaTimeModule());
+                    Donation donation = mapper.readValue(response.body(), Donation.class);
+
+                    Platform.runLater(() -> {
+                        DonationDetailUI detailUI = new DonationDetailUI(getUser(), donation);
+                        detailUI.showUI();
+                    });
+                } else {
+                    System.err.println("Gagal memuat detail donasi: " + response.statusCode());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private Button createFilterButton(String text, boolean isActive) {

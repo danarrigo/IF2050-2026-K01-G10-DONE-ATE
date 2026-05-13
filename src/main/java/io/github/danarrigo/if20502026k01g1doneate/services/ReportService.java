@@ -99,7 +99,7 @@ public class ReportService {
         int total = 0;
         if (donationList != null) {
             for (Donation donation : donationList) {
-                if ("Selesai".equals(donation.getStatus()) || donation.isTaken()) {
+                if ("Selesai".equals(donation.getStatus())) {
                     total += 1;
                 }
             }
