@@ -12,21 +12,15 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
-import org.springframework.stereotype.Component;
-
-@Component
 public class VerificationUI extends BorderPane {
-
-    private final TransactionService transactionService;
 
     // UI Elements that need to be accessed by methods
     private TextField[] pinFields = new TextField[6];
     private HBox successBox;
     private Button btnKonfirmasi;
 
-    // Constructor Injection for Spring Boot
-    public VerificationUI(TransactionService transactionService) {
-        this.transactionService = transactionService;
+    // Constructor
+    public VerificationUI() {
         this.setStyle("-fx-background-color: #F9FAFB;");
         initializeUI();
     }
@@ -214,16 +208,47 @@ public class VerificationUI extends BorderPane {
         try {
             int transactionCode = Integer.parseInt(fullPin.toString());
             
-            // Adjusted: Call createTransaction using the TransactionCreateRequest DTO
-            TransactionCreateRequest req = new TransactionCreateRequest(transactionCode, "CurrentRecipient", "Restoran Hijau");
-            transactionService.createTransaction(req);
+            // Disable button to prevent multiple clicks
+            btnKonfirmasi.setDisable(true);
+            btnKonfirmasi.setText("Memverifikasi...");
             
-            showAlert(Alert.AlertType.INFORMATION, "Sukses", "Transaksi berhasil dikonfirmasi!");
+            java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
+            String jsonPayload = "{\"inputCode\":" + transactionCode + "}";
+
+            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create("http://localhost:8081/api/claims/verify"))
+                    .header("Content-Type", "application/json")
+                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(jsonPayload))
+                    .build();
+
+            client.sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString())
+                .thenAccept(response -> {
+                    javafx.application.Platform.runLater(() -> {
+                        btnKonfirmasi.setDisable(false);
+                        btnKonfirmasi.setText("Konfirmasi Terima");
+                        
+                        if (response.statusCode() == 200) {
+                            // Show Success UI
+                            VerificationSuccessUI successUI = new VerificationSuccessUI();
+                            javafx.scene.Scene scene = new javafx.scene.Scene(successUI, 900, 600);
+                            javafx.stage.Stage stage = (javafx.stage.Stage) this.getScene().getWindow();
+                            stage.setScene(scene);
+                        } else {
+                            showAlert(Alert.AlertType.ERROR, "Error", response.body()); 
+                        }
+                    });
+                })
+                .exceptionally(ex -> {
+                    javafx.application.Platform.runLater(() -> {
+                        btnKonfirmasi.setDisable(false);
+                        btnKonfirmasi.setText("Konfirmasi Terima");
+                        showAlert(Alert.AlertType.ERROR, "Error System", "Gagal menghubungi server: " + ex.getMessage());
+                    });
+                    return null;
+                });
             
         } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Error", "Kode verifikasi harus berupa angka.");
-        } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "Error System", "Gagal memproses transaksi: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Format Salah", "Kode verifikasi harus berupa angka.");
         }
     }
 

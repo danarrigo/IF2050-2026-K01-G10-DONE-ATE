@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalTime;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/transactions")
@@ -25,19 +26,19 @@ public class TransactionController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Transaction> getTransactionData(@PathVariable Integer id) {
+    public ResponseEntity<Transaction> getTransactionData(@PathVariable UUID id) {
         Transaction transaction = transactionService.getTransactionData(id);
         return ResponseEntity.ok(transaction);
     }
 
     @GetMapping("/{id}/time")
-    public ResponseEntity<LocalTime> getTransactionTime(@PathVariable Integer id) {
+    public ResponseEntity<LocalTime> getTransactionTime(@PathVariable UUID id) {
         LocalTime transactionTime = transactionService.getTransactionTime(id);
         return ResponseEntity.ok(transactionTime);
     }
 
     @GetMapping("/{id}/cancellation-limit")
-    public ResponseEntity<LocalTime> getCancellationTimeLimit(@PathVariable Integer id) {
+    public ResponseEntity<LocalTime> getCancellationTimeLimit(@PathVariable UUID id) {
         LocalTime limitTime = transactionService.getCancellationTimeLimit(id);
         return ResponseEntity.ok(limitTime);
     }

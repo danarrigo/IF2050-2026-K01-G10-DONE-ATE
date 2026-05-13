@@ -21,12 +21,71 @@ public class ClaimingService {
     private final RecipientRepository recipientRepository;
     private final TransactionRepository transactionRepository;
     private final NotificationService notificationService;
+    private final DonationService donationService; // Ditambahkan untuk memanggil removeDonation
 
-    public ClaimingService(DonationRepository donationRepository, RecipientRepository recipientRepository, TransactionRepository transactionRepository, NotificationService notificationService) {
+    public ClaimingService(DonationRepository donationRepository, RecipientRepository recipientRepository, TransactionRepository transactionRepository, NotificationService notificationService, DonationService donationService) {
         this.donationRepository = donationRepository;
         this.recipientRepository = recipientRepository;
         this.transactionRepository = transactionRepository;
         this.notificationService = notificationService;
+        this.donationService = donationService;
+    }
+
+
+    @Transactional
+    public String validateTransactionCode(Integer inputCode) {
+        // 1. findTransactionByCode
+        Transaction transaction = findTransactionByCode(inputCode);
+        if (transaction == null) {
+            return "error";
+        }
+
+        // 2. getTransactionData
+        Integer transactionDataCode = transaction.getTransactionCode();
+
+        // 3. verifyCode
+        boolean isValid = verifyCode(inputCode, transactionDataCode);
+
+        if (isValid) {
+            // 4. removeClaimability
+            removeClaimability(transaction.getTransactionId());
+
+            // 5. removeDonation (Memanggil DonationService yang mewakili DonationController)
+            if (transaction.getDonation() != null) {
+                donationService.removeDonation(transaction.getDonation().getDonationId());
+            }
+
+            // 6 & 7. create Notification & sendNotification
+            if (transaction.getDonator() != null) {
+                notificationService.sendNotification(
+                        transaction.getDonator(),
+                        "Serah Terima Sukses",
+                        "Serah terima sukses. Makanan telah diterima oleh Penerima.",
+                        transaction.getDonation() != null ? transaction.getDonation().getDonationId() : null,
+                        NotificationType.DONASI
+                );
+            }
+
+            return "success";
+        } else {
+            return "error";
+        }
+    }
+
+    private Transaction findTransactionByCode(Integer inputCode) {
+        return transactionRepository.findByTransactionCode(inputCode).orElse(null);
+    }
+
+    private boolean verifyCode(Integer inputCode, Integer transactionDataCode) {
+        return inputCode.equals(transactionDataCode);
+    }
+
+    private void removeClaimability(UUID transactionId) {
+        Transaction transaction = transactionRepository.findById(transactionId).orElse(null);
+        if (transaction != null) {
+            transaction.setStatus("COMPLETED"); // Menandakan tidak bisa diklaim lagi
+            transactionRepository.save(transaction);
+        }
     }
 
     @Transactional
