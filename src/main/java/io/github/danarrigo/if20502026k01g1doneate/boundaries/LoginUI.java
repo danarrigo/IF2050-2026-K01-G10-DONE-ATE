@@ -25,16 +25,16 @@ import java.nio.charset.StandardCharsets;
 
 public class LoginUI extends UI {
 
-    private static final String BASE_URL   = "http://localhost:8080";
+    private static final String BASE_URL = "http://localhost:8080";
     private static final String GREEN_DARK = "#2a5f2a";
     // private static final String GREEN_LIGHT = "#1a4d1a";
 
     private static boolean jfxInitialized = false;
 
-    private TextField     usernameField;
+    private TextField usernameField;
     private PasswordField passwordField;
-    private Label         errorLabel;
-    private Button        loginButton;
+    private Label errorLabel;
+    private Button loginButton;
 
     public LoginUI() {
         super(null);
@@ -146,21 +146,21 @@ public class LoginUI extends UI {
         LinearGradient grad = new LinearGradient(
                 0, 0, 0, 1, true, CycleMethod.NO_CYCLE,
                 new Stop(0, Color.web("#1a4d1a")),
-                new Stop(1, Color.web("#2a5f2a"))
-        );
+                new Stop(1, Color.web("#2a5f2a")));
         gc.setFill(grad);
         gc.fillRect(0, 0, w, h);
 
         double cx = w / 2.0, cy = h / 2.0;
         gc.setStroke(Color.web("#ffffff", 0.05));
         gc.setLineWidth(1.2);
-        int[] radii = {400, 340, 280, 220, 160, 100, 50};
-        for (int r : radii) gc.strokeOval(cx - r, cy - r, r * 2, r * 2);
+        int[] radii = { 400, 340, 280, 220, 160, 100, 50 };
+        for (int r : radii)
+            gc.strokeOval(cx - r, cy - r, r * 2, r * 2);
 
         for (int deg = 0; deg < 180; deg += 15) {
             double rad = Math.toRadians(deg);
             gc.strokeLine(cx + 400 * Math.cos(rad), cy + 400 * Math.sin(rad),
-                          cx - 400 * Math.cos(rad), cy - 400 * Math.sin(rad));
+                    cx - 400 * Math.cos(rad), cy - 400 * Math.sin(rad));
         }
 
         gc.setStroke(Color.web("#ffffff", 0.03));
@@ -210,15 +210,14 @@ public class LoginUI extends UI {
         card.setPadding(new Insets(36, 32, 36, 32));
         card.setStyle(
                 "-fx-background-color: white;" +
-                "-fx-background-radius: 20;" +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 30, 0, 0, 6);"
-        );
+                        "-fx-background-radius: 20;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 30, 0, 0, 6);");
 
         VBox usernameGroup = new VBox(8);
-        Label usernameLabel = new Label("Email atau Username");
+        Label usernameLabel = new Label("Username");
         usernameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;");
         usernameField = new TextField();
-        usernameField.setPromptText("nama@contoh.com");
+        usernameField.setPromptText("username");
         applyInputStyle(usernameField);
         usernameGroup.getChildren().addAll(usernameLabel, usernameField);
 
@@ -230,7 +229,8 @@ public class LoginUI extends UI {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         Hyperlink forgot = new Hyperlink("Lupa password?");
-        forgot.setStyle("-fx-font-size: 13px; -fx-text-fill: " + GREEN_DARK + "; -fx-border-color: transparent; -fx-padding: 0;");
+        forgot.setStyle("-fx-font-size: 13px; -fx-text-fill: " + GREEN_DARK
+                + "; -fx-border-color: transparent; -fx-padding: 0;");
         pwdLabelRow.getChildren().addAll(pwdLabel, spacer, forgot);
 
         passwordField = new PasswordField();
@@ -249,15 +249,12 @@ public class LoginUI extends UI {
         loginButton.setFont(Font.font("System", FontWeight.BOLD, 17));
         loginButton.setStyle(
                 "-fx-background-color: " + GREEN_DARK + ";" +
-                "-fx-text-fill: white;" +
-                "-fx-background-radius: 12;" +
-                "-fx-padding: 16 0 16 0;" +
-                "-fx-cursor: hand;"
-        );
-        loginButton.setOnMouseEntered(e ->
-                loginButton.setStyle(loginButton.getStyle().replace(GREEN_DARK, "#1e4a1e")));
-        loginButton.setOnMouseExited(e ->
-                loginButton.setStyle(loginButton.getStyle().replace("#1e4a1e", GREEN_DARK)));
+                        "-fx-text-fill: white;" +
+                        "-fx-background-radius: 12;" +
+                        "-fx-padding: 16 0 16 0;" +
+                        "-fx-cursor: hand;");
+        loginButton.setOnMouseEntered(e -> loginButton.setStyle(loginButton.getStyle().replace(GREEN_DARK, "#1e4a1e")));
+        loginButton.setOnMouseExited(e -> loginButton.setStyle(loginButton.getStyle().replace("#1e4a1e", GREEN_DARK)));
         loginButton.setOnAction(e -> handleLogin());
 
         usernameField.setOnAction(e -> passwordField.requestFocus());
@@ -268,15 +265,13 @@ public class LoginUI extends UI {
     }
 
     private void applyInputStyle(TextInputControl input) {
-        String base =
-                "-fx-background-color: #f6f6f6;" +
+        String base = "-fx-background-color: #f6f6f6;" +
                 "-fx-background-radius: 12;" +
                 "-fx-border-color: transparent;" +
                 "-fx-border-radius: 12;" +
                 "-fx-padding: 14 16 14 16;" +
                 "-fx-font-size: 15px;";
-        String focused =
-                "-fx-background-color: white;" +
+        String focused = "-fx-background-color: white;" +
                 "-fx-background-radius: 12;" +
                 "-fx-border-color: " + GREEN_DARK + ";" +
                 "-fx-border-radius: 12;" +
@@ -284,8 +279,7 @@ public class LoginUI extends UI {
                 "-fx-font-size: 15px;";
         input.setStyle(base);
         input.setMaxWidth(Double.MAX_VALUE);
-        input.focusedProperty().addListener((obs, old, isFocused) ->
-                input.setStyle(isFocused ? focused : base));
+        input.focusedProperty().addListener((obs, old, isFocused) -> input.setStyle(isFocused ? focused : base));
     }
 
     // ─── Footer ────────────────────────────────────────────────────────────────
@@ -300,8 +294,7 @@ public class LoginUI extends UI {
         Hyperlink register = new Hyperlink("Daftar sekarang");
         register.setStyle(
                 "-fx-font-size: 15px; -fx-text-fill: " + GREEN_DARK + ";" +
-                "-fx-font-weight: bold; -fx-border-color: transparent; -fx-padding: 0;"
-        );
+                        "-fx-font-weight: bold; -fx-border-color: transparent; -fx-padding: 0;");
         register.setOnAction(e -> {
             RegisterUI registerUI = new RegisterUI();
             showWithAnimation(stage, registerUI.createContent(stage));
@@ -331,8 +324,7 @@ public class LoginUI extends UI {
                 String body = String.format(
                         "{\"username\":\"%s\",\"password\":\"%s\"}",
                         username.replace("\"", "\\\""),
-                        password.replace("\"", "\\\"")
-                );
+                        password.replace("\"", "\\\""));
 
                 HttpClient client = HttpClient.newHttpClient();
                 HttpRequest request = HttpRequest.newBuilder()
