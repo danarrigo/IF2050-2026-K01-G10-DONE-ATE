@@ -2,6 +2,7 @@ package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
 import io.github.danarrigo.if20502026k01g1doneate.entities.Dish;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donation;
+import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
 import javafx.animation.FadeTransition;
@@ -61,7 +62,7 @@ public class RecipientCatalogUI extends UI {
 
         VBox centerContent = new VBox(0);
         centerContent.setStyle("-fx-background-color: " + BG_COLOR + ";");
-        centerContent.getChildren().addAll(buildPageHeader(), buildFilterBar());
+        centerContent.getChildren().addAll(buildPageHeader(), buildFilterBar(stage));
 
         catalogList = new VBox(12);
         catalogList.setPadding(new Insets(16, 24, 24, 24));
@@ -79,11 +80,11 @@ public class RecipientCatalogUI extends UI {
         VBox.setVgrow(scroll, Priority.ALWAYS);
         outer.getChildren().add(scroll);
 
-        HBox bottomNav = Navigator.createBottomNav(stage, getUser(), "CATALOG");
+        HBox bottomNav = Navigator.createBottomNav(stage, getUser(), "HOME");
         outer.getChildren().add(bottomNav);
 
         playAnimation(centerContent);
-        loadCatalog();
+        loadCatalog(stage);
 
         return outer;
     }
@@ -166,18 +167,18 @@ public class RecipientCatalogUI extends UI {
 
     // ─── Filter Chips ──────────────────────────────────────────────────────────
 
-    private HBox buildFilterBar() {
+    private HBox buildFilterBar(Stage stage) {
         HBox bar = new HBox(10);
         bar.setPadding(new Insets(4, 24, 18, 24));
         bar.setStyle("-fx-background-color: " + BG_COLOR + ";");
         bar.setAlignment(Pos.CENTER_LEFT);
 
         String[] filters = {"Semua", "Nasi & Lauk", "Roti & Kue", "Sayuran"};
-        rebuildFilterChips(bar, filters);
+        rebuildFilterChips(bar, filters, stage);
         return bar;
     }
 
-    private void rebuildFilterChips(HBox bar, String[] filters) {
+    private void rebuildFilterChips(HBox bar, String[] filters, Stage stage) {
         bar.getChildren().clear();
         for (String filter : filters) {
             boolean active = filter.equals(activeFilter);
@@ -195,8 +196,8 @@ public class RecipientCatalogUI extends UI {
             );
             chip.setOnAction(e -> {
                 activeFilter = filter;
-                rebuildFilterChips(bar, filters);
-                renderList(stage(chip));
+                rebuildFilterChips(bar, filters, stage);
+                renderList(stage);
             });
             bar.getChildren().add(chip);
         }
@@ -210,7 +211,7 @@ public class RecipientCatalogUI extends UI {
 
     // ─── Load & Render ─────────────────────────────────────────────────────────
 
-    private void loadCatalog() {
+    private void loadCatalog(Stage stage) {
         new Thread(() -> {
             try {
                 String token = SessionManager.getInstance().getToken();
@@ -224,7 +225,7 @@ public class RecipientCatalogUI extends UI {
 
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
-                        parseResponse(response.body());
+                        parseResponse(response.body(), stage);
                     } else {
                         showEmpty("Gagal memuat katalog donasi.");
                     }
@@ -235,7 +236,7 @@ public class RecipientCatalogUI extends UI {
         }).start();
     }
 
-    private void parseResponse(String json) {
+    private void parseResponse(String json, Stage stage) {
         allItems.clear();
         if (json == null || json.equals("[]") || json.isEmpty()) {
             showEmpty("Belum ada donasi yang tersedia saat ini.");
@@ -260,6 +261,8 @@ public class RecipientCatalogUI extends UI {
                         ? String.valueOf(node.get("expiresInMinutes").asLong()) : null);
                 item.put("timeCooked",       textOrNull(node, "timeCooked"));
                 item.put("donatorUsername",  textOrNull(node, "donatorUsername"));
+                item.put("donatorAddress",   textOrNull(node, "donatorAddress"));
+                item.put("donatorPhoneNumber", textOrNull(node, "donatorPhoneNumber"));
                 item.put("status",           textOrNull(node, "status"));
                 allItems.add(item);
             }
@@ -268,7 +271,7 @@ public class RecipientCatalogUI extends UI {
             showEmpty("Gagal memproses data katalog.");
             return;
         }
-        renderList(null);
+        renderList(stage);
     }
 
     private String textOrNull(JsonNode node, String field) {
@@ -317,7 +320,8 @@ public class RecipientCatalogUI extends UI {
     // ─── Catalog Card ──────────────────────────────────────────────────────────
 
     private HBox buildCard(Map<String, String> item, Stage stage) {
-        HBox card = new HBox(0);
+        HBox card = new HBox(18);
+        card.setPadding(new Insets(18));
         card.setAlignment(Pos.CENTER_LEFT);
         card.setStyle(
                 "-fx-background-color: white;" +
@@ -506,6 +510,10 @@ public class RecipientCatalogUI extends UI {
                 nvl(item.get("dishName"), "Makanan"),
                 item.get("imagePath") != null && !item.get("imagePath").equals("null") ? item.get("imagePath") : null
         );
+        String exp = item.get("expiresInMinutes");
+        if (exp != null && !exp.equals("null") && !exp.isEmpty()) {
+            dish.setExpiresIn(java.time.Duration.ofMinutes(Long.parseLong(exp)));
+        }
 
         Donation donation = new Donation();
         try {
@@ -515,6 +523,7 @@ public class RecipientCatalogUI extends UI {
 
         donation.setDish(dish);
         donation.setStatus(nvl(item.get("status"), "QC Passed"));
+        donation.setTaken(false);
 
         String tc = item.get("timeCooked");
         if (tc != null && !tc.equals("null")) {
@@ -522,6 +531,13 @@ public class RecipientCatalogUI extends UI {
                 donation.setTimeCooked(LocalDateTime.parse(tc, DateTimeFormatter.ISO_LOCAL_DATE_TIME));
             } catch (Exception ignored) {}
         }
+        
+        Donator donator = new Donator();
+        donator.setUsername(item.get("donatorUsername"));
+        donator.setAddress(item.get("donatorAddress"));
+        donator.setPhoneNumber(item.get("donatorPhoneNumber"));
+        donation.setDonator(donator);
+
         return donation;
     }
 

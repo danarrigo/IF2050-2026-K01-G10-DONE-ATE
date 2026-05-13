@@ -15,6 +15,8 @@ public class CatalogItemResponse {
     private boolean ongoing;
     private String status;
     private String donatorUsername;
+    private String donatorAddress;
+    private String donatorPhoneNumber;
 
     public CatalogItemResponse() {}
 
@@ -50,4 +52,20 @@ public class CatalogItemResponse {
 
     public String getDonatorUsername() { return donatorUsername; }
     public void setDonatorUsername(String donatorUsername) { this.donatorUsername = donatorUsername; }
+
+    public String getDonatorAddress() {
+        return donatorAddress;
+    }
+
+    public void setDonatorAddress(String donatorAddress) {
+        this.donatorAddress = donatorAddress;
+    }
+
+    public String getDonatorPhoneNumber() {
+        return donatorPhoneNumber;
+    }
+
+    public void setDonatorPhoneNumber(String donatorPhoneNumber) {
+        this.donatorPhoneNumber = donatorPhoneNumber;
+    }
 }

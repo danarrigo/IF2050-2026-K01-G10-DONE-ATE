@@ -90,7 +90,7 @@ public class CatalogUI extends UI {
         StackPane root = new StackPane(outer, fab);
 
         playAnimation(centerContent);
-        loadCatalog(username);
+        loadCatalog(username, stage);
 
         return root;
     }
@@ -391,7 +391,7 @@ public class CatalogUI extends UI {
 
     // ─── Load catalog from API ─────────────────────────────────────────────────
 
-    private void loadCatalog(String username) {
+    private void loadCatalog(String username, Stage stage) {
         new Thread(() -> {
             try {
                 String token = SessionManager.getInstance().getToken();
@@ -407,7 +407,7 @@ public class CatalogUI extends UI {
                 Platform.runLater(() -> {
                     catalogList.getChildren().clear();
                     if (response.statusCode() == 200) {
-                        parseAndRenderCatalog(response.body());
+                        parseAndRenderCatalog(response.body(), stage);
                     } else {
                         showStatus("Gagal memuat katalog.", true);
                     }
@@ -419,7 +419,7 @@ public class CatalogUI extends UI {
         }).start();
     }
 
-    private void parseAndRenderCatalog(String json) {
+    private void parseAndRenderCatalog(String json, Stage stage) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             List<Map<String, Object>> items = mapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
@@ -438,9 +438,11 @@ public class CatalogUI extends UI {
                 String imagePath  = String.valueOf(item.get("imagePath"));
                 String timeCooked = String.valueOf(item.get("timeCooked"));
                 boolean taken     = Boolean.parseBoolean(String.valueOf(item.getOrDefault("taken", false)));
+                String donatorAddr = String.valueOf(item.getOrDefault("donatorAddress", ""));
+                String donatorPhone = String.valueOf(item.getOrDefault("donatorPhoneNumber", ""));
 
                 catalogList.getChildren().add(
-                        buildCatalogCard(donationId, dishName, status, timeAdded, expiresIn, imagePath, timeCooked, taken));
+                        buildCatalogCard(stage, donationId, dishName, status, timeAdded, expiresIn, imagePath, timeCooked, taken, donatorAddr, donatorPhone));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -454,8 +456,8 @@ public class CatalogUI extends UI {
         catalogList.getChildren().add(label);
     }
 
-    private VBox buildCatalogCard(String donationId, String dishName, String status,
-            String timeAdded, String expiresIn, String imagePath, String timeCooked, boolean taken) {
+    private VBox buildCatalogCard(Stage stage, String donationId, String dishName, String status,
+            String timeAdded, String expiresIn, String imagePath, String timeCooked, boolean taken, String donatorAddr, String donatorPhone) {
         VBox card = new VBox(0);
         card.setStyle(
                 "-fx-background-color: white;" +
@@ -557,7 +559,35 @@ public class CatalogUI extends UI {
                 "-fx-cursor: hand;" +
                 "-fx-padding: 6 16 6 16;"
         );
-        editBtn.setOnAction(e -> showEditDialog(donationId, dishName, expiresIn));
+        editBtn.setOnAction(e -> {
+            // Reconstruct Donation object for Detail UI
+            io.github.danarrigo.if20502026k01g1doneate.entities.Dish dish = new io.github.danarrigo.if20502026k01g1doneate.entities.Dish();
+            dish.setName(dishName);
+            dish.setImagePath(imagePath);
+            if (expiresIn != null && !expiresIn.equals("null")) {
+                dish.setExpiresIn(java.time.Duration.ofMinutes(Long.parseLong(expiresIn)));
+            }
+
+            io.github.danarrigo.if20502026k01g1doneate.entities.Donation d = new io.github.danarrigo.if20502026k01g1doneate.entities.Donation();
+            d.setDonationId(UUID.fromString(donationId));
+            d.setDish(dish);
+            d.setStatus(status);
+            d.setTaken(taken);
+            if (timeCooked != null && !timeCooked.equals("null")) {
+                d.setTimeCooked(LocalDateTime.parse(timeCooked));
+            }
+            if (timeAdded != null && !timeAdded.equals("null")) {
+                d.setTimeAdded(LocalDateTime.parse(timeAdded));
+            }
+            
+            io.github.danarrigo.if20502026k01g1doneate.entities.Donator donator = new io.github.danarrigo.if20502026k01g1doneate.entities.Donator();
+            donator.setUsername(resolveUsername());
+            donator.setAddress(donatorAddr);
+            donator.setPhoneNumber(donatorPhone);
+            d.setDonator(donator);
+
+            Navigator.navigate(stage, new DonationDetailUI(getUser(), d));
+        });
 
         Button removeBtn = new Button("Hapus");
         removeBtn.setStyle(
@@ -569,7 +599,7 @@ public class CatalogUI extends UI {
                 "-fx-cursor: hand;" +
                 "-fx-padding: 6 16 6 16;"
         );
-        removeBtn.setOnAction(e -> removeDonation(donationId));
+        removeBtn.setOnAction(e -> removeDonation(stage, donationId));
 
         actions.getChildren().addAll(editBtn, removeBtn);
         info.getChildren().addAll(name, statusBadge, timeLabel, takenLabel, actions);
@@ -577,96 +607,16 @@ public class CatalogUI extends UI {
         return card;
     }
 
-    // ─── Edit dialog ───────────────────────────────────────────────────────────
-
-    private void showEditDialog(String donationId, String currentName, String currentExpires) {
-        Stage dialog = new Stage();
-        dialog.setTitle("Edit Donasi");
-
-        VBox content = new VBox(16);
-        content.setPadding(new Insets(30));
-        content.setStyle("-fx-background-color: white;");
-        content.setPrefWidth(420);
-
-        Label title = new Label("Edit Informasi Donasi");
-        title.setFont(Font.font("System", FontWeight.BOLD, 20));
-
-        TextField nameField = new TextField(currentName != null ? currentName : "");
-        nameField.setPromptText("Nama Hidangan");
-        styleTextField(nameField);
-
-        TextField expiresField = new TextField(currentExpires != null ? currentExpires : "");
-        expiresField.setPromptText("Kedaluwarsa (menit)");
-        styleTextField(expiresField);
-
-        TextField timeCookedField = new TextField();
-        timeCookedField.setPromptText("Waktu Dimasak (yyyy-MM-dd HH:mm)");
-        styleTextField(timeCookedField);
-
-        Button nowBtn = new Button("Sekarang");
-        nowBtn.setStyle("-fx-background-color: " + LIGHT_GREEN + "; -fx-text-fill: " + DARK_GREEN
-                + "; -fx-font-weight: bold; -fx-background-radius: 6px; -fx-cursor: hand;");
-        nowBtn.setOnAction(e -> {
-            String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-            timeCookedField.setText(now);
-        });
-
-        HBox timeCookedBox = new HBox(10, timeCookedField, nowBtn);
-        HBox.setHgrow(timeCookedField, Priority.ALWAYS);
-
-        Button saveBtn = new Button("Simpan Perubahan");
-        saveBtn.setStyle(
-                "-fx-background-color: " + DARK_GREEN + ";" +
-                "-fx-text-fill: white;" +
-                "-fx-font-weight: bold;" +
-                "-fx-font-size: 14px;" +
-                "-fx-background-radius: 8px;" +
-                "-fx-cursor: hand;"
-        );
-        saveBtn.setPrefWidth(Double.MAX_VALUE);
-        saveBtn.setPrefHeight(46);
-        saveBtn.setOnAction(e -> {
-            String name    = nameField.getText().trim();
-            String expires = expiresField.getText().trim();
-            String timeCooked = timeCookedField.getText().trim();
-
-            if (name.isEmpty() || expires.isEmpty() || timeCooked.isEmpty()) {
-                showStatus("Harap isi semua field.", true);
-                dialog.close();
-                return;
-            }
-
-            String timeCookedFormatted = timeCooked.replace(" ", "T");
-            if (timeCookedFormatted.length() == 16)
-                timeCookedFormatted += ":00";
-
-            String body = String.format(
-                    "{\"dishName\":\"%s\",\"imagePath\":\"\",\"expiresInMinutes\":%s,\"timeCooked\":\"%s\"}",
-                    esc(name), expires, timeCookedFormatted);
-
-            updateDonation(donationId, body);
-            dialog.close();
-        });
-
-        content.getChildren().addAll(
-                title,
-                new Label("Nama Makanan"), nameField,
-                new Label("Kedaluwarsa (menit)"), expiresField,
-                new Label("Waktu Dimasak"), timeCookedBox,
-                saveBtn);
-
-        dialog.setScene(new Scene(content));
-        dialog.show();
-    }
 
     // ─── API calls ─────────────────────────────────────────────────────────────
 
-    private void removeDonation(String donationId) {
+    private void removeDonation(Stage stage, String donationId) {
         new Thread(() -> {
             try {
                 HttpClient client = HttpClient.newHttpClient();
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(BASE_URL + "/api/catalog/" + donationId))
+                        .header("Authorization", "Bearer " + SessionManager.getInstance().getToken())
                         .DELETE()
                         .build();
 
@@ -675,7 +625,7 @@ public class CatalogUI extends UI {
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
                         showStatus("Donasi berhasil dihapus.", false);
-                        loadCatalog(resolveUsername());
+                        loadCatalog(resolveUsername(), stage);
                     } else {
                         showStatus("Gagal menghapus donasi.", true);
                     }
@@ -687,32 +637,6 @@ public class CatalogUI extends UI {
         }).start();
     }
 
-    private void updateDonation(String donationId, String body) {
-        new Thread(() -> {
-            try {
-                HttpClient client = HttpClient.newHttpClient();
-                HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(BASE_URL + "/api/catalog/" + donationId))
-                        .header("Content-Type", "application/json")
-                        .PUT(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-                        .build();
-
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-                Platform.runLater(() -> {
-                    if (response.statusCode() == 200) {
-                        showStatus("Donasi berhasil diperbarui.", false);
-                        loadCatalog(resolveUsername());
-                    } else {
-                        showStatus("Gagal memperbarui donasi.", true);
-                    }
-                });
-
-            } catch (Exception ex) {
-                Platform.runLater(() -> showStatus("Tidak dapat terhubung ke server.", true));
-            }
-        }).start();
-    }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
 

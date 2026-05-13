@@ -42,4 +42,10 @@ public class TransactionController {
         LocalDateTime limitTime = transactionService.getCancellationTimeLimit(id);
         return ResponseEntity.ok(limitTime);
     }
+
+    @GetMapping("/donation/{donationId}")
+    public ResponseEntity<TransactionResponse> getTransactionByDonationId(@PathVariable UUID donationId) {
+        TransactionResponse transaction = transactionService.getTransactionByDonationId(donationId);
+        return ResponseEntity.ok(transaction);
+    }
 }

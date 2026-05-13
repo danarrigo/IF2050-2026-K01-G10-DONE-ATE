@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
     Optional<Transaction> findByTransactionCode(Integer transactionCode);
+    Optional<Transaction> findByDonation_DonationId(UUID donationId);
 }

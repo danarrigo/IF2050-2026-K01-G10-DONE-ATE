@@ -31,7 +31,6 @@ public class Navigator {
         nav.setStyle("-fx-background-color: white; -fx-border-color: " + BORDER_COLOR + " transparent transparent transparent;");
 
         nav.getChildren().add(createNavItem("🏠", "Home", "HOME".equals(activeTab), currentStage, user));
-        nav.getChildren().add(createNavItem("🍱", "Catalog", "CATALOG".equals(activeTab), currentStage, user));
 
         nav.getChildren().addAll(
                 createNavItem("✉", "Inbox", "INBOX".equals(activeTab), currentStage, user),

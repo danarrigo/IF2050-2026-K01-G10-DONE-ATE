@@ -24,13 +24,16 @@ public class CatalogService {
     private final DonationRepository donationRepository;
     private final DishRepository dishRepository;
     private final DonatorRepository donatorRepository;
+    private final NotificationService notificationService;
 
     public CatalogService(DonationRepository donationRepository,
                           DishRepository dishRepository,
-                          DonatorRepository donatorRepository) {
+                          DonatorRepository donatorRepository,
+                          NotificationService notificationService) {
         this.donationRepository = donationRepository;
         this.dishRepository = dishRepository;
         this.donatorRepository = donatorRepository;
+        this.notificationService = notificationService;
     }
 
     public List<CatalogItemResponse> getActiveCatalog() {
@@ -68,6 +71,14 @@ public class CatalogService {
         donation.setOngoing(true);
         donationRepository.save(donation);
 
+        notificationService.sendNotification(
+            donator,
+            "Donasi Terdaftar",
+            "Donasi '" + dish.getName() + "' berhasil didaftarkan dan menunggu proses QC.",
+            donation.getDonationId(),
+            io.github.danarrigo.if20502026k01g1doneate.enums.NotificationType.DONASI
+        );
+
         return toResponse(donation);
     }
 
@@ -77,12 +88,22 @@ public class CatalogService {
 
         Dish dish = donation.getDish();
         dish.setName(request.getDishName());
-        dish.setImagePath(request.getImagePath());
+        if (request.getImagePath() != null && !request.getImagePath().isEmpty()) {
+            dish.setImagePath(request.getImagePath());
+        }
         dish.setExpiresIn(Duration.ofMinutes(request.getExpiresInMinutes()));
         dishRepository.save(dish);
 
         donation.setTimeCooked(request.getTimeCooked());
         donationRepository.save(donation);
+
+        notificationService.sendNotification(
+            donation.getDonator(),
+            "Donasi Diperbarui",
+            "Informasi donasi '" + dish.getName() + "' telah berhasil diperbarui.",
+            donation.getDonationId(),
+            io.github.danarrigo.if20502026k01g1doneate.enums.NotificationType.DONASI
+        );
 
         return toResponse(donation);
     }
@@ -93,6 +114,14 @@ public class CatalogService {
         donation.setOngoing(false);
         donation.setStatus("Removed");
         donationRepository.save(donation);
+
+        notificationService.sendNotification(
+            donation.getDonator(),
+            "Donasi Dihapus",
+            "Donasi '" + donation.getDish().getName() + "' telah dihapus dari katalog.",
+            donation.getDonationId(),
+            io.github.danarrigo.if20502026k01g1doneate.enums.NotificationType.SISTEM
+        );
     }
 
     private CatalogItemResponse toResponse(Donation donation) {
@@ -106,6 +135,8 @@ public class CatalogService {
 
         if (donation.getDonator() != null) {
             response.setDonatorUsername(donation.getDonator().getUsername());
+            response.setDonatorAddress(donation.getDonator().getAddress());
+            response.setDonatorPhoneNumber(donation.getDonator().getPhoneNumber());
         }
         if (donation.getDish() != null) {
             Dish dish = donation.getDish();

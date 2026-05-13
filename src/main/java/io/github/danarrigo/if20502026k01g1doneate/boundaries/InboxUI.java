@@ -283,52 +283,6 @@ public class InboxUI extends UI {
     }
 
     public void openNotification(Notification notification) {
-        Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("Detail Notifikasi");
-
-        DialogPane dialogPane = new DialogPane();
-        dialog.setDialogPane(dialogPane);
-
-        GridPane grid = new GridPane();
-        grid.setHgap(15);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20, 20, 10, 20));
-
-        StackPane iconPane = createIconBox(notification);
-        grid.add(iconPane, 0, 0, 1, 2);
-        GridPane.setVgrow(iconPane, Priority.ALWAYS);
-
-        Label titleLabel = new Label(notification.getTitle());
-        titleLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #333333;");
-        grid.add(titleLabel, 1, 0);
-
-        Label msgLabel = new Label(notification.getMessageBody());
-        msgLabel.setStyle("-fx-text-fill: #666666; -fx-font-size: 14px;");
-        msgLabel.setWrapText(true);
-        msgLabel.setMaxWidth(350);
-        grid.add(msgLabel, 1, 1);
-
-        dialogPane.setContent(grid);
-
-        ButtonType okButtonType = new ButtonType("Tutup", ButtonData.OK_DONE);
-        dialogPane.getButtonTypes().add(okButtonType);
-
-        Node okButton = dialogPane.lookupButton(okButtonType);
-        if (okButton instanceof Button) {
-            okButton.setStyle(
-                    "-fx-background-color: #1B5E20; -fx-text-fill: white; -fx-background-radius: 20; -fx-padding: 7 20; -fx-cursor: hand; -fx-font-weight: bold;");
-
-            okButton.setOnMouseEntered(e -> okButton.setStyle(
-                    "-fx-background-color: #2E7D32; -fx-text-fill: white; -fx-background-radius: 20; -fx-padding: 7 20; -fx-cursor: hand; -fx-font-weight: bold;"));
-            okButton.setOnMouseExited(e -> okButton.setStyle(
-                    "-fx-background-color: #1B5E20; -fx-text-fill: white; -fx-background-radius: 20; -fx-padding: 7 20; -fx-cursor: hand; -fx-font-weight: bold;"));
-        }
-
-        dialogPane.setStyle(
-                "-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #E0E0E0; -fx-border-radius: 10;");
-
-        dialog.showAndWait();
-
         if (notification.getRelatedDonationId() != null) {
             fetchDonationAndOpenDetail(notification.getRelatedDonationId());
         }
