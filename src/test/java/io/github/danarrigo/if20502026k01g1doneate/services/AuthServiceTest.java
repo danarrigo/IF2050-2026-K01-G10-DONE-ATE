@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalTime;
 import java.util.Map;
@@ -22,6 +23,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,6 +31,9 @@ class AuthServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private AuthService authService;
@@ -52,6 +57,7 @@ class AuthServiceTest {
     @Test
     void testLoginSuccess() {
         when(userRepository.findByUsername("donator1")).thenReturn(Optional.of(donator));
+        when(passwordEncoder.matches("password123", "password123")).thenReturn(true);
 
         Map<String, String> result = authService.login(loginRequest);
 
@@ -62,6 +68,7 @@ class AuthServiceTest {
     @Test
     void testLoginInvalidPassword() {
         when(userRepository.findByUsername("donator1")).thenReturn(Optional.of(donator));
+        when(passwordEncoder.matches("wrong-password", "password123")).thenReturn(false);
 
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> authService.login(new LoginRequest("donator1", "wrong-password")));
@@ -84,6 +91,7 @@ class AuthServiceTest {
         DonatorRegistrationRequest request = createDonatorRequest("newdonator");
 
         when(userRepository.existsByUsername("newdonator")).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("encodedPass");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Map<String, String> result = authService.registerDonator(request);
@@ -111,6 +119,7 @@ class AuthServiceTest {
         RecipientRegistrationRequest request = createRecipientRequest("newrecipient");
 
         when(userRepository.existsByUsername("newrecipient")).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("encodedPass");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Map<String, String> result = authService.registerRecipient(request);

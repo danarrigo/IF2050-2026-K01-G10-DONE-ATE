@@ -9,6 +9,7 @@ import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 import io.github.danarrigo.if20502026k01g1doneate.enums.UserRole;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.UserRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -17,15 +18,17 @@ import java.util.Map;
 @Transactional
 public class AuthService {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthService(UserRepository userRepository) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public Map<String, String> login(LoginRequest request) {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new RuntimeException("Invalid username or password"));
-        if (!user.getPassword().equals(request.getPassword())) {
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Invalid username or password");
         }
         return Map.of("username", user.getUsername(), "role", UserRole.of(user).name());
@@ -37,7 +40,7 @@ public class AuthService {
         }
         Donator donator = new Donator(
                 request.getUsername(),
-                request.getPassword(),
+                passwordEncoder.encode(request.getPassword()),
                 request.getAddress(),
                 request.getPhoneNumber(),
                 request.getEmail(),
@@ -53,7 +56,7 @@ public class AuthService {
         }
         Recipient recipient = new Recipient();
         recipient.setUsername(request.getUsername());
-        recipient.setPassword(request.getPassword());
+        recipient.setPassword(passwordEncoder.encode(request.getPassword()));
         recipient.setAddress(request.getAddress());
         recipient.setPhoneNumber(request.getPhoneNumber());
         recipient.setEmail(request.getEmail());
