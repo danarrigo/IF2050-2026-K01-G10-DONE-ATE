@@ -90,7 +90,7 @@ public class ClaimDonationUI extends UI {
         HBox.setHgrow(leftCol, Priority.ALWAYS);
 
         VBox claimCard = createCard("Formulir Klaim Donasi");
-        
+
         TextField donationIdField = new TextField();
         donationIdField.setPromptText("Masukkan ID Donasi (UUID)");
         styleTextField(donationIdField);
@@ -104,7 +104,7 @@ public class ClaimDonationUI extends UI {
                 + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16px; -fx-background-radius: 6px; -fx-cursor: hand;");
         claimBtn.setMaxWidth(Double.MAX_VALUE);
         claimBtn.setPrefHeight(50);
-        
+
         claimBtn.setOnAction(e -> {
             String donationId = donationIdField.getText();
             String username = recipientUsernameField.getText();
@@ -116,10 +116,9 @@ public class ClaimDonationUI extends UI {
         });
 
         claimCard.getChildren().addAll(
-            new Label("ID Donasi"), donationIdField,
-            new Label("Username Penerima"), recipientUsernameField,
-            claimBtn
-        );
+                new Label("ID Donasi"), donationIdField,
+                new Label("Username Penerima"), recipientUsernameField,
+                claimBtn);
 
         leftCol.getChildren().add(claimCard);
 
@@ -129,12 +128,13 @@ public class ClaimDonationUI extends UI {
 
         VBox cancelCard = new VBox(15);
         cancelCard.setPadding(new Insets(25));
-        cancelCard.setStyle("-fx-border-color: #F1948A; -fx-border-radius: 8px; -fx-background-color: " + LIGHT_RED + "; -fx-background-radius: 8px;");
-        
+        cancelCard.setStyle("-fx-border-color: #F1948A; -fx-border-radius: 8px; -fx-background-color: " + LIGHT_RED
+                + "; -fx-background-radius: 8px;");
+
         Label cancelTitle = new Label("Batalkan Klaim");
         cancelTitle.setFont(Font.font("System", FontWeight.BOLD, 18));
         cancelTitle.setTextFill(Color.web(DARK_RED));
-        
+
         Label cancelSubtitle = new Label("Hanya dapat dibatalkan maksimal 1 jam sebelum batas waktu kedaluwarsa.");
         cancelSubtitle.setFont(Font.font("System", 13));
         cancelSubtitle.setTextFill(Color.web(DARK_RED));
@@ -149,7 +149,7 @@ public class ClaimDonationUI extends UI {
                 + "; -fx-font-weight: bold; -fx-font-size: 15px; -fx-background-radius: 6px; -fx-border-radius: 6px; -fx-cursor: hand;");
         cancelBtn.setMaxWidth(Double.MAX_VALUE);
         cancelBtn.setPrefHeight(45);
-        
+
         cancelBtn.setOnAction(e -> {
             String codeStr = transactionCodeField.getText();
             if (codeStr.isEmpty()) {
@@ -164,7 +164,8 @@ public class ClaimDonationUI extends UI {
             }
         });
 
-        cancelCard.getChildren().addAll(cancelTitle, cancelSubtitle, new Label("Kode Transaksi"), transactionCodeField, cancelBtn);
+        cancelCard.getChildren().addAll(cancelTitle, cancelSubtitle, new Label("Kode Transaksi"), transactionCodeField,
+                cancelBtn);
 
         rightCol.getChildren().addAll(cancelCard);
 
@@ -184,12 +185,14 @@ public class ClaimDonationUI extends UI {
         }
 
         // Animations matching template
-        javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(javafx.util.Duration.millis(600), root);
+        javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(javafx.util.Duration.millis(600),
+                root);
         ft.setFromValue(0.0);
         ft.setToValue(1.0);
         ft.play();
 
-        javafx.animation.TranslateTransition tt = new javafx.animation.TranslateTransition(javafx.util.Duration.millis(600), root);
+        javafx.animation.TranslateTransition tt = new javafx.animation.TranslateTransition(
+                javafx.util.Duration.millis(600), root);
         tt.setFromY(30);
         tt.setToY(0);
         tt.play();
@@ -199,7 +202,8 @@ public class ClaimDonationUI extends UI {
         try {
             String token = SessionManager.getInstance().getToken();
             HttpClient client = HttpClient.newHttpClient();
-            String jsonPayload = String.format("{\"donationId\":\"%s\", \"recipientUsername\":\"%s\"}", donationId, recipientUsername);
+            String jsonPayload = String.format("{\"donationId\":\"%s\", \"recipientUsername\":\"%s\"}", donationId,
+                    recipientUsername);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create("http://localhost:8080/api/claims"))
@@ -216,7 +220,8 @@ public class ClaimDonationUI extends UI {
                 showAlert(Alert.AlertType.ERROR, "Klaim Gagal", response.body());
             }
         } catch (Exception ex) {
-            showAlert(Alert.AlertType.ERROR, "Koneksi Gagal", "Pastikan Server Spring Boot berjalan di port 8080.\n" + ex.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Koneksi Gagal",
+                    "Pastikan Server Spring Boot berjalan di port 8080.\n" + ex.getMessage());
         }
     }
 
@@ -239,14 +244,16 @@ public class ClaimDonationUI extends UI {
                 showAlert(Alert.AlertType.ERROR, "Pembatalan Gagal", response.body());
             }
         } catch (Exception ex) {
-            showAlert(Alert.AlertType.ERROR, "Koneksi Gagal", "Pastikan Server Spring Boot berjalan di port 8080.\n" + ex.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Koneksi Gagal",
+                    "Pastikan Server Spring Boot berjalan di port 8080.\n" + ex.getMessage());
         }
     }
 
     private VBox createCard(String title) {
         VBox card = new VBox(15);
         card.setPadding(new Insets(25));
-        card.setStyle("-fx-border-color: " + BORDER_COLOR + "; -fx-border-radius: 8px; -fx-background-color: white; -fx-background-radius: 8px;");
+        card.setStyle("-fx-border-color: " + BORDER_COLOR
+                + "; -fx-border-radius: 8px; -fx-background-color: white; -fx-background-radius: 8px;");
         Label lblTitle = new Label(title);
         lblTitle.setFont(Font.font("System", FontWeight.BOLD, 18));
         lblTitle.setTextFill(Color.web(DARK_GREEN));
@@ -255,7 +262,8 @@ public class ClaimDonationUI extends UI {
     }
 
     private void styleTextField(TextField tf) {
-        tf.setStyle("-fx-background-radius: 6px; -fx-border-color: " + BORDER_COLOR + "; -fx-border-radius: 6px; -fx-padding: 12px; -fx-font-size: 14px;");
+        tf.setStyle("-fx-background-radius: 6px; -fx-border-color: " + BORDER_COLOR
+                + "; -fx-border-radius: 6px; -fx-padding: 12px; -fx-font-size: 14px;");
     }
 
     private void showAlert(Alert.AlertType type, String title, String content) {
