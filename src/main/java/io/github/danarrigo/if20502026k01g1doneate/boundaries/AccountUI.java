@@ -448,8 +448,7 @@ public class AccountUI extends UI {
 
     private void handleLogout(Stage stage) {
         SessionManager.getInstance().clearSession();
-        stage.close();
-        new LoginUI().showUI();
+        Navigator.navigate(stage, new LoginUI());
     }
 
     private String formatRole(String role) {
