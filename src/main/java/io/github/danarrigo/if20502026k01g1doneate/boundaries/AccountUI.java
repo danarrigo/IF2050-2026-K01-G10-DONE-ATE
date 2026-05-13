@@ -1,10 +1,16 @@
 package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
+import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
+import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
+import io.github.danarrigo.if20502026k01g1doneate.enums.DonatorType;
 import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.animation.FadeTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
@@ -18,15 +24,26 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
 public class AccountUI extends UI {
 
     private static final String DARK_GREEN   = "#0F5B21";
     private static final String TEXT_GRAY    = "#555555";
     private static final String BORDER_COLOR = "#E0E0E0";
     private static final String BG_COLOR     = "#FAFAFA";
+    private static final String BASE_URL     = "http://localhost:8080";
+
+    private boolean isEditMode = false;
+    private VBox contentContainer;
+    private User fullUser;
 
     public AccountUI(User user) {
         super(user);
+        this.fullUser = user;
     }
 
     @Override
@@ -37,26 +54,218 @@ public class AccountUI extends UI {
 
     @Override
     public Parent getSceneContent(Stage stage) {
-        SessionManager session = SessionManager.getInstance();
-        String username = session.getUsername() != null ? session.getUsername()
-                : (getUser() != null ? getUser().getUsername() : "Pengguna");
-        String role = session.getRole() != null ? session.getRole() : "-";
-
-        User user = getUser();
-        String email   = user != null ? user.getEmail()       : "-";
-        String phone   = user != null ? user.getPhoneNumber() : "-";
-        String address = user != null ? user.getAddress()     : "-";
+        if (fullUser == null || fullUser.getEmail() == null) {
+            fetchFullProfile();
+        }
 
         HBox root = new HBox();
         root.setStyle("-fx-background-color: " + BG_COLOR + ";");
 
+        String username = SessionManager.getInstance().getUsername();
+        String role = SessionManager.getInstance().getRole();
+
         VBox sidebar = buildSidebar(stage, username, role);
-        ScrollPane contentScroll = buildContent(stage, username, role, email, phone, address);
+        
+        contentContainer = new VBox();
+        ScrollPane contentScroll = new ScrollPane(contentContainer);
+        contentScroll.setFitToWidth(true);
+        contentScroll.setStyle("-fx-background-color: " + BG_COLOR + "; -fx-background: " + BG_COLOR + ";");
         HBox.setHgrow(contentScroll, Priority.ALWAYS);
+
+        refreshContent(stage);
 
         root.getChildren().addAll(sidebar, contentScroll);
         playAnimation(root);
         return root;
+    }
+
+    private void fetchFullProfile() {
+        new Thread(() -> {
+            try {
+                String token = SessionManager.getInstance().getToken();
+                HttpClient client = HttpClient.newHttpClient();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(BASE_URL + "/api/users/me"))
+                        .header("Authorization", "Bearer " + token)
+                        .GET()
+                        .build();
+
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() == 200) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode node = mapper.readTree(response.body());
+                    
+                    Platform.runLater(() -> {
+                        if (SessionManager.getInstance().getRole().equalsIgnoreCase("DONATOR")) {
+                            Donator d = new Donator();
+                            d.setUsername(node.get("username").asText());
+                            d.setEmail(node.has("email") ? node.get("email").asText() : "");
+                            d.setPhoneNumber(node.has("phoneNumber") ? node.get("phoneNumber").asText() : "");
+                            d.setAddress(node.has("address") ? node.get("address").asText() : "");
+                            if (node.has("donatorType")) {
+                                d.setDonatorType(DonatorType.valueOf(node.get("donatorType").asText()));
+                            }
+                            fullUser = d;
+                        } else {
+                            Recipient r = new Recipient();
+                            r.setUsername(node.get("username").asText());
+                            r.setEmail(node.has("email") ? node.get("email").asText() : "");
+                            r.setPhoneNumber(node.has("phoneNumber") ? node.get("phoneNumber").asText() : "");
+                            r.setAddress(node.has("address") ? node.get("address").asText() : "");
+                            fullUser = r;
+                        }
+                        setUser(fullUser);
+                        // Trigger refresh if stage is showing
+                    });
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private void refreshContent(Stage stage) {
+        contentContainer.getChildren().clear();
+        contentContainer.setPadding(new Insets(60, 80, 60, 80));
+        contentContainer.setSpacing(32);
+
+        String username = SessionManager.getInstance().getUsername();
+        String role = SessionManager.getInstance().getRole();
+        User u = fullUser != null ? fullUser : getUser();
+
+        // Back Button
+        Button backBtn = new Button("← Kembali");
+        backBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: " + DARK_GREEN + "; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 0;");
+        backBtn.setOnAction(e -> Navigator.navigate(stage, u instanceof Donator ? new CatalogUI(u) : new RecipientCatalogUI(u)));
+
+        Label pageTitle = new Label("Profil Saya");
+        pageTitle.setFont(Font.font("System", FontWeight.BOLD, 36));
+
+        HBox headerRow = new HBox(20, pageTitle);
+        headerRow.setAlignment(Pos.CENTER_LEFT);
+        
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        
+        Button editToggleBtn = new Button(isEditMode ? "Batal" : "Edit Profil");
+        editToggleBtn.setStyle("-fx-background-color: " + (isEditMode ? "#EEE" : DARK_GREEN) + "; -fx-text-fill: " + (isEditMode ? "#333" : "white") + "; -fx-font-weight: bold; -fx-padding: 10 25; -fx-background-radius: 8; -fx-cursor: hand;");
+        editToggleBtn.setOnAction(e -> {
+            isEditMode = !isEditMode;
+            refreshContent(stage);
+        });
+        
+        headerRow.getChildren().addAll(spacer, editToggleBtn);
+
+        VBox profileCard;
+        if (isEditMode) {
+            profileCard = buildEditCard(stage);
+        } else {
+            profileCard = buildInfoCard("Informasi Akun", new String[][]{
+                    {"Username",        username},
+                    {"Peran",           formatRole(role)},
+                    {"Email",           u != null ? u.getEmail() : "-"},
+                    {"Nomor Telepon",   u != null ? u.getPhoneNumber() : "-"},
+                    {"Alamat",          u != null ? u.getAddress() : "-"}
+            });
+        }
+
+        contentContainer.getChildren().addAll(backBtn, headerRow, profileCard);
+
+        if (!isEditMode) {
+            VBox roleCard = buildRoleCard(role);
+            if (roleCard != null) contentContainer.getChildren().add(roleCard);
+        }
+    }
+
+    private VBox buildEditCard(Stage stage) {
+        VBox card = new VBox(25);
+        card.setPadding(new Insets(30));
+        card.setStyle("-fx-background-color: white; -fx-border-color: " + BORDER_COLOR + "; -fx-border-radius: 12px; -fx-background-radius: 12px;");
+
+        TextField emailF = new TextField(fullUser != null ? fullUser.getEmail() : "");
+        TextField phoneF = new TextField(fullUser != null ? fullUser.getPhoneNumber() : "");
+        TextArea addrF = new TextArea(fullUser != null ? fullUser.getAddress() : "");
+        addrF.setPrefRowCount(3);
+        
+        styleControl(emailF);
+        styleControl(phoneF);
+        addrF.setStyle("-fx-background-radius: 10; -fx-border-color: " + BORDER_COLOR + "; -fx-border-radius: 10; -fx-padding: 10;");
+
+        card.getChildren().addAll(
+            new Label("Email"), emailF,
+            new Label("Nomor Telepon"), phoneF,
+            new Label("Alamat"), addrF
+        );
+
+        ComboBox<DonatorType> typeBox = null;
+        if (fullUser instanceof Donator d) {
+            typeBox = new ComboBox<>(FXCollections.observableArrayList(DonatorType.values()));
+            typeBox.setValue(d.getDonatorType());
+            typeBox.setMaxWidth(Double.MAX_VALUE);
+            card.getChildren().addAll(new Label("Tipe Donator"), typeBox);
+        }
+
+        Button saveBtn = new Button("Simpan Perubahan");
+        saveBtn.setStyle("-fx-background-color: " + DARK_GREEN + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 15 40; -fx-background-radius: 10; -fx-cursor: hand;");
+        
+        final ComboBox<DonatorType> finalTypeBox = typeBox;
+        saveBtn.setOnAction(e -> handleUpdateProfile(stage, emailF.getText(), phoneF.getText(), addrF.getText(), finalTypeBox != null ? finalTypeBox.getValue() : null));
+
+        card.getChildren().add(saveBtn);
+        return card;
+    }
+
+    private void styleControl(Control c) {
+        c.setStyle("-fx-background-radius: 10; -fx-border-color: " + BORDER_COLOR + "; -fx-border-radius: 10; -fx-padding: 12; -fx-font-size: 14;");
+        c.setMaxWidth(Double.MAX_VALUE);
+    }
+
+    private void handleUpdateProfile(Stage stage, String email, String phone, String address, DonatorType type) {
+        new Thread(() -> {
+            try {
+                String token = SessionManager.getInstance().getToken();
+                String body = String.format("{\"email\":\"%s\",\"phoneNumber\":\"%s\",\"address\":\"%s\"%s}",
+                    email, phone, address, 
+                    type != null ? ",\"donatorType\":\"" + type.name() + "\"" : ""
+                );
+
+                HttpClient client = HttpClient.newHttpClient();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(BASE_URL + "/api/users/me"))
+                        .header("Content-Type", "application/json")
+                        .header("Authorization", "Bearer " + token)
+                        .PUT(HttpRequest.BodyPublishers.ofString(body))
+                        .build();
+
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                
+                Platform.runLater(() -> {
+                    if (response.statusCode() == 200) {
+                        if (fullUser != null) {
+                            fullUser.setEmail(email);
+                            fullUser.setPhoneNumber(phone);
+                            fullUser.setAddress(address);
+                            if (fullUser instanceof Donator d) d.setDonatorType(type);
+                        }
+                        isEditMode = false;
+                        refreshContent(stage);
+                        showAlert("Sukses", "Profil berhasil diperbarui.");
+                    } else {
+                        showAlert("Gagal", "Gagal memperbarui profil.");
+                    }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private void showAlert(String title, String content) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
     }
 
     private void createAndShowStage() {
@@ -85,9 +294,9 @@ public class AccountUI extends UI {
         circle.setFill(Color.web("#ffffff", 0.2));
         circle.setStroke(Color.web("#ffffff", 0.5));
         circle.setStrokeWidth(2);
-        String initials = username.length() >= 2
+        String initials = username != null && username.length() >= 2
                 ? username.substring(0, 2).toUpperCase()
-                : username.toUpperCase();
+                : (username != null ? username.toUpperCase() : "??");
         Label initialsLabel = new Label(initials);
         initialsLabel.setFont(Font.font("System", FontWeight.BOLD, 28));
         initialsLabel.setStyle("-fx-text-fill: white;");
@@ -153,62 +362,6 @@ public class AccountUI extends UI {
         return entry;
     }
 
-    // ─── Main Content ──────────────────────────────────────────────────────────
-
-    private ScrollPane buildContent(Stage stage, String username, String role, String email, String phone, String address) {
-        VBox content = new VBox(32);
-        content.setPadding(new Insets(60, 80, 60, 80));
-        content.setStyle("-fx-background-color: " + BG_COLOR + ";");
-
-        // Back Button
-        Button backBtn = new Button("← Kembali");
-        backBtn.setStyle(
-                "-fx-background-color: transparent;" +
-                "-fx-text-fill: " + DARK_GREEN + ";" +
-                "-fx-font-size: 14px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-cursor: hand;" +
-                "-fx-padding: 0;"
-        );
-        backBtn.setOnMouseEntered(e -> backBtn.setStyle(backBtn.getStyle() + "-fx-underline: true;"));
-        backBtn.setOnMouseExited(e -> backBtn.setStyle(backBtn.getStyle().replace("-fx-underline: true;", "")));
-        backBtn.setOnAction(e -> {
-            User user = getUser();
-            UI targetUI;
-            if (user instanceof io.github.danarrigo.if20502026k01g1doneate.entities.Donator) {
-                targetUI = new CatalogUI(user);
-            } else {
-                targetUI = new RecipientCatalogUI(user);
-            }
-            Navigator.navigate(stage, targetUI);
-        });
-
-        Label pageTitle = new Label("Profil Saya");
-        pageTitle.setFont(Font.font("System", FontWeight.BOLD, 36));
-        pageTitle.setStyle("-fx-text-fill: #111;");
-
-        Label pageSubtitle = new Label("Informasi akun dan data profil Anda.");
-        pageSubtitle.setStyle("-fx-font-size: 16px; -fx-text-fill: " + TEXT_GRAY + ";");
-
-        VBox profileCard = buildInfoCard("Informasi Akun", new String[][]{
-                {"Username",        username},
-                {"Peran",           formatRole(role)},
-                {"Email",           email},
-                {"Nomor Telepon",   phone},
-                {"Alamat",          address}
-        });
-
-        content.getChildren().addAll(backBtn, pageTitle, pageSubtitle, profileCard);
-
-        VBox roleCard = buildRoleCard(role);
-        if (roleCard != null) content.getChildren().add(roleCard);
-
-        ScrollPane scroll = new ScrollPane(content);
-        scroll.setFitToWidth(true);
-        scroll.setStyle("-fx-background-color: " + BG_COLOR + "; -fx-background: " + BG_COLOR + ";");
-        return scroll;
-    }
-
     private VBox buildInfoCard(String title, String[][] rows) {
         VBox card = new VBox(20);
         card.setPadding(new Insets(30));
@@ -252,9 +405,10 @@ public class AccountUI extends UI {
 
     private VBox buildRoleCard(String role) {
         if (role == null) return null;
+        User u = fullUser != null ? fullUser : getUser();
         return switch (role.toUpperCase()) {
             case "DONATOR" -> buildInfoCard("Informasi Donator", new String[][]{
-                    {"Tipe Donator", "Individu / Organisasi"},
+                    {"Tipe Donator", u instanceof Donator d ? (d.getDonatorType() != null ? d.getDonatorType().name() : "-") : "-"},
                     {"Riwayat Donasi", "Lihat di menu Riwayat"}
             });
             case "RECIPIENT" -> buildInfoCard("Informasi Penerima", new String[][]{
@@ -265,15 +419,11 @@ public class AccountUI extends UI {
         };
     }
 
-    // ─── Logout ────────────────────────────────────────────────────────────────
-
     private void handleLogout(Stage stage) {
         SessionManager.getInstance().clearSession();
         stage.close();
         new LoginUI().showUI();
     }
-
-    // ─── Helpers ───────────────────────────────────────────────────────────────
 
     private String formatRole(String role) {
         if (role == null) return "-";

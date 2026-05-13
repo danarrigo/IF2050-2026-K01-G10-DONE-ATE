@@ -294,6 +294,8 @@ public class RecipientCatalogUI extends UI {
             item.put("expiresInMinutes", extractValue(entry, "expiresInMinutes"));
             item.put("timeCooked",       extractValue(entry, "timeCooked"));
             item.put("donatorUsername",  extractValue(entry, "donatorUsername"));
+            item.put("donatorAddress",   extractValue(entry, "donatorAddress"));
+            item.put("donatorPhoneNumber", extractValue(entry, "donatorPhoneNumber"));
             item.put("status",           extractValue(entry, "status"));
             allItems.add(item);
         }
@@ -384,6 +386,8 @@ public class RecipientCatalogUI extends UI {
             
             io.github.danarrigo.if20502026k01g1doneate.entities.Donator donator = new io.github.danarrigo.if20502026k01g1doneate.entities.Donator();
             donator.setUsername(item.get("donatorUsername"));
+            donator.setAddress(item.get("donatorAddress"));
+            donator.setPhoneNumber(item.get("donatorPhoneNumber"));
             d.setDonator(donator);
 
             Navigator.navigate(stage, new DonationDetailUI(getUser(), d));

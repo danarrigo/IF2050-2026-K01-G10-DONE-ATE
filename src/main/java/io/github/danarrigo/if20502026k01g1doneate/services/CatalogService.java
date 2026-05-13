@@ -77,7 +77,9 @@ public class CatalogService {
 
         Dish dish = donation.getDish();
         dish.setName(request.getDishName());
-        dish.setImagePath(request.getImagePath());
+        if (request.getImagePath() != null && !request.getImagePath().isEmpty()) {
+            dish.setImagePath(request.getImagePath());
+        }
         dish.setExpiresIn(Duration.ofMinutes(request.getExpiresInMinutes()));
         dishRepository.save(dish);
 
@@ -106,6 +108,8 @@ public class CatalogService {
 
         if (donation.getDonator() != null) {
             response.setDonatorUsername(donation.getDonator().getUsername());
+            response.setDonatorAddress(donation.getDonator().getAddress());
+            response.setDonatorPhoneNumber(donation.getDonator().getPhoneNumber());
         }
         if (donation.getDish() != null) {
             Dish dish = donation.getDish();

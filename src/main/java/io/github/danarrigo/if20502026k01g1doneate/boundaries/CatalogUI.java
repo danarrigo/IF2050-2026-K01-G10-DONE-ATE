@@ -438,9 +438,11 @@ public class CatalogUI extends UI {
                 String imagePath  = String.valueOf(item.get("imagePath"));
                 String timeCooked = String.valueOf(item.get("timeCooked"));
                 boolean taken     = Boolean.parseBoolean(String.valueOf(item.getOrDefault("taken", false)));
+                String donatorAddr = String.valueOf(item.getOrDefault("donatorAddress", ""));
+                String donatorPhone = String.valueOf(item.getOrDefault("donatorPhoneNumber", ""));
 
                 catalogList.getChildren().add(
-                        buildCatalogCard(stage, donationId, dishName, status, timeAdded, expiresIn, imagePath, timeCooked, taken));
+                        buildCatalogCard(stage, donationId, dishName, status, timeAdded, expiresIn, imagePath, timeCooked, taken, donatorAddr, donatorPhone));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -455,7 +457,7 @@ public class CatalogUI extends UI {
     }
 
     private VBox buildCatalogCard(Stage stage, String donationId, String dishName, String status,
-            String timeAdded, String expiresIn, String imagePath, String timeCooked, boolean taken) {
+            String timeAdded, String expiresIn, String imagePath, String timeCooked, boolean taken, String donatorAddr, String donatorPhone) {
         VBox card = new VBox(0);
         card.setStyle(
                 "-fx-background-color: white;" +
@@ -580,6 +582,8 @@ public class CatalogUI extends UI {
             
             io.github.danarrigo.if20502026k01g1doneate.entities.Donator donator = new io.github.danarrigo.if20502026k01g1doneate.entities.Donator();
             donator.setUsername(resolveUsername());
+            donator.setAddress(donatorAddr);
+            donator.setPhoneNumber(donatorPhone);
             d.setDonator(donator);
 
             Navigator.navigate(stage, new DonationDetailUI(getUser(), d));
