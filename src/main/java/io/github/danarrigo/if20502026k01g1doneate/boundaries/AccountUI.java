@@ -7,6 +7,7 @@ import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -19,10 +20,7 @@ import javafx.util.Duration;
 
 public class AccountUI extends UI {
 
-    private static boolean jfxInitialized = false;
-
     private static final String DARK_GREEN   = "#0F5B21";
-    private static final String LIGHT_GREEN  = "#D2F4D6";
     private static final String TEXT_GRAY    = "#555555";
     private static final String BORDER_COLOR = "#E0E0E0";
     private static final String BG_COLOR     = "#FAFAFA";
@@ -33,26 +31,12 @@ public class AccountUI extends UI {
 
     @Override
     public void showUI() {
-        if (!jfxInitialized) {
-            try {
-                Platform.startup(() -> {});
-                jfxInitialized = true;
-            } catch (IllegalStateException e) {
-                jfxInitialized = true;
-            }
-        }
+        initJFX();
         Platform.runLater(this::createAndShowStage);
     }
 
-    private void createAndShowStage() {
-        Stage stage = new Stage();
-        stage.setTitle("DONE-ATE - Akun Saya");
-        stage.setMaximized(true);
-        showAccountScene(stage);
-        stage.show();
-    }
-
-    private void showAccountScene(Stage stage) {
+    @Override
+    public Parent getSceneContent(Stage stage) {
         SessionManager session = SessionManager.getInstance();
         String username = session.getUsername() != null ? session.getUsername()
                 : (getUser() != null ? getUser().getUsername() : "Pengguna");
@@ -71,17 +55,18 @@ public class AccountUI extends UI {
         HBox.setHgrow(contentScroll, Priority.ALWAYS);
 
         root.getChildren().addAll(sidebar, contentScroll);
-
-        Scene scene = stage.getScene();
-        if (scene == null) {
-            scene = new Scene(root);
-            stage.setScene(scene);
-            stage.setMaximized(true);
-        } else {
-            scene.setRoot(root);
-        }
-
         playAnimation(root);
+        return root;
+    }
+
+    private void createAndShowStage() {
+        Stage stage = new Stage();
+        stage.setTitle("DONE-ATE - Akun Saya");
+        stage.setMaximized(true);
+        Scene scene = new Scene(getSceneContent(stage));
+        stage.setScene(scene);
+        stage.setFullScreen(true);
+        stage.show();
     }
 
     // ─── Sidebar ───────────────────────────────────────────────────────────────

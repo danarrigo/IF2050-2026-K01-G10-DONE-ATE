@@ -1,12 +1,8 @@
 package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
-import io.github.danarrigo.if20502026k01g1doneate.entities.User;
-<<<<<<< HEAD
-import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
-=======
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
-import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
->>>>>>> 108f980b429f56d1f2a1d68fae0ffd6d45e80309
+import io.github.danarrigo.if20502026k01g1doneate.entities.User;
+import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
 import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.geometry.Insets;
@@ -24,7 +20,6 @@ import java.net.http.*;
 import java.nio.charset.StandardCharsets;
 
 public class CatalogUI extends UI {
-
 
     private static final String DARK_GREEN   = "#0F5B21";
     private static final String LIGHT_GREEN  = "#D2F4D6";
@@ -47,73 +42,12 @@ public class CatalogUI extends UI {
         Platform.runLater(this::createAndShowStage);
     }
 
-<<<<<<< HEAD
-    private void createAndShowStage() {
-        String role = SessionManager.getInstance().getRole();
-        if (!"DONATOR".equalsIgnoreCase(role)) {
-            showAccessDenied();
-            return;
-        }
-
-        Stage stage = new Stage();
-        stage.setTitle("DONE-ATE - Katalog Donasi");
-        stage.setMaximized(true);
-        showCatalogScene(stage);
-        stage.show();
-    }
-
-    private void showAccessDenied() {
-        Stage dialog = new Stage();
-        dialog.setTitle("Akses Ditolak");
-
-        VBox content = new VBox(16);
-        content.setPadding(new Insets(40));
-        content.setAlignment(Pos.CENTER);
-        content.setStyle("-fx-background-color: white;");
-        content.setPrefWidth(380);
-
-        Label icon = new Label("🚫");
-        icon.setStyle("-fx-font-size: 48px;");
-
-        Label title = new Label("Akses Ditolak");
-        title.setFont(Font.font("System", FontWeight.BOLD, 22));
-        title.setStyle("-fx-text-fill: #c62828;");
-
-        Label msg = new Label("Halaman ini hanya dapat diakses oleh Donator.");
-        msg.setStyle("-fx-font-size: 14px; -fx-text-fill: #555;");
-        msg.setWrapText(true);
-        msg.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
-
-        Button okBtn = new Button("Kembali ke Login");
-        okBtn.setStyle(
-                "-fx-background-color: " + DARK_GREEN + ";" +
-                "-fx-text-fill: white;" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 8px;" +
-                "-fx-cursor: hand;" +
-                "-fx-padding: 10 24 10 24;"
-        );
-        okBtn.setOnAction(e -> {
-            dialog.close();
-            SessionManager.getInstance().clearSession();
-            new LoginUI().showUI();
-        });
-
-        content.getChildren().addAll(icon, title, msg, okBtn);
-        dialog.setScene(new javafx.scene.Scene(content));
-        dialog.show();
-    }
-
-    private void showCatalogScene(Stage stage) {
-=======
     @Override
     public Parent getSceneContent(Stage stage) {
->>>>>>> 108f980b429f56d1f2a1d68fae0ffd6d45e80309
         VBox root = new VBox(30);
         root.setPadding(new Insets(50, 80, 50, 80));
         root.setStyle("-fx-background-color: " + BG_COLOR + ";");
 
-        // Header
         Label title = new Label("Katalog Donasi Saya");
         title.setFont(Font.font("System", FontWeight.BOLD, 36));
 
@@ -129,11 +63,9 @@ public class CatalogUI extends UI {
 
         VBox header = new VBox(10, title, subtitle, statusLabel);
 
-        // Main layout
         HBox columns = new HBox(40);
         columns.setAlignment(Pos.TOP_LEFT);
 
-        // Left: catalog list
         VBox leftCol = new VBox(16);
         HBox.setHgrow(leftCol, Priority.ALWAYS);
 
@@ -143,7 +75,6 @@ public class CatalogUI extends UI {
         catalogList = new VBox(12);
         leftCol.getChildren().addAll(listTitle, catalogList);
 
-        // Right: actions panel
         VBox rightCol = new VBox(20);
         rightCol.setPrefWidth(380);
 
@@ -194,19 +125,67 @@ public class CatalogUI extends UI {
 
         playAnimation(root);
         loadCatalog(username);
-        
+
         return scroll;
     }
 
     private void createAndShowStage() {
+        String role = SessionManager.getInstance().getRole();
+        if (!"DONATOR".equalsIgnoreCase(role)) {
+            showAccessDenied();
+            return;
+        }
+
         Stage stage = new Stage();
         stage.setTitle("DONE-ATE - Katalog Donasi");
         stage.setMaximized(true);
-        
+
         Scene scene = new Scene(getSceneContent(stage));
         stage.setScene(scene);
         stage.setFullScreen(true);
         stage.show();
+    }
+
+    private void showAccessDenied() {
+        Stage dialog = new Stage();
+        dialog.setTitle("Akses Ditolak");
+
+        VBox content = new VBox(16);
+        content.setPadding(new Insets(40));
+        content.setAlignment(Pos.CENTER);
+        content.setStyle("-fx-background-color: white;");
+        content.setPrefWidth(380);
+
+        Label icon = new Label("🚫");
+        icon.setStyle("-fx-font-size: 48px;");
+
+        Label title = new Label("Akses Ditolak");
+        title.setFont(Font.font("System", FontWeight.BOLD, 22));
+        title.setStyle("-fx-text-fill: #c62828;");
+
+        Label msg = new Label("Halaman ini hanya dapat diakses oleh Donator.");
+        msg.setStyle("-fx-font-size: 14px; -fx-text-fill: #555;");
+        msg.setWrapText(true);
+        msg.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+
+        Button okBtn = new Button("Kembali ke Login");
+        okBtn.setStyle(
+                "-fx-background-color: " + DARK_GREEN + ";" +
+                "-fx-text-fill: white;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 8px;" +
+                "-fx-cursor: hand;" +
+                "-fx-padding: 10 24 10 24;"
+        );
+        okBtn.setOnAction(e -> {
+            dialog.close();
+            SessionManager.getInstance().clearSession();
+            new LoginUI().showUI();
+        });
+
+        content.getChildren().addAll(icon, title, msg, okBtn);
+        dialog.setScene(new javafx.scene.Scene(content));
+        dialog.show();
     }
 
     // ─── Load catalog from API ─────────────────────────────────────────────────
@@ -238,7 +217,6 @@ public class CatalogUI extends UI {
     }
 
     private void parseAndRenderCatalog(String json) {
-        // Minimal JSON parsing — split by donationId entries
         if (json.equals("[]") || json.isEmpty()) {
             Label empty = new Label("Belum ada donasi dalam katalog Anda.");
             empty.setTextFill(Color.web(TEXT_GRAY));
@@ -298,7 +276,6 @@ public class CatalogUI extends UI {
         Label takenLabel = new Label(taken ? "● Sudah diklaim" : "● Belum diklaim");
         takenLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: " + (taken ? "#1a7a1a" : TEXT_GRAY) + ";");
 
-        // Action buttons
         HBox actions = new HBox(10);
         actions.setAlignment(Pos.CENTER_LEFT);
 
@@ -377,9 +354,9 @@ public class CatalogUI extends UI {
         saveBtn.setPrefWidth(Double.MAX_VALUE);
         saveBtn.setPrefHeight(46);
         saveBtn.setOnAction(e -> {
-            String name        = nameField.getText().trim();
-            String expires     = expiresField.getText().trim();
-            String timeCooked  = timeCookedField.getText().trim();
+            String name       = nameField.getText().trim();
+            String expires    = expiresField.getText().trim();
+            String timeCooked = timeCookedField.getText().trim();
 
             if (name.isEmpty() || expires.isEmpty() || timeCooked.isEmpty()) {
                 showStatus("Harap isi semua field.", true);
@@ -427,8 +404,7 @@ public class CatalogUI extends UI {
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
                         showStatus("Donasi berhasil dihapus dari katalog.", false);
-                        String username = resolveUsername();
-                        loadCatalog(username);
+                        loadCatalog(resolveUsername());
                     } else {
                         showStatus("Gagal menghapus donasi.", true);
                     }
@@ -455,8 +431,7 @@ public class CatalogUI extends UI {
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
                         showStatus("Donasi berhasil diperbarui.", false);
-                        String username = resolveUsername();
-                        loadCatalog(username);
+                        loadCatalog(resolveUsername());
                     } else {
                         showStatus("Gagal memperbarui donasi.", true);
                     }
@@ -524,7 +499,6 @@ public class CatalogUI extends UI {
     }
 
     public static void main(String[] args) {
-        CatalogUI ui = new CatalogUI(null);
-        ui.showUI();
+        new CatalogUI(null).showUI();
     }
 }

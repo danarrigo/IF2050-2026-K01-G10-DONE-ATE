@@ -377,7 +377,7 @@ public class LoginUI extends UI {
                     Donator donator = new Donator();
                     donator.setUsername(username);
                     
-                    Navigator.navigate(currentStage, new CatalogUI(donator));
+                    Navigator.navigate(currentStage, new DonatorHomeUI(donator));
                 });
             } else if ("RECIPIENT".equals(role)) {
                 Platform.runLater(() -> {

@@ -5,6 +5,7 @@ import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
 import javafx.animation.FadeTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
+import javafx.scene.Parent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -28,8 +29,6 @@ import java.util.*;
 
 public class RecipientCatalogUI extends UI {
 
-    private static boolean jfxInitialized = false;
-
     private static final String DARK_GREEN   = "#0F5B21";
     private static final String LIGHT_GREEN  = "#D2F4D6";
     private static final String TEXT_GRAY    = "#666666";
@@ -47,32 +46,17 @@ public class RecipientCatalogUI extends UI {
 
     @Override
     public void showUI() {
-        if (!jfxInitialized) {
-            try {
-                Platform.startup(() -> {});
-                jfxInitialized = true;
-            } catch (IllegalStateException e) {
-                jfxInitialized = true;
-            }
-        }
+        initJFX();
         Platform.runLater(this::createAndShowStage);
     }
 
-    private void createAndShowStage() {
-        Stage stage = new Stage();
-        stage.setTitle("DONE-ATE - Katalog Donasi");
-        stage.setMaximized(true);
-        showScene(stage);
-        stage.show();
-    }
-
-    private void showScene(Stage stage) {
+    @Override
+    public Parent getSceneContent(Stage stage) {
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: " + BG_COLOR + ";");
 
         root.setTop(buildNavbar(stage));
 
-        // Center: scrollable content with header + filters + list
         catalogList = new VBox(12);
         catalogList.setPadding(new Insets(0, 0, 24, 0));
 
@@ -80,7 +64,6 @@ public class RecipientCatalogUI extends UI {
         centerContent.setStyle("-fx-background-color: " + BG_COLOR + ";");
         centerContent.getChildren().addAll(buildPageHeader(), buildFilterBar());
 
-        // Wrap catalogList in a centered column for readability
         VBox listWrapper = new VBox(catalogList);
         listWrapper.setPadding(new Insets(16, 24, 24, 24));
         listWrapper.setMaxWidth(960);
@@ -97,17 +80,19 @@ public class RecipientCatalogUI extends UI {
         root.setCenter(scroll);
         root.setBottom(buildBottomNav(stage));
 
-        Scene scene = stage.getScene();
-        if (scene == null) {
-            scene = new Scene(root);
-            stage.setScene(scene);
-            stage.setMaximized(true);
-        } else {
-            scene.setRoot(root);
-        }
-
         playAnimation(centerContent);
         loadCatalog();
+        return root;
+    }
+
+    private void createAndShowStage() {
+        Stage stage = new Stage();
+        stage.setTitle("DONE-ATE - Katalog Donasi");
+        stage.setMaximized(true);
+        Scene scene = new Scene(getSceneContent(stage));
+        stage.setScene(scene);
+        stage.setFullScreen(true);
+        stage.show();
     }
 
     // ─── Top Navbar ────────────────────────────────────────────────────────────
