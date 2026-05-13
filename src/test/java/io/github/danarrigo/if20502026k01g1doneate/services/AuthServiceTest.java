@@ -15,6 +15,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import io.github.danarrigo.if20502026k01g1doneate.security.JwtUtils;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalTime;
 import java.util.Map;
@@ -22,6 +24,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,6 +32,12 @@ class AuthServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private JwtUtils jwtUtils;
 
     @InjectMocks
     private AuthService authService;
@@ -52,16 +61,20 @@ class AuthServiceTest {
     @Test
     void testLoginSuccess() {
         when(userRepository.findByUsername("donator1")).thenReturn(Optional.of(donator));
+        when(passwordEncoder.matches("password123", "password123")).thenReturn(true);
+        when(jwtUtils.generateToken("donator1")).thenReturn("mock-token");
 
         Map<String, String> result = authService.login(loginRequest);
 
         assertEquals("donator1", result.get("username"));
         assertEquals("DONATOR", result.get("role"));
+        assertEquals("mock-token", result.get("token"));
     }
 
     @Test
     void testLoginInvalidPassword() {
         when(userRepository.findByUsername("donator1")).thenReturn(Optional.of(donator));
+        when(passwordEncoder.matches("wrong-password", "password123")).thenReturn(false);
 
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> authService.login(new LoginRequest("donator1", "wrong-password")));
@@ -84,12 +97,15 @@ class AuthServiceTest {
         DonatorRegistrationRequest request = createDonatorRequest("newdonator");
 
         when(userRepository.existsByUsername("newdonator")).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("encodedPass");
+        when(jwtUtils.generateToken("newdonator")).thenReturn("mock-token");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Map<String, String> result = authService.registerDonator(request);
 
         assertEquals("newdonator", result.get("username"));
         assertEquals("DONATOR", result.get("role"));
+        assertEquals("mock-token", result.get("token"));
         verify(userRepository, times(1)).save(any(Donator.class));
     }
 
@@ -111,12 +127,15 @@ class AuthServiceTest {
         RecipientRegistrationRequest request = createRecipientRequest("newrecipient");
 
         when(userRepository.existsByUsername("newrecipient")).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("encodedPass");
+        when(jwtUtils.generateToken("newrecipient")).thenReturn("mock-token");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Map<String, String> result = authService.registerRecipient(request);
 
         assertEquals("newrecipient", result.get("username"));
         assertEquals("RECIPIENT", result.get("role"));
+        assertEquals("mock-token", result.get("token"));
         verify(userRepository, times(1)).save(any(Recipient.class));
     }
 

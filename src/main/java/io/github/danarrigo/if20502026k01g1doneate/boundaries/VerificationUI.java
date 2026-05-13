@@ -1,9 +1,12 @@
 package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
-import io.github.danarrigo.if20502026k01g1doneate.dtos.TransactionCreateRequest;
-import io.github.danarrigo.if20502026k01g1doneate.services.TransactionService;
+import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
+import io.github.danarrigo.if20502026k01g1doneate.entities.User;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -12,20 +15,53 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
-public class VerificationUI extends BorderPane {
+import javafx.stage.Stage;
 
-    // UI Elements that need to be accessed by methods
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
+public class VerificationUI extends UI {
+
     private TextField[] pinFields = new TextField[6];
     private HBox successBox;
     private Button btnKonfirmasi;
+    private static boolean jfxInitialized = false;
+    private Stage stage;
 
-    // Constructor
-    public VerificationUI() {
-        this.setStyle("-fx-background-color: #F9FAFB;");
-        initializeUI();
+    public VerificationUI(User user) {
+        super(user);
     }
 
-    private void initializeUI() {
+    @Override
+    public void showUI() {
+        if (!jfxInitialized) {
+            try {
+                Platform.startup(() -> {});
+                jfxInitialized = true;
+            } catch (IllegalStateException e) {
+                jfxInitialized = true;
+            }
+        }
+        Platform.runLater(() -> start(new Stage()));
+    }
+
+    public void start(Stage stage) {
+        this.stage = stage;
+        stage.setTitle("DONE-ATE - Verifikasi");
+        Scene scene = new Scene(createContent(stage), 1920, 1080);
+        stage.setScene(scene);
+        stage.setFullScreen(true);
+        stage.setFullScreenExitHint("");
+        stage.show();
+    }
+
+    public Parent createContent(Stage stage) {
+        this.stage = stage;
+        BorderPane root = new BorderPane();
+        root.setStyle("-fx-background-color: #F9FAFB;");
+
         // --- TOP HEADER ---
         HBox header = new HBox();
         header.setStyle("-fx-background-color: white; -fx-border-color: #60A5FA; -fx-border-width: 0 0 4 0;");
@@ -35,7 +71,7 @@ public class VerificationUI extends BorderPane {
         Label logoLabel = new Label("DONE-ATE");
         logoLabel.setStyle("-fx-text-fill: #16A34A; -fx-font-weight: bold; -fx-font-size: 20px;");
         header.getChildren().add(logoLabel);
-        this.setTop(header);
+        root.setTop(header);
 
         // --- MAIN CONTENT CONTAINER ---
         HBox mainContent = new HBox(25);
@@ -79,7 +115,6 @@ public class VerificationUI extends BorderPane {
         locationTimeBox.getChildren().addAll(locLabel, timeLabel);
 
         leftCol.getChildren().addAll(leftTitle, imageBox, tagsBox, foodName, donatorName, locationTimeBox);
-
 
         // --- RIGHT COLUMN ---
         VBox rightCol = new VBox(20);
@@ -136,7 +171,6 @@ public class VerificationUI extends BorderPane {
 
         verifikasiCard.getChildren().addAll(rightTitle, descText, pinLabel, pinBox, successBox, btnKonfirmasi, resendBox);
 
-
         // 2. Panduan Keamanan Card
         VBox panduanCard = new VBox(10);
         panduanCard.setStyle("-fx-background-color: #F3F4F6; -fx-border-color: #166534; -fx-border-width: 0 0 0 4; -fx-background-radius: 0 8 8 0;");
@@ -159,10 +193,10 @@ public class VerificationUI extends BorderPane {
 
         // Add both columns to main content
         mainContent.getChildren().addAll(leftCol, rightCol);
-        this.setCenter(mainContent);
+        root.setCenter(mainContent);
+        
+        return root;
     }
-
-    // --- LOGIC METHODS ---
 
     private void setupPinLogic() {
         for (int i = 0; i < 6; i++) {
@@ -212,34 +246,35 @@ public class VerificationUI extends BorderPane {
             btnKonfirmasi.setDisable(true);
             btnKonfirmasi.setText("Memverifikasi...");
             
-            java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
+            String token = SessionManager.getInstance().getToken();
+            HttpClient client = HttpClient.newHttpClient();
             String jsonPayload = "{\"inputCode\":" + transactionCode + "}";
 
-            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create("http://localhost:8080/api/claims/verify"))
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:8080/api/claims/verify"))
                     .header("Content-Type", "application/json")
-                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(jsonPayload))
+                    .header("Authorization", "Bearer " + token)
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                     .build();
 
-            client.sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString())
+            client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenAccept(response -> {
-                    javafx.application.Platform.runLater(() -> {
+                    Platform.runLater(() -> {
                         btnKonfirmasi.setDisable(false);
                         btnKonfirmasi.setText("Konfirmasi Terima");
                         
                         if (response.statusCode() == 200) {
                             // Show Success UI
-                            VerificationSuccessUI successUI = new VerificationSuccessUI();
-                            javafx.scene.Scene scene = new javafx.scene.Scene(successUI, 900, 600);
-                            javafx.stage.Stage stage = (javafx.stage.Stage) this.getScene().getWindow();
-                            stage.setScene(scene);
+                            VerificationSuccessUI successUI = new VerificationSuccessUI(getUser());
+                            stage.getScene().setRoot(successUI.createContent(stage));
+                            stage.setFullScreen(true);
                         } else {
                             showAlert(Alert.AlertType.ERROR, "Error", response.body()); 
                         }
                     });
                 })
                 .exceptionally(ex -> {
-                    javafx.application.Platform.runLater(() -> {
+                    Platform.runLater(() -> {
                         btnKonfirmasi.setDisable(false);
                         btnKonfirmasi.setText("Konfirmasi Terima");
                         showAlert(Alert.AlertType.ERROR, "Error System", "Gagal menghubungi server: " + ex.getMessage());
@@ -258,5 +293,9 @@ public class VerificationUI extends BorderPane {
         alert.setHeaderText(null);
         alert.setContentText(content);
         alert.showAndWait();
+    }
+
+    public static void main(String[] args) {
+        new VerificationUI(null).showUI();
     }
 }

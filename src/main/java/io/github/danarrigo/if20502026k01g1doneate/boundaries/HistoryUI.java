@@ -1,5 +1,6 @@
 package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
+import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 import javafx.application.Platform;
@@ -69,6 +70,8 @@ public class HistoryUI extends UI {
     private void createAndShowStage() {
         stage = new Stage();
         stage.setTitle("DONE-ATE - Riwayat Donasi");
+        stage.setFullScreen(true);
+        stage.setFullScreenExitHint("");
 
         VBox root = new VBox();
         root.setStyle("-fx-background-color: " + BG_COLOR + ";");
@@ -310,9 +313,11 @@ public class HistoryUI extends UI {
         // Convert UUID ke String untuk URL
         String url = "http://localhost:8080/api/reports/download/" + donatorId.toString();
 
+        String token = SessionManager.getInstance().getToken();
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
+                .header("Authorization", "Bearer " + token)
                 .GET()
                 .build();
 
@@ -340,6 +345,8 @@ public class HistoryUI extends UI {
                                         "Gagal menyimpan file: " + e.getMessage());
                                 }
                             }
+                        } else if (response.statusCode() == 401 || response.statusCode() == 403) {
+                            showAlert(Alert.AlertType.ERROR, "Gagal", "Sesi berakhir atau tidak memiliki izin.");
                         } else if (response.statusCode() == 404) {
                             showAlert(Alert.AlertType.ERROR, "Gagal", "Donatur tidak ditemukan.");
                         } else {
