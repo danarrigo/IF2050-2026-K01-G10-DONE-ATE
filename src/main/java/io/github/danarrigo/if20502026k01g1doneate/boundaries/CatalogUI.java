@@ -1,6 +1,7 @@
 package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
+import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -49,11 +50,59 @@ public class CatalogUI extends UI {
     }
 
     private void createAndShowStage() {
+        String role = SessionManager.getInstance().getRole();
+        if (!"DONATOR".equalsIgnoreCase(role)) {
+            showAccessDenied();
+            return;
+        }
+
         Stage stage = new Stage();
         stage.setTitle("DONE-ATE - Katalog Donasi");
         stage.setMaximized(true);
         showCatalogScene(stage);
         stage.show();
+    }
+
+    private void showAccessDenied() {
+        Stage dialog = new Stage();
+        dialog.setTitle("Akses Ditolak");
+
+        VBox content = new VBox(16);
+        content.setPadding(new Insets(40));
+        content.setAlignment(Pos.CENTER);
+        content.setStyle("-fx-background-color: white;");
+        content.setPrefWidth(380);
+
+        Label icon = new Label("🚫");
+        icon.setStyle("-fx-font-size: 48px;");
+
+        Label title = new Label("Akses Ditolak");
+        title.setFont(Font.font("System", FontWeight.BOLD, 22));
+        title.setStyle("-fx-text-fill: #c62828;");
+
+        Label msg = new Label("Halaman ini hanya dapat diakses oleh Donator.");
+        msg.setStyle("-fx-font-size: 14px; -fx-text-fill: #555;");
+        msg.setWrapText(true);
+        msg.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+
+        Button okBtn = new Button("Kembali ke Login");
+        okBtn.setStyle(
+                "-fx-background-color: " + DARK_GREEN + ";" +
+                "-fx-text-fill: white;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 8px;" +
+                "-fx-cursor: hand;" +
+                "-fx-padding: 10 24 10 24;"
+        );
+        okBtn.setOnAction(e -> {
+            dialog.close();
+            SessionManager.getInstance().clearSession();
+            new LoginUI().showUI();
+        });
+
+        content.getChildren().addAll(icon, title, msg, okBtn);
+        dialog.setScene(new javafx.scene.Scene(content));
+        dialog.show();
     }
 
     private void showCatalogScene(Stage stage) {
@@ -65,7 +114,7 @@ public class CatalogUI extends UI {
         Label title = new Label("Katalog Donasi Saya");
         title.setFont(Font.font("System", FontWeight.BOLD, 36));
 
-        String username = getUser() != null ? getUser().getUsername() : "-";
+        String username = resolveUsername().isEmpty() ? "-" : resolveUsername();
         Label subtitle = new Label("Kelola daftar donasi yang telah Anda posting sebagai " + username + ".");
         subtitle.setTextFill(Color.web(TEXT_GRAY));
         subtitle.setFont(Font.font("System", 16));
@@ -368,7 +417,7 @@ public class CatalogUI extends UI {
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
                         showStatus("Donasi berhasil dihapus dari katalog.", false);
-                        String username = getUser() != null ? getUser().getUsername() : "";
+                        String username = resolveUsername();
                         loadCatalog(username);
                     } else {
                         showStatus("Gagal menghapus donasi.", true);
@@ -396,7 +445,7 @@ public class CatalogUI extends UI {
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
                         showStatus("Donasi berhasil diperbarui.", false);
-                        String username = getUser() != null ? getUser().getUsername() : "";
+                        String username = resolveUsername();
                         loadCatalog(username);
                     } else {
                         showStatus("Gagal memperbarui donasi.", true);
@@ -410,6 +459,12 @@ public class CatalogUI extends UI {
     }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
+
+    private String resolveUsername() {
+        if (getUser() != null && getUser().getUsername() != null) return getUser().getUsername();
+        String s = SessionManager.getInstance().getUsername();
+        return s != null ? s : "";
+    }
 
     private void showStatus(String msg, boolean isError) {
         statusLabel.setText(msg);
