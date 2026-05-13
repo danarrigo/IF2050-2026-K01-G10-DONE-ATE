@@ -221,6 +221,13 @@ public class DonationDetailUI extends UI {
             claimBtn.setOnAction(e -> handleClaim(stage));
             actions.getChildren().add(claimBtn);
         } else if (isUserDonatorOfThis()) {
+            if (donation.isTaken()) {
+                Button showCodeBtn = new Button("Tampilkan Kode Verifikasi");
+                showCodeBtn.setStyle("-fx-background-color: #E8F5E9; -fx-text-fill: " + DARK_GREEN + "; -fx-font-weight: bold; -fx-font-size: 16; -fx-background-radius: 12; -fx-cursor: hand; -fx-padding: 12 30; -fx-border-color: " + DARK_GREEN + "; -fx-border-radius: 12;");
+                showCodeBtn.setOnAction(e -> handleShowCode(showCodeBtn));
+                actions.getChildren().add(showCodeBtn);
+            }
+
             Button editBtn = new Button("Edit Donasi");
             editBtn.setStyle("-fx-background-color: " + DARK_GREEN + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16; -fx-background-radius: 12; -fx-cursor: hand; -fx-padding: 12 30;");
             editBtn.setOnAction(e -> {
@@ -360,6 +367,48 @@ public class DonationDetailUI extends UI {
                 }).start();
             }
         });
+    }
+
+    private void handleShowCode(Button btn) {
+        btn.setText("Memuat...");
+        new Thread(() -> {
+            try {
+                String token = SessionManager.getInstance().getToken();
+                HttpClient client = HttpClient.newHttpClient();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(BASE_URL + "/api/transactions/donation/" + donation.getDonationId()))
+                        .header("Authorization", "Bearer " + token)
+                        .GET()
+                        .build();
+
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                Platform.runLater(() -> {
+                    if (response.statusCode() == 200) {
+                        try {
+                            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                            com.fasterxml.jackson.databind.JsonNode node = mapper.readTree(response.body());
+                            String code = node.get("transactionCode").asText();
+                            
+                            btn.setText("Kode: " + code);
+                            btn.setStyle("-fx-background-color: " + DARK_GREEN + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 18; -fx-background-radius: 12; -fx-padding: 10 30;");
+                            btn.setDisable(true);
+                        } catch (Exception e) {
+                            btn.setText("Tampilkan Kode Verifikasi");
+                            showStatus("Gagal membaca kode transaksi.", true);
+                        }
+                    } else {
+                        btn.setText("Tampilkan Kode Verifikasi");
+                        showStatus("Belum ada kode verifikasi.", true);
+                    }
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    btn.setText("Tampilkan Kode Verifikasi");
+                    showStatus("Terjadi kesalahan koneksi.", true);
+                });
+            }
+        }).start();
     }
 
     private void handleClaim(Stage stage) {
