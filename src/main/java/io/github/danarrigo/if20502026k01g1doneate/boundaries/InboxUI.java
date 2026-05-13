@@ -1,5 +1,6 @@
 package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
+import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -138,11 +139,16 @@ public class InboxUI extends UI {
 
         CompletableFuture.runAsync(() -> {
             try {
+                String token = SessionManager.getInstance().getToken();
                 HttpClient client = HttpClient.newHttpClient();
                 String url = String.format("http://localhost:8080/api/notifications/user/%s?filter=%s&page=%d&size=%d",
                         getUser().getUsername(), currentFilter, currentPage, PAGE_SIZE);
 
-                HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .header("Authorization", "Bearer " + token)
+                        .GET()
+                        .build();
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
                 if (response.statusCode() == 200) {
@@ -237,10 +243,12 @@ public class InboxUI extends UI {
     private void markAsReadInBackend(java.util.UUID notificationId) {
         CompletableFuture.runAsync(() -> {
             try {
+                String token = SessionManager.getInstance().getToken();
                 HttpClient client = HttpClient.newHttpClient();
                 String url = "http://localhost:8080/api/notifications/" + notificationId + "/read";
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(url))
+                        .header("Authorization", "Bearer " + token)
                         .PUT(HttpRequest.BodyPublishers.noBody())
                         .build();
                 client.send(request, HttpResponse.BodyHandlers.ofString());

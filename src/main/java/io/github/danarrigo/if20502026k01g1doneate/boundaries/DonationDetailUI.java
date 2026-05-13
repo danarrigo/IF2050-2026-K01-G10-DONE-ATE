@@ -5,6 +5,7 @@ import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Dish;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
+import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -334,11 +335,13 @@ public class DonationDetailUI extends UI {
             return;
         }
 
+        String token = SessionManager.getInstance().getToken();
         UUID donationId = donation.getDonationId();
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/api/donations/" + donationId + "/remove"))
                 .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + token)
                 .method("PATCH", HttpRequest.BodyPublishers.noBody())
                 .build();
 

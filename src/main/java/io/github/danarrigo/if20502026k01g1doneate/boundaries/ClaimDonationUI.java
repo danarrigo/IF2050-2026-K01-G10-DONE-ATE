@@ -1,5 +1,6 @@
 package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
+import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -196,12 +197,14 @@ public class ClaimDonationUI extends UI {
 
     private void processClaim(String donationId, String recipientUsername) {
         try {
+            String token = SessionManager.getInstance().getToken();
             HttpClient client = HttpClient.newHttpClient();
             String jsonPayload = String.format("{\"donationId\":\"%s\", \"recipientUsername\":\"%s\"}", donationId, recipientUsername);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create("http://localhost:8080/api/claims"))
                     .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + token)
                     .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                     .build();
 
@@ -219,10 +222,12 @@ public class ClaimDonationUI extends UI {
 
     private void processCancel(int transactionCode) {
         try {
+            String token = SessionManager.getInstance().getToken();
             HttpClient client = HttpClient.newHttpClient();
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create("http://localhost:8080/api/claims/cancel/" + transactionCode))
+                    .header("Authorization", "Bearer " + token)
                     .DELETE()
                     .build();
 

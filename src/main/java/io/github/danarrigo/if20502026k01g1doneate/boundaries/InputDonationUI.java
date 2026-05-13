@@ -1,5 +1,6 @@
 package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
+import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
 import io.github.danarrigo.if20502026k01g1doneate.dtos.QCFormData;
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 import javafx.application.Platform;
@@ -248,7 +249,7 @@ public class InputDonationUI extends UI {
 
         CheckBox[] checkBoxes = new CheckBox[10];
         String[] descriptions = {
-                "Apakah hidangan berbau segar dan normal?",
+                "Apakah hidangan berbau segar and normal?",
                 "Apakah makanan bebas dari tanda-tanda basi atau rusak?",
                 "Apakah hidangan dimasak/disiapkan dengan benar?",
                 "Apakah ada bahan kedaluwarsa yang digunakan? (Pilih jika ADA - akan menggagalkan QC)",
@@ -344,6 +345,9 @@ public class InputDonationUI extends UI {
                 errorBox.setVisible(false);
 
                 try {
+                    String token = SessionManager.getInstance().getToken();
+                    if (token == null) throw new RuntimeException("Sesi berakhir. Harap login kembali.");
+
                     java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
 
                     String safeImagePath = imagePath.replace("\\", "\\\\").replace("\"", "\\\"");
@@ -355,6 +359,7 @@ public class InputDonationUI extends UI {
                     java.net.http.HttpRequest dishReq = java.net.http.HttpRequest.newBuilder()
                             .uri(java.net.URI.create("http://localhost:8080/api/dishes"))
                             .header("Content-Type", "application/json")
+                            .header("Authorization", "Bearer " + token)
                             .POST(java.net.http.HttpRequest.BodyPublishers.ofString(dishJson))
                             .build();
                     java.net.http.HttpResponse<String> dishRes = client.send(dishReq,
@@ -387,6 +392,7 @@ public class InputDonationUI extends UI {
                     java.net.http.HttpRequest donReq = java.net.http.HttpRequest.newBuilder()
                             .uri(java.net.URI.create("http://localhost:8080/api/donations"))
                             .header("Content-Type", "application/json")
+                            .header("Authorization", "Bearer " + token)
                             .POST(java.net.http.HttpRequest.BodyPublishers.ofString(donationJson))
                             .build();
                     java.net.http.HttpResponse<String> donRes = client.send(donReq,
@@ -410,6 +416,7 @@ public class InputDonationUI extends UI {
                     java.net.http.HttpRequest qcReq = java.net.http.HttpRequest.newBuilder()
                             .uri(java.net.URI.create("http://localhost:8080/api/dishes/submit-qc-form"))
                             .header("Content-Type", "application/json")
+                            .header("Authorization", "Bearer " + token)
                             .POST(java.net.http.HttpRequest.BodyPublishers.ofString(qcJson))
                             .build();
                     java.net.http.HttpResponse<String> qcRes = client.send(qcReq,
