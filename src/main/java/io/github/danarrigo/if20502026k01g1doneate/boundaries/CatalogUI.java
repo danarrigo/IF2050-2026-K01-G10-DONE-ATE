@@ -92,10 +92,7 @@ public class CatalogUI extends UI {
         );
         addBtn.setPrefWidth(Double.MAX_VALUE);
         addBtn.setPrefHeight(52);
-        addBtn.setOnAction(e -> {
-            InputDonationUI inputUI = new InputDonationUI(getUser());
-            inputUI.showUI();
-        });
+        addBtn.setOnAction(e -> Navigator.navigate(stage, new InputDonationUI(getUser())));
 
         VBox infoBox = new VBox(10);
         infoBox.setPadding(new Insets(20));
