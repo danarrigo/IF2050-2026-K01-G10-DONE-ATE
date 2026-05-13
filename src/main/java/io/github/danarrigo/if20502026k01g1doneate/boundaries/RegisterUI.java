@@ -15,16 +15,21 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
+import javafx.animation.FadeTransition;
+import javafx.util.Duration;
+import javafx.scene.Parent;
 
 import java.net.URI;
 import java.net.http.*;
 import java.nio.charset.StandardCharsets;
 
-public class RegisterUI extends Application {
+public class RegisterUI extends UI {
 
     private static final String BASE_URL   = "http://localhost:8080";
     private static final String GREEN_DARK = "#2a5f2a";
     // private static final String GREEN_LIGHT = "#1a4d1a";
+
+    private static boolean jfxInitialized = false;
 
     private TextField     usernameField;
     private PasswordField passwordField;
@@ -45,17 +50,66 @@ public class RegisterUI extends Application {
     private Button  registerButton;
     private boolean isDonator = true;
 
-    @Override
-    public void start(Stage stage) {
-        HBox root = new HBox();
-        root.setPrefSize(1920, 1080);
-        root.getChildren().addAll(buildLeftPanel(), buildRightPanel(stage));
+    public RegisterUI() {
+        super(null);
+    }
 
-        Scene scene = new Scene(root, 1920, 1080);
+    @Override
+    public void showUI() {
+        if (!jfxInitialized) {
+            try {
+                Platform.startup(() -> {
+                });
+                jfxInitialized = true;
+            } catch (IllegalStateException e) {
+                jfxInitialized = true;
+            }
+        }
+        Platform.runLater(() -> start(new Stage()));
+    }
+
+    public void start(Stage stage) {
+        Scene scene = new Scene(new Pane(), 1920, 1080); // Placeholder
         stage.setTitle("DONE-ATE — Daftar");
         stage.setScene(scene);
         stage.setResizable(false);
+        stage.setFullScreen(true);
+        stage.setFullScreenExitHint("");
         stage.show();
+
+        showWithAnimation(stage, createContent(stage));
+    }
+
+    public Parent createContent(Stage stage) {
+        HBox root = new HBox();
+        root.setPrefSize(1920, 1080);
+        root.getChildren().addAll(buildLeftPanel(), buildRightPanel(stage));
+        return root;
+    }
+
+    private void showWithAnimation(Stage stage, Parent newRoot) {
+        Parent oldRoot = stage.getScene().getRoot();
+        if (oldRoot != null && oldRoot instanceof Pane && !((Pane) oldRoot).getChildren().isEmpty()) {
+            FadeTransition out = new FadeTransition(Duration.millis(300), oldRoot);
+            out.setFromValue(1.0);
+            out.setToValue(0.0);
+            out.setOnFinished(e -> {
+                stage.getScene().setRoot(newRoot);
+                newRoot.setOpacity(0);
+                FadeTransition in = new FadeTransition(Duration.millis(300), newRoot);
+                in.setFromValue(0.0);
+                in.setToValue(1.0);
+                in.play();
+            });
+            out.play();
+        } else {
+            stage.getScene().setRoot(newRoot);
+            newRoot.setOpacity(0);
+            FadeTransition in = new FadeTransition(Duration.millis(300), newRoot);
+            in.setFromValue(0.0);
+            in.setToValue(1.0);
+            in.play();
+        }
     }
 
     // ─── Left Panel (Branding) ─────────────────────────────────────────────────
@@ -418,9 +472,8 @@ public class RegisterUI extends Application {
                 "-fx-font-weight: bold; -fx-border-color: transparent; -fx-padding: 0;"
         );
         loginLink.setOnAction(e -> {
-            stage.close();
-            Stage loginStage = new Stage();
-            new LoginUI().start(loginStage);
+            LoginUI loginUI = new LoginUI();
+            showWithAnimation(stage, loginUI.createContent(stage));
         });
 
         footer.getChildren().addAll(text, loginLink);
@@ -520,8 +573,8 @@ public class RegisterUI extends Application {
             try { Thread.sleep(1500); } catch (InterruptedException ignored) {}
             Platform.runLater(() -> {
                 Stage currentStage = (Stage) registerButton.getScene().getWindow();
-                currentStage.close();
-                new LoginUI().start(new Stage());
+                LoginUI loginUI = new LoginUI();
+                showWithAnimation(currentStage, loginUI.createContent(currentStage));
             });
         }).start();
     }
@@ -555,6 +608,6 @@ public class RegisterUI extends Application {
     }
 
     public static void main(String[] args) {
-        launch(args);
+        new RegisterUI().showUI();
     }
 }

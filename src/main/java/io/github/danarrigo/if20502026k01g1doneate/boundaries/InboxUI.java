@@ -7,6 +7,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import io.github.danarrigo.if20502026k01g1doneate.entities.Notification;
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
+import io.github.danarrigo.if20502026k01g1doneate.enums.NotificationType;
 
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -73,14 +74,15 @@ public class InboxUI extends UI {
         setupFilterButtons();
 
         notificationListContainer = new VBox(15);
-        
+
         lblEmptyInbox = new Label("Belum ada notifikasi saat ini.");
         lblEmptyInbox.setStyle("-fx-font-style: italic; -fx-text-fill: #999999;");
         lblEmptyInbox.setVisible(false);
         lblEmptyInbox.setManaged(false);
 
         btnLoadMore = new Button("Lihat Selengkapnya");
-        btnLoadMore.setStyle("-fx-background-color: transparent; -fx-text-fill: #1B5E20; -fx-font-weight: bold; -fx-cursor: hand;");
+        btnLoadMore.setStyle(
+                "-fx-background-color: transparent; -fx-text-fill: #1B5E20; -fx-font-weight: bold; -fx-cursor: hand;");
         btnLoadMore.setVisible(false);
         btnLoadMore.setManaged(false);
         btnLoadMore.setOnAction(e -> {
@@ -106,7 +108,7 @@ public class InboxUI extends UI {
 
     private void setupFilterButtons() {
         filterBox.getChildren().clear();
-        
+
         Button btnSemua = createFilterButton("Semua", currentFilter.equals("ALL"));
         Button btnBelumDibaca = createFilterButton("Belum Dibaca", currentFilter.equals("UNREAD"));
         Button btnDonasi = createFilterButton("Donasi", currentFilter.equals("DONASI"));
@@ -148,12 +150,14 @@ public class InboxUI extends UI {
                 if (response.statusCode() == 200) {
                     ObjectMapper mapper = new ObjectMapper();
                     mapper.registerModule(new JavaTimeModule());
-                    
+
                     JsonNode rootNode = mapper.readTree(response.body());
                     JsonNode contentNode = rootNode.get("content");
                     boolean isLast = rootNode.get("last").asBoolean();
 
-                    List<Notification> fetchedItems = mapper.convertValue(contentNode, new TypeReference<List<Notification>>() {});
+                    List<Notification> fetchedItems = mapper.convertValue(contentNode,
+                            new TypeReference<List<Notification>>() {
+                            });
 
                     Platform.runLater(() -> {
                         if (currentPage == 0 && fetchedItems.isEmpty()) {
@@ -196,12 +200,14 @@ public class InboxUI extends UI {
             StackPane iconBox = createIconBox(notif);
 
             VBox textContainer = new VBox(5);
-            
+
             Label titleLabel = new Label(notif.getTitle());
-            titleLabel.setStyle("-fx-font-weight: " + (notif.isRead() ? "normal" : "bold") + "; -fx-font-size: 14px; -fx-text-fill: #333333;");
-            
+            titleLabel.setStyle("-fx-font-weight: " + (notif.isRead() ? "normal" : "bold")
+                    + "; -fx-font-size: 14px; -fx-text-fill: #333333;");
+
             Label msgLabel = new Label(notif.getMessageBody());
-            msgLabel.setStyle("-fx-text-fill: #666666; -fx-font-size: 13px; -fx-font-weight: " + (notif.isRead() ? "normal" : "bold") + ";");
+            msgLabel.setStyle("-fx-text-fill: #666666; -fx-font-size: 13px; -fx-font-weight: "
+                    + (notif.isRead() ? "normal" : "bold") + ";");
             msgLabel.setWrapText(true);
             msgLabel.setMaxWidth(380);
 
@@ -222,8 +228,8 @@ public class InboxUI extends UI {
                 if (!notif.isRead()) {
                     markAsReadInBackend(notif.getNotificationId());
                     notif.setRead(true);
-                    
-                    card.setStyle(readStyle); 
+
+                    card.setStyle(readStyle);
                     titleLabel.setStyle("-fx-font-weight: normal; -fx-font-size: 14px; -fx-text-fill: #333333;");
                     msgLabel.setStyle("-fx-text-fill: #666666; -fx-font-size: 13px; -fx-font-weight: normal;");
                 }
@@ -262,7 +268,7 @@ public class InboxUI extends UI {
         grid.setVgap(10);
         grid.setPadding(new Insets(20, 20, 10, 20));
 
-        StackPane iconPane = createIconBox(notification); 
+        StackPane iconPane = createIconBox(notification);
         grid.add(iconPane, 0, 0, 1, 2);
         GridPane.setVgrow(iconPane, Priority.ALWAYS);
 
@@ -283,13 +289,17 @@ public class InboxUI extends UI {
 
         Node okButton = dialogPane.lookupButton(okButtonType);
         if (okButton instanceof Button) {
-            okButton.setStyle("-fx-background-color: #1B5E20; -fx-text-fill: white; -fx-background-radius: 20; -fx-padding: 7 20; -fx-cursor: hand; -fx-font-weight: bold;");
-            
-            okButton.setOnMouseEntered(e -> okButton.setStyle("-fx-background-color: #2E7D32; -fx-text-fill: white; -fx-background-radius: 20; -fx-padding: 7 20; -fx-cursor: hand; -fx-font-weight: bold;"));
-            okButton.setOnMouseExited(e -> okButton.setStyle("-fx-background-color: #1B5E20; -fx-text-fill: white; -fx-background-radius: 20; -fx-padding: 7 20; -fx-cursor: hand; -fx-font-weight: bold;"));
+            okButton.setStyle(
+                    "-fx-background-color: #1B5E20; -fx-text-fill: white; -fx-background-radius: 20; -fx-padding: 7 20; -fx-cursor: hand; -fx-font-weight: bold;");
+
+            okButton.setOnMouseEntered(e -> okButton.setStyle(
+                    "-fx-background-color: #2E7D32; -fx-text-fill: white; -fx-background-radius: 20; -fx-padding: 7 20; -fx-cursor: hand; -fx-font-weight: bold;"));
+            okButton.setOnMouseExited(e -> okButton.setStyle(
+                    "-fx-background-color: #1B5E20; -fx-text-fill: white; -fx-background-radius: 20; -fx-padding: 7 20; -fx-cursor: hand; -fx-font-weight: bold;"));
         }
 
-        dialogPane.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #E0E0E0; -fx-border-radius: 10;");
+        dialogPane.setStyle(
+                "-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #E0E0E0; -fx-border-radius: 10;");
 
         dialog.showAndWait();
 
@@ -302,9 +312,11 @@ public class InboxUI extends UI {
     private Button createFilterButton(String text, boolean isActive) {
         Button btn = new Button(text);
         if (isActive) {
-            btn.setStyle("-fx-background-color: #1B5E20; -fx-text-fill: white; -fx-background-radius: 20; -fx-padding: 5 15; -fx-cursor: hand;");
+            btn.setStyle(
+                    "-fx-background-color: #1B5E20; -fx-text-fill: white; -fx-background-radius: 20; -fx-padding: 5 15; -fx-cursor: hand;");
         } else {
-            btn.setStyle("-fx-background-color: #E8F5E9; -fx-text-fill: #1B5E20; -fx-background-radius: 20; -fx-padding: 5 15; -fx-cursor: hand;");
+            btn.setStyle(
+                    "-fx-background-color: #E8F5E9; -fx-text-fill: #1B5E20; -fx-background-radius: 20; -fx-padding: 5 15; -fx-cursor: hand;");
         }
         return btn;
     }
@@ -313,11 +325,15 @@ public class InboxUI extends UI {
         LocalDateTime now = LocalDateTime.now();
         Duration duration = Duration.between(timestamp, now);
 
-        if (duration.toMinutes() < 1) return "Baru saja";
-        if (duration.toMinutes() < 60) return duration.toMinutes() + " menit lalu";
-        if (duration.toHours() < 24) return duration.toHours() + " jam lalu";
-        if (duration.toDays() == 1) return "Kemarin";
-        
+        if (duration.toMinutes() < 1)
+            return "Baru saja";
+        if (duration.toMinutes() < 60)
+            return duration.toMinutes() + " menit lalu";
+        if (duration.toHours() < 24)
+            return duration.toHours() + " jam lalu";
+        if (duration.toDays() == 1)
+            return "Kemarin";
+
         return timestamp.format(DateTimeFormatter.ofPattern("dd MMM yyyy"));
     }
 
@@ -325,8 +341,8 @@ public class InboxUI extends UI {
         StackPane iconPane = new StackPane();
         Circle bg = new Circle(20);
         Label iconLabel = new Label();
-        
-        if (notif.getType().toString().equals("DONASI")) {
+
+        if (notif.getType() == NotificationType.DONASI) {
             bg.setFill(Color.web("#E8F5E9"));
             iconLabel.setText("💖");
             iconLabel.setStyle("-fx-font-size: 18px;");
