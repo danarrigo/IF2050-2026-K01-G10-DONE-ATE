@@ -162,9 +162,15 @@ public class ClaimDonationUI extends UI {
 
         columns.getChildren().addAll(leftCol, rightCol);
         root.getChildren().addAll(header, columns);
+        VBox.setVgrow(columns, Priority.ALWAYS);
 
-        ScrollPane scroll = new ScrollPane(root);
+        HBox bottomNav = Navigator.createBottomNav(stage, getUser(), "HOME");
+        VBox mainLayout = new VBox(root, bottomNav);
+        VBox.setVgrow(root, Priority.ALWAYS);
+
+        ScrollPane scroll = new ScrollPane(mainLayout);
         scroll.setFitToWidth(true);
+        scroll.setFitToHeight(true);
 
         Scene scene = stage.getScene();
         if (scene == null) {

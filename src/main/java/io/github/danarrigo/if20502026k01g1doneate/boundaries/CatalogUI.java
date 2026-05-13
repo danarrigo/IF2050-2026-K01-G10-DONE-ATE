@@ -126,7 +126,11 @@ public class CatalogUI extends UI {
         columns.getChildren().addAll(leftCol, rightCol);
         root.getChildren().addAll(header, columns);
 
-        ScrollPane scroll = new ScrollPane(root);
+        HBox bottomNav = Navigator.createBottomNav(stage, getUser(), "CATALOG");
+        VBox mainLayout = new VBox(root, bottomNav);
+        VBox.setVgrow(root, Priority.ALWAYS);
+
+        ScrollPane scroll = new ScrollPane(mainLayout);
         scroll.setFitToWidth(true);
 
         Scene scene = stage.getScene();

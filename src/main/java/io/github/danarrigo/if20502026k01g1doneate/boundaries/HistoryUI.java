@@ -193,20 +193,7 @@ public class HistoryUI extends UI {
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setStyle("-fx-background-color: transparent; -fx-background: " + BG_COLOR + ";");
 
-        // --- 3. BOTTOM NAVIGATION ---
-        HBox bottomNav = new HBox();
-        bottomNav.setAlignment(Pos.CENTER);
-        bottomNav.setPadding(new Insets(10));
-        bottomNav.setSpacing(35); // Disesuaikan agar pas di layar
-        bottomNav.setStyle("-fx-background-color: white; -fx-border-color: " + BORDER_COLOR + " transparent transparent transparent;");
-
-        bottomNav.getChildren().addAll(
-                createNavItem("🏠", "Home", false),
-                createNavItem("🍱", "Catalog", false),
-                createNavItem("✉", "Inbox", false),
-                createNavItem("📜", "History", true), 
-                createNavItem("👤", "Account", false)
-        );
+        HBox bottomNav = Navigator.createBottomNav(stage, getUser(), "HISTORY");
 
         root.getChildren().addAll(topBar, scrollPane, bottomNav);
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
@@ -268,29 +255,6 @@ public class HistoryUI extends UI {
         return item;
     }
 
-    private VBox createNavItem(String icon, String label, boolean active) {
-        VBox item = new VBox(2);
-        item.setAlignment(Pos.CENTER);
-        item.setPadding(new Insets(5, 10, 5, 10));
-
-        Label iconLbl = new Label(icon);
-        iconLbl.setFont(Font.font(20));
-        Label textLbl = new Label(label);
-        textLbl.setFont(Font.font(10));
-
-        if (active) {
-            item.setStyle("-fx-background-color: " + LIGHT_GREEN + "; -fx-background-radius: 12px;");
-            iconLbl.setTextFill(Color.web(DARK_GREEN));
-            textLbl.setTextFill(Color.web(DARK_GREEN));
-            textLbl.setFont(Font.font("System", FontWeight.BOLD, 10));
-        } else {
-            iconLbl.setTextFill(Color.web(TEXT_GRAY));
-            textLbl.setTextFill(Color.web(TEXT_GRAY));
-        }
-
-        item.getChildren().addAll(iconLbl, textLbl);
-        return item;
-    }
 
     // Fungsi Panggil API menggunakan UUID
     private void handleDownloadReport() {

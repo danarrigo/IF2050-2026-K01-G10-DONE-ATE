@@ -101,6 +101,10 @@ public class InboxUI extends UI {
         scrollPane.setStyle("-fx-background-color: transparent; -fx-background: #FAFAFA;");
 
         root.getChildren().addAll(title, subtitle, filterBox, scrollPane);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+        
+        HBox bottomNav = Navigator.createBottomNav(stage, getUser(), "INBOX");
+        root.getChildren().add(bottomNav);
 
         fetchNotifications(true);
 
