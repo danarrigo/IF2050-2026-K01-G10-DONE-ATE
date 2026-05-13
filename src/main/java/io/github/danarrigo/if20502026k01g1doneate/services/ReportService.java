@@ -68,7 +68,7 @@ public class ReportService {
             }
 
         } catch (Exception e) {
-            throw new RuntimeException("Gagal bikin PDF", e);
+            throw new RuntimeException("Gagal membuat PDF", e);
         } finally {
             document.close();
         }
