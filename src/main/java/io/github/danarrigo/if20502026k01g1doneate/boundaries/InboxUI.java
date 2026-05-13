@@ -283,9 +283,127 @@ public class InboxUI extends UI {
     }
 
     public void openNotification(Notification notification) {
+        if ("Klaim Donasi".equals(notification.getTitle())) {
+            showClaimNotificationDialog(notification);
+            return;
+        }
         if (notification.getRelatedDonationId() != null) {
             fetchDonationAndOpenDetail(notification.getRelatedDonationId());
         }
+    }
+
+    private void showClaimNotificationDialog(Notification notification) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Detail Klaim Donasi");
+
+        DialogPane dialogPane = dialog.getDialogPane();
+        dialogPane.getButtonTypes().add(ButtonType.CLOSE);
+        dialogPane.setStyle("-fx-background-color: white;");
+
+        VBox content = new VBox(16);
+        content.setPadding(new Insets(10, 0, 0, 0));
+        content.setPrefWidth(480);
+
+        // Header
+        Label titleLabel = new Label("💖  " + notification.getTitle());
+        titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1B5E20;");
+
+        String timeStr = notification.getTimeStamp() != null
+                ? notification.getTimeStamp().format(DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm"))
+                : "-";
+        Label timeLabel = new Label("🕒  " + timeStr);
+        timeLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #999999;");
+
+        Region divider = new Region();
+        divider.setPrefHeight(1);
+        divider.setStyle("-fx-background-color: #E0E0E0;");
+
+        // Full message body
+        Label msgLabel = new Label(notification.getMessageBody() != null ? notification.getMessageBody() : "-");
+        msgLabel.setWrapText(true);
+        msgLabel.setPrefWidth(460);
+        msgLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #444444;");
+
+        content.getChildren().addAll(titleLabel, timeLabel, divider, msgLabel);
+
+        // Verification code section — fetched live from the transaction API
+        Label codeTitle = new Label("Kode Verifikasi Serah Terima");
+        codeTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: #1B5E20;");
+
+        Label codeLabel = new Label("Memuat kode...");
+        codeLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #999999;");
+        codeLabel.setMaxWidth(Double.MAX_VALUE);
+        codeLabel.setAlignment(Pos.CENTER);
+
+        VBox codeBox = new VBox(10, codeTitle, codeLabel);
+        codeBox.setAlignment(Pos.CENTER);
+        codeBox.setMaxWidth(Double.MAX_VALUE);
+        codeBox.setPadding(new Insets(20));
+        codeBox.setStyle("-fx-background-color: #E8F5E9; -fx-background-radius: 12; " +
+                         "-fx-border-color: #81C784; -fx-border-radius: 12; -fx-border-width: 1.5;");
+
+        Label hint = new Label("Tunjukkan kode ini kepada penerima untuk menyelesaikan serah terima.");
+        hint.setWrapText(true);
+        hint.setStyle("-fx-font-size: 12px; -fx-text-fill: #666666;");
+
+        content.getChildren().addAll(codeBox, hint);
+
+        // Button to open full donation detail
+        if (notification.getRelatedDonationId() != null) {
+            Button viewBtn = new Button("Lihat Detail Donasi →");
+            viewBtn.setStyle(
+                    "-fx-background-color: #1B5E20; -fx-text-fill: white; -fx-font-weight: bold;" +
+                    "-fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 10 20; -fx-font-size: 13px;");
+            viewBtn.setOnAction(e -> {
+                dialog.close();
+                fetchDonationAndOpenDetail(notification.getRelatedDonationId());
+            });
+            content.getChildren().add(viewBtn);
+        }
+
+        dialogPane.setContent(content);
+
+        // Fetch transaction code from API (non-blocking, updates label after dialog opens)
+        if (notification.getRelatedDonationId() != null) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    String token = SessionManager.getInstance().getToken();
+                    HttpRequest req = HttpRequest.newBuilder()
+                            .uri(URI.create("http://localhost:8080/api/transactions/donation/"
+                                    + notification.getRelatedDonationId()))
+                            .header("Authorization", "Bearer " + token)
+                            .GET()
+                            .build();
+                    HttpResponse<String> resp = HttpClient.newHttpClient()
+                            .send(req, HttpResponse.BodyHandlers.ofString());
+
+                    Platform.runLater(() -> {
+                        if (resp.statusCode() == 200) {
+                            try {
+                                JsonNode node = new ObjectMapper().readTree(resp.body());
+                                String code = node.get("transactionCode").asText();
+                                codeLabel.setText(code);
+                                codeLabel.setStyle("-fx-font-size: 42px; -fx-font-weight: bold; " +
+                                                   "-fx-text-fill: #1B5E20;");
+                            } catch (Exception ex) {
+                                codeLabel.setText("Gagal membaca kode");
+                                codeLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #c62828;");
+                            }
+                        } else {
+                            codeLabel.setText("Kode tidak tersedia");
+                            codeLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #999999;");
+                        }
+                    });
+                } catch (Exception ex) {
+                    Platform.runLater(() -> {
+                        codeLabel.setText("Gagal menghubungi server");
+                        codeLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #c62828;");
+                    });
+                }
+            });
+        }
+
+        dialog.showAndWait();
     }
 
     private void fetchDonationAndOpenDetail(java.util.UUID donationId) {

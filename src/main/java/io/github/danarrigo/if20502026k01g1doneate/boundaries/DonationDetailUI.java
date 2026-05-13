@@ -414,7 +414,42 @@ public class DonationDetailUI extends UI {
     }
 
     private void handleClaim(Stage stage) {
-        showStatus("Fitur klaim akan segera hadir.", false);
+        String username = SessionManager.getInstance().getUsername();
+        if (username == null && getUser() != null) username = getUser().getUsername();
+        if (username == null) {
+            showStatus("Tidak dapat memproses klaim: username tidak ditemukan.", true);
+            return;
+        }
+        final String finalUsername = username;
+
+        new Thread(() -> {
+            try {
+                String token = SessionManager.getInstance().getToken();
+                HttpClient client = HttpClient.newHttpClient();
+                String jsonPayload = String.format(
+                        "{\"donationId\":\"%s\", \"recipientUsername\":\"%s\"}",
+                        donation.getDonationId(), finalUsername
+                );
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(BASE_URL + "/api/claims"))
+                        .header("Content-Type", "application/json")
+                        .header("Authorization", "Bearer " + token)
+                        .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                        .build();
+
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                Platform.runLater(() -> {
+                    if (response.statusCode() == 200) {
+                        Navigator.navigate(stage, new VerificationUI(getUser()));
+                    } else {
+                        showStatus("Klaim gagal: " + response.body(), true);
+                    }
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> showStatus("Terjadi kesalahan koneksi.", true));
+            }
+        }).start();
     }
 
     private VBox detailItem(String label, String value) {

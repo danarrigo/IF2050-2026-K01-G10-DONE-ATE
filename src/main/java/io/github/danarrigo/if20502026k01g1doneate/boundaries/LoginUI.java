@@ -230,10 +230,10 @@ public class LoginUI extends UI {
         pwdLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;");
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        Hyperlink forgot = new Hyperlink("Lupa password?");
-        forgot.setStyle("-fx-font-size: 13px; -fx-text-fill: " + GREEN_DARK
-                + "; -fx-border-color: transparent; -fx-padding: 0;");
-        pwdLabelRow.getChildren().addAll(pwdLabel, spacer, forgot);
+        // Hyperlink forgot = new Hyperlink("Lupa password?");
+        // forgot.setStyle("-fx-font-size: 13px; -fx-text-fill: " + GREEN_DARK
+        //         + "; -fx-border-color: transparent; -fx-padding: 0;");
+        // pwdLabelRow.getChildren().addAll(pwdLabel, spacer, forgot);
 
         passwordField = new PasswordField();
         passwordField.setPromptText("••••••••");

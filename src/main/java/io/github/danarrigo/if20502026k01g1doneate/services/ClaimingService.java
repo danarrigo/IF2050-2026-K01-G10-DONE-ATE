@@ -124,12 +124,12 @@ public class ClaimingService {
         transaction.setStatus(TransactionStatus.ACTIVE.name());
         transactionRepository.save(transaction);
 
-        // Send notification to donator (MENGGUNAKAN FORMAT BARU)
+        // Send notification to donator with verification code
         if (donation.getDonator() != null) {
             notificationService.sendNotification(
                     donation.getDonator(),
                     "Klaim Donasi",
-                    "Donasi Anda telah diklaim oleh penerima",
+                    "Donasi Anda telah diklaim oleh penerima. Kode verifikasi serah terima: " + transactionCode,
                     donation.getDonationId(),
                     NotificationType.DONASI
             );

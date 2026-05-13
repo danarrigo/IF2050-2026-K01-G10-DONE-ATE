@@ -79,7 +79,7 @@ public class VerificationSuccessUI extends UI {
         // Back to Home Button
         Button btnHome = new Button("Kembali ke Beranda");
         btnHome.setStyle("-fx-background-color: #16A34A; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16px; -fx-padding: 12 30 12 30; -fx-background-radius: 8; -fx-cursor: hand;");
-        btnHome.setOnAction(e -> Navigator.navigate(stage, new CatalogUI(getUser())));
+        btnHome.setOnAction(e -> Navigator.navigate(stage, new RecipientCatalogUI(getUser())));
 
         root.getChildren().addAll(iconContainer, titleLabel, descText, btnHome);
         return root;
