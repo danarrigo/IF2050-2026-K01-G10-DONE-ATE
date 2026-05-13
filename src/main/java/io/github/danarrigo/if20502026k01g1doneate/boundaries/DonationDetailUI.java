@@ -237,7 +237,14 @@ public class DonationDetailUI extends UI {
 
             Button deleteBtn = new Button("Hapus Donasi");
             deleteBtn.setStyle("-fx-background-color: #FADBD8; -fx-text-fill: #C0392B; -fx-font-weight: bold; -fx-font-size: 16; -fx-background-radius: 12; -fx-cursor: hand; -fx-padding: 12 30;");
-            deleteBtn.setOnAction(e -> handleDelete(stage));
+            deleteBtn.setOnAction(e -> {
+                if (deleteBtn.getText().equals("Hapus Donasi")) {
+                    deleteBtn.setText("Yakin Hapus?");
+                    deleteBtn.setStyle("-fx-background-color: #C0392B; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16; -fx-background-radius: 12; -fx-cursor: hand; -fx-padding: 12 30;");
+                } else {
+                    handleDelete(stage);
+                }
+            });
 
             actions.getChildren().addAll(editBtn, deleteBtn);
         }
@@ -339,34 +346,29 @@ public class DonationDetailUI extends UI {
     }
 
     private void handleDelete(Stage stage) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Apakah Anda yakin ingin menghapus donasi ini?", ButtonType.YES, ButtonType.NO);
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.YES) {
-                new Thread(() -> {
-                    try {
-                        String token = SessionManager.getInstance().getToken();
-                        HttpClient client = HttpClient.newHttpClient();
-                        HttpRequest request = HttpRequest.newBuilder()
-                                .uri(URI.create(BASE_URL + "/api/catalog/" + donation.getDonationId()))
-                                .header("Authorization", "Bearer " + token)
-                                .DELETE()
-                                .build();
+        new Thread(() -> {
+            try {
+                String token = SessionManager.getInstance().getToken();
+                HttpClient client = HttpClient.newHttpClient();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(BASE_URL + "/api/catalog/" + donation.getDonationId()))
+                        .header("Authorization", "Bearer " + token)
+                        .DELETE()
+                        .build();
 
-                        HttpResponse<String> responseApi = client.send(request, HttpResponse.BodyHandlers.ofString());
+                HttpResponse<String> responseApi = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-                        Platform.runLater(() -> {
-                            if (responseApi.statusCode() == 200) {
-                                Navigator.navigate(stage, new CatalogUI(getUser()));
-                            } else {
-                                showStatus("Gagal menghapus donasi.", true);
-                            }
-                        });
-                    } catch (Exception e) {
-                        Platform.runLater(() -> showStatus("Terjadi kesalahan koneksi.", true));
+                Platform.runLater(() -> {
+                    if (responseApi.statusCode() == 200) {
+                        Navigator.navigate(stage, new CatalogUI(getUser()));
+                    } else {
+                        showStatus("Gagal menghapus donasi.", true);
                     }
-                }).start();
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> showStatus("Terjadi kesalahan koneksi.", true));
             }
-        });
+        }).start();
     }
 
     private void handleShowCode(Button btn) {
