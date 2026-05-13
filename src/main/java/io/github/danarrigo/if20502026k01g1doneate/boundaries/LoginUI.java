@@ -1,5 +1,8 @@
 package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
+import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -354,8 +357,29 @@ public class LoginUI extends UI {
     }
 
     private void onLoginSuccess(String responseBody) {
-        // TODO: parse role dari responseBody lalu buka home window
-        showError("Login berhasil! (halaman home belum diimplementasi)");
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(responseBody);
+            
+            String token = root.get("token").asText();
+            String username = root.get("username").asText();
+            String role = root.get("role").asText();
+
+            // Save to SessionManager
+            SessionManager.getInstance().startSession(token, username, role);
+
+            // TODO: Redirect based on role
+            if ("DONATOR".equals(role)) {
+                showError("Login Berhasil! Membuka dashboard Donator...");
+                // stage.close(); new DonatorDashboardUI().showUI();
+            } else {
+                showError("Login Berhasil! Membuka dashboard Recipient...");
+            }
+            
+        } catch (Exception e) {
+            showError("Gagal memproses data login dari server.");
+            e.printStackTrace();
+        }
     }
 
     private void setLoading(boolean loading) {
