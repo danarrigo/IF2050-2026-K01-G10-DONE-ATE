@@ -3,7 +3,9 @@ package io.github.danarrigo.if20502026k01g1doneate.services;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donation;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.DonationRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,11 +21,18 @@ public class DonationService {
 
     public void removeDonation(UUID donationId) {
         Donation donation = donationRepository.findById(donationId)
-                .orElseThrow(() -> new RuntimeException("Donation not found with id: " + donationId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Donation not found with id: " + donationId));
         donation.setOngoing(false);
-        donation.setStatus("Removed");
+        donation.setStatus("Selesai");
         donationRepository.save(donation);
-        System.out.println("Donation removed");
+    }
+
+    public void cancelDonation(UUID donationId) {
+        Donation donation = donationRepository.findById(donationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Donation not found with id: " + donationId));
+        donation.setOngoing(false);
+        donation.setStatus("Dibatalkan");
+        donationRepository.save(donation);
     }
 
     // CREATE

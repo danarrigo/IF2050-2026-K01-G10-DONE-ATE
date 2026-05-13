@@ -42,22 +42,13 @@ public class ClaimDonationUI extends UI {
 
     @Override
     public void showUI() {
-        if (!jfxInitialized) {
-            try {
-                Platform.startup(() -> {
-                });
-                jfxInitialized = true;
-            } catch (IllegalStateException e) {
-                jfxInitialized = true;
-            }
-        }
         Platform.runLater(this::createAndShowStage);
     }
 
     private void createAndShowStage() {
         Stage stage = new Stage();
         stage.setTitle("DONE-ATE - Klaim & Batal Donasi");
-        stage.setMaximized(true);
+        stage.setFullScreen(true);
         showMainScene(stage);
         stage.show();
     }
@@ -179,7 +170,7 @@ public class ClaimDonationUI extends UI {
         if (scene == null) {
             scene = new Scene(scroll);
             stage.setScene(scene);
-            stage.setMaximized(true);
+            stage.setFullScreen(true);
         } else {
             scene.setRoot(scroll);
         }

@@ -61,22 +61,13 @@ public class DonationDetailUI extends UI {
 
     @Override
     public void showUI() {
-        if (!jfxInitialized) {
-            try {
-                Platform.startup(() -> {
-                });
-                jfxInitialized = true;
-            } catch (IllegalStateException e) {
-                jfxInitialized = true;
-            }
-        }
         Platform.runLater(this::createAndShowStage);
     }
 
     private void createAndShowStage() {
         Stage stage = new Stage();
         stage.setTitle("DONE-ATE - Detail Donasi");
-        stage.setMaximized(true);
+        stage.setFullScreen(true);
 
         VBox root = new VBox();
         root.setStyle("-fx-background-color: " + BG_COLOR + ";");

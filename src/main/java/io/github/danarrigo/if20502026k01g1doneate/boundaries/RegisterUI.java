@@ -56,15 +56,6 @@ public class RegisterUI extends UI {
 
     @Override
     public void showUI() {
-        if (!jfxInitialized) {
-            try {
-                Platform.startup(() -> {
-                });
-                jfxInitialized = true;
-            } catch (IllegalStateException e) {
-                jfxInitialized = true;
-            }
-        }
         Platform.runLater(() -> start(new Stage()));
     }
 

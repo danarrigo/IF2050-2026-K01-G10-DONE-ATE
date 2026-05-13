@@ -1,7 +1,7 @@
 package io.github.danarrigo.if20502026k01g1doneate.entities;
 
 import jakarta.persistence.*;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -26,13 +26,13 @@ public class Transaction {
     @JoinColumn(name = "donation_id", referencedColumnName = "donationId")
     private Donation donation;
 
-    private LocalTime transactionTime;
+    private LocalDateTime transactionTime;
 
     private String status;
 
     public Transaction() {}
 
-    public Transaction(Integer transactionCode, Recipient recipient, Donator donator, Donation donation, LocalTime transactionTime, String status) {
+    public Transaction(Integer transactionCode, Recipient recipient, Donator donator, Donation donation, LocalDateTime transactionTime, String status) {
         this.transactionCode = transactionCode;
         this.recipient = recipient;
         this.donator = donator;
@@ -56,8 +56,8 @@ public class Transaction {
     public Donation getDonation() { return donation; }
     public void setDonation(Donation donation) { this.donation = donation; }
 
-    public LocalTime getTransactionTime() { return transactionTime; }
-    public void setTransactionTime(LocalTime transactionTime) { this.transactionTime = transactionTime; }
+    public LocalDateTime getTransactionTime() { return transactionTime; }
+    public void setTransactionTime(LocalDateTime transactionTime) { this.transactionTime = transactionTime; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

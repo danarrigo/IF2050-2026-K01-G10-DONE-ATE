@@ -47,7 +47,7 @@ public class DonationController {
     //PATCH
     @PatchMapping("/{id}/remove")
     public ResponseEntity<Void> removeDonation(@PathVariable UUID id) {
-        donationService.removeDonation(id);
+        donationService.cancelDonation(id);
         return ResponseEntity.noContent().build();
     }
 
