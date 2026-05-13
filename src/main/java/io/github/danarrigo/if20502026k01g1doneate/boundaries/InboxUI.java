@@ -15,6 +15,7 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar.ButtonData;
@@ -44,6 +45,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class InboxUI extends UI {
+    private Stage stage;
 
     private int currentPage = 0;
     private final int PAGE_SIZE = 10;
@@ -59,10 +61,8 @@ public class InboxUI extends UI {
     }
 
     @Override
-    public void showUI() {
-        Stage stage = new Stage();
-        stage.setTitle("DONE-ATE - Kotak Masuk");
-
+    public Parent getSceneContent(Stage stage) {
+        this.stage = stage;
         VBox root = new VBox(20);
         root.setPadding(new Insets(30));
         root.setStyle("-fx-background-color: #FBF9F8;");
@@ -97,16 +97,32 @@ public class InboxUI extends UI {
 
         ScrollPane scrollPane = new ScrollPane(contentWrapper);
         scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
         scrollPane.setStyle("-fx-background-color: transparent; -fx-background: #FAFAFA;");
 
         root.getChildren().addAll(title, subtitle, filterBox, scrollPane);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+        
+        HBox bottomNav = Navigator.createBottomNav(stage, getUser(), "INBOX");
+        root.getChildren().add(bottomNav);
 
         fetchNotifications(true);
+        
+        return root;
+    }
 
-        Scene scene = new Scene(root, 600, 700);
-        stage.setScene(scene);
-        stage.setFullScreen(true);
-        stage.show();
+    @Override
+    public void showUI() {
+        initJFX();
+        Platform.runLater(() -> {
+            Stage stage = new Stage();
+            stage.setTitle("DONE-ATE - Kotak Masuk");
+            
+            Scene scene = new Scene(getSceneContent(stage), 1920, 1080);
+            stage.setScene(scene);
+            stage.setFullScreen(true);
+            stage.show();
+        });
     }
 
     private void setupFilterButtons() {
@@ -339,8 +355,7 @@ public class InboxUI extends UI {
                     Donation donation = mapper.readValue(response.body(), Donation.class);
 
                     Platform.runLater(() -> {
-                        DonationDetailUI detailUI = new DonationDetailUI(getUser(), donation);
-                        detailUI.showUI();
+                        Navigator.navigate(stage, new DonationDetailUI(getUser(), donation));
                     });
                 } else {
                     System.err.println("Gagal memuat detail donasi: " + response.statusCode());

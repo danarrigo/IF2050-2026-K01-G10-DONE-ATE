@@ -27,7 +27,6 @@ public class VerificationUI extends UI {
     private TextField[] pinFields = new TextField[6];
     private HBox successBox;
     private Button btnKonfirmasi;
-    private static boolean jfxInitialized = false;
     private Stage stage;
 
     public VerificationUI(User user) {
@@ -35,15 +34,13 @@ public class VerificationUI extends UI {
     }
 
     @Override
+    public Parent getSceneContent(Stage stage) {
+        return createContent(stage);
+    }
+
+    @Override
     public void showUI() {
-        if (!jfxInitialized) {
-            try {
-                Platform.startup(() -> {});
-                jfxInitialized = true;
-            } catch (IllegalStateException e) {
-                jfxInitialized = true;
-            }
-        }
+        initJFX();
         Platform.runLater(() -> start(new Stage()));
     }
 
@@ -265,9 +262,7 @@ public class VerificationUI extends UI {
                         
                         if (response.statusCode() == 200) {
                             // Show Success UI
-                            VerificationSuccessUI successUI = new VerificationSuccessUI(getUser());
-                            stage.getScene().setRoot(successUI.createContent(stage));
-                            stage.setFullScreen(true);
+                            Navigator.navigate(stage, new VerificationSuccessUI(getUser()));
                         } else {
                             showAlert(Alert.AlertType.ERROR, "Error", response.body()); 
                         }
