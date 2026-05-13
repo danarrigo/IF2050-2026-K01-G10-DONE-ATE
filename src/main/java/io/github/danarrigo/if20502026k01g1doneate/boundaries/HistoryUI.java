@@ -4,6 +4,7 @@ import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 import javafx.application.Platform;
+import javafx.scene.Parent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -59,12 +60,9 @@ public class HistoryUI extends UI {
         Platform.runLater(this::createAndShowStage);
     }
 
-    private void createAndShowStage() {
-        stage = new Stage();
-        stage.setTitle("DONE-ATE - Riwayat Donasi");
-        stage.setFullScreen(true);
-        stage.setFullScreenExitHint("");
-
+    @Override
+    public Parent getSceneContent(Stage stage) {
+        this.stage = stage;
         VBox root = new VBox();
         root.setStyle("-fx-background-color: " + BG_COLOR + ";");
 
@@ -74,7 +72,7 @@ public class HistoryUI extends UI {
         topBar.setPadding(new Insets(15, 20, 15, 20));
         topBar.setStyle("-fx-background-color: white;");
 
-        Label logoLabel = new Label("🍴 DONE-ATE"); // Menggunakan emoji sebagai ikon sementara
+        Label logoLabel = new Label("🍴 DONE-ATE"); 
         logoLabel.setFont(Font.font("System", FontWeight.BOLD, 16));
         logoLabel.setTextFill(Color.web(DARK_GREEN));
 
@@ -104,7 +102,7 @@ public class HistoryUI extends UI {
 
         Button downloadBtn = new Button("📄 Unduh Laporan");
         downloadBtn.setStyle("-fx-background-color: " + DARK_GREEN + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 6px; -fx-cursor: hand;");
-        downloadBtn.setOnAction(e -> handleDownloadReport()); // Panggil API
+        downloadBtn.setOnAction(e -> handleDownloadReport()); 
         
         headerBox.getChildren().addAll(titleBox, headerSpacer, downloadBtn);
 
@@ -125,7 +123,7 @@ public class HistoryUI extends UI {
         Label startLbl = new Label("Tanggal Mulai");
         startLbl.setFont(Font.font(9));
         startLbl.setTextFill(Color.web(TEXT_GRAY));
-        TextField dp1 = new TextField("mm/dd/yyyy"); // Pakai TextField meniru mockup
+        TextField dp1 = new TextField("mm/dd/yyyy"); 
         dp1.setPrefWidth(90);
         startBox.getChildren().addAll(startLbl, dp1);
 
@@ -190,6 +188,7 @@ public class HistoryUI extends UI {
 
         ScrollPane scrollPane = new ScrollPane(scrollContent);
         scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setStyle("-fx-background-color: transparent; -fx-background: " + BG_COLOR + ";");
 
@@ -197,8 +196,17 @@ public class HistoryUI extends UI {
 
         root.getChildren().addAll(topBar, scrollPane, bottomNav);
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
+        
+        return root;
+    }
 
-        Scene scene = new Scene(root, 400, 800);
+    private void createAndShowStage() {
+        stage = new Stage();
+        stage.setTitle("DONE-ATE - Riwayat Donasi");
+        stage.setFullScreen(true);
+        stage.setFullScreenExitHint("");
+        
+        Scene scene = new Scene(getSceneContent(stage), 1920, 1080);
         stage.setScene(scene);
         stage.show();
     }

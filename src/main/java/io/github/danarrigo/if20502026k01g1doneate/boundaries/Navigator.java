@@ -3,8 +3,10 @@ package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
+import javafx.animation.FadeTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -12,6 +14,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 public class Navigator {
 
@@ -61,36 +64,62 @@ public class Navigator {
         item.setOnMouseClicked(e -> {
             if (active) return;
             
-            stage.close(); // Tutup window saat ini
-            
+            UI targetUI;
             switch (label) {
                 case "Home":
-                    if (user instanceof Donator) {
-                        new CatalogUI(user).showUI();
-                    } else if (user instanceof Recipient) {
-                        new ClaimDonationUI(user).showUI();
-                    } else {
-                        new CatalogUI(user).showUI();
-                    }
+                    if (user instanceof Donator) targetUI = new CatalogUI(user);
+                    else if (user instanceof Recipient) targetUI = new ClaimDonationUI(user);
+                    else targetUI = new CatalogUI(user);
                     break;
                 case "Catalog":
-                    new CatalogUI(user).showUI();
+                    targetUI = new CatalogUI(user);
                     break;
                 case "Inbox":
-                    new InboxUI(user).showUI();
+                    targetUI = new InboxUI(user);
                     break;
                 case "History":
-                    new HistoryUI(user).showUI();
+                    targetUI = new HistoryUI(user);
                     break;
-                case "Account":
-                    // For now, redirect to login as a placeholder or show alert
-                    System.out.println("Opening Account Settings...");
-                    new CatalogUI(user).showUI(); // Placeholder
-                    break;
+                default:
+                    return;
             }
+
+            Parent newContent = targetUI.getSceneContent(stage);
+            Parent oldContent = stage.getScene().getRoot();
+
+            FadeTransition fadeOut = new FadeTransition(Duration.millis(300), oldContent);
+            fadeOut.setFromValue(1.0);
+            fadeOut.setToValue(0.0);
+            fadeOut.setOnFinished(event -> {
+                stage.getScene().setRoot(newContent);
+                newContent.setOpacity(0.0);
+                FadeTransition fadeIn = new FadeTransition(Duration.millis(300), newContent);
+                fadeIn.setFromValue(0.0);
+                fadeIn.setToValue(1.0);
+                fadeIn.play();
+            });
+            fadeOut.play();
         });
 
         item.getChildren().addAll(iconLbl, textLbl);
         return item;
+    }
+
+    public static void navigate(Stage stage, UI targetUI) {
+        Parent newContent = targetUI.getSceneContent(stage);
+        Parent oldContent = stage.getScene().getRoot();
+
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(300), oldContent);
+        fadeOut.setFromValue(1.0);
+        fadeOut.setToValue(0.0);
+        fadeOut.setOnFinished(event -> {
+            stage.getScene().setRoot(newContent);
+            newContent.setOpacity(0.0);
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(300), newContent);
+            fadeIn.setFromValue(0.0);
+            fadeIn.setToValue(1.0);
+            fadeIn.play();
+        });
+        fadeOut.play();
     }
 }

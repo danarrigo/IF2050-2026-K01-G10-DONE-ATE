@@ -53,6 +53,11 @@ public class RegisterUI extends UI {
     }
 
     @Override
+    public Parent getSceneContent(Stage stage) {
+        return createContent(stage);
+    }
+
+    @Override
     public void showUI() {
         initJFX();
         Platform.runLater(() -> start(new Stage()));
@@ -461,10 +466,7 @@ public class RegisterUI extends UI {
                 "-fx-font-size: 15px; -fx-text-fill: " + GREEN_DARK + ";" +
                 "-fx-font-weight: bold; -fx-border-color: transparent; -fx-padding: 0;"
         );
-        loginLink.setOnAction(e -> {
-            LoginUI loginUI = new LoginUI();
-            showWithAnimation(stage, loginUI.createContent(stage));
-        });
+        loginLink.setOnAction(e -> Navigator.navigate(stage, new LoginUI()));
 
         footer.getChildren().addAll(text, loginLink);
         return footer;
@@ -563,8 +565,7 @@ public class RegisterUI extends UI {
             try { Thread.sleep(1500); } catch (InterruptedException ignored) {}
             Platform.runLater(() -> {
                 Stage currentStage = (Stage) registerButton.getScene().getWindow();
-                LoginUI loginUI = new LoginUI();
-                showWithAnimation(currentStage, loginUI.createContent(currentStage));
+                Navigator.navigate(currentStage, new LoginUI());
             });
         }).start();
     }

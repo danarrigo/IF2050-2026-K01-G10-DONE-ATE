@@ -4,6 +4,7 @@ import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
 import io.github.danarrigo.if20502026k01g1doneate.dtos.QCFormData;
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 import javafx.application.Platform;
+import javafx.scene.Parent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -41,15 +42,12 @@ public class InputDonationUI extends UI {
         Platform.runLater(this::createAndShowStage);
     }
 
-    private void createAndShowStage() {
-        Stage stage = new Stage();
-        stage.setTitle("DONE-ATE - Input Donasi");
-        stage.setFullScreen(true);
-        showInputDonationScene(stage);
-        stage.show();
+    @Override
+    public Parent getSceneContent(Stage stage) {
+        return buildInputDonationContent(stage);
     }
 
-    private void showInputDonationScene(Stage stage) {
+    private Parent buildInputDonationContent(Stage stage) {
         VBox root = new VBox(30);
         root.setPadding(new Insets(50, 80, 50, 80));
         root.setStyle("-fx-background-color: " + BG_COLOR + ";");
@@ -57,6 +55,7 @@ public class InputDonationUI extends UI {
         Label backBtn = new Label("<- Kembali");
         backBtn.setTextFill(Color.web(DARK_GREEN));
         backBtn.setStyle("-fx-cursor: hand;");
+        backBtn.setOnMouseClicked(e -> Navigator.navigate(stage, new CatalogUI(getUser())));
 
         Label title = new Label("Donasi Baru");
         title.setFont(Font.font("System", FontWeight.BOLD, 36));
@@ -98,29 +97,26 @@ public class InputDonationUI extends UI {
             fileChooser.setTitle("Pilih Gambar Makanan");
             fileChooser.getExtensionFilters().addAll(
                     new javafx.stage.FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg"));
-            java.io.File selectedFile = fileChooser.showOpenDialog(stage);
-            if (selectedFile != null) {
-                imagePathField.setText(selectedFile.getAbsolutePath());
+            java.io.File file = fileChooser.showOpenDialog(stage);
+            if (file != null) {
+                imagePathField.setText(file.getAbsolutePath());
             }
         });
-
         imageInputBox.getChildren().addAll(imagePathField, browseBtn);
 
         TextField expiresField = new TextField();
-        expiresField.setPromptText("Kedaluwarsa dalam (contoh: 24)");
+        expiresField.setPromptText("Misal: 24 (Jam)");
         styleTextField(expiresField);
 
         HBox timeCookedBox = new HBox(10);
         timeCookedBox.setAlignment(Pos.CENTER_LEFT);
-
         TextField timeCookedField = new TextField();
-        timeCookedField.setPromptText("Waktu Dimasak (contoh: 2026-05-12 18:00)");
+        timeCookedField.setPromptText("yyyy-MM-dd HH:mm");
         styleTextField(timeCookedField);
         HBox.setHgrow(timeCookedField, Priority.ALWAYS);
 
         Button nowBtn = new Button("Sekarang");
-        nowBtn.setStyle("-fx-background-color: " + LIGHT_GREEN + "; -fx-text-fill: " + DARK_GREEN
-                + "; -fx-font-weight: bold; -fx-background-radius: 6px; -fx-cursor: hand;");
+        nowBtn.setStyle("-fx-background-color: #E0E0E0; -fx-text-fill: #333; -fx-font-weight: bold; -fx-background-radius: 6px; -fx-cursor: hand;");
         nowBtn.setOnAction(e -> {
             java.time.LocalDateTime now = java.time.LocalDateTime.now();
             java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter
@@ -182,33 +178,24 @@ public class InputDonationUI extends UI {
         });
 
         rightCol.getChildren().addAll(infoBox, nextBtn);
-
         columns.getChildren().addAll(leftCol, rightCol);
         root.getChildren().addAll(header, columns);
 
         ScrollPane scroll = new ScrollPane(root);
         scroll.setFitToWidth(true);
+        scroll.setFitToHeight(true);
+        
+        return scroll;
+    }
 
-        Scene scene = stage.getScene();
-        if (scene == null) {
-            scene = new Scene(scroll);
-            stage.setScene(scene);
-            stage.setFullScreen(true);
-        } else {
-            scene.setRoot(scroll);
-        }
-
-        javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(javafx.util.Duration.millis(600),
-                root);
-        ft.setFromValue(0.0);
-        ft.setToValue(1.0);
-        ft.play();
-
-        javafx.animation.TranslateTransition tt = new javafx.animation.TranslateTransition(
-                javafx.util.Duration.millis(600), root);
-        tt.setFromY(30);
-        tt.setToY(0);
-        tt.play();
+    private void createAndShowStage() {
+        Stage stage = new Stage();
+        stage.setTitle("DONE-ATE - Input Donasi");
+        
+        Scene scene = new Scene(getSceneContent(stage), 1920, 1080);
+        stage.setScene(scene);
+        stage.setFullScreen(true);
+        stage.show();
     }
 
     private void showDigitalQCScene(Stage stage, String dishName, String imagePath, String expiresIn,
@@ -417,7 +404,7 @@ public class InputDonationUI extends UI {
 
                     System.out.println("Memproses Donasi: " + dishName + " | Waktu: " + timeCooked);
                     success("Donasi berhasil disubmit ke server! (QC Lulus)");
-                    stage.close();
+                    Platform.runLater(() -> Navigator.navigate(stage, new CatalogUI(getUser())));
                 } catch (Exception ex) {
                     error("Gagal terhubung ke API: " + ex.toString());
                     ex.printStackTrace();

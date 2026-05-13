@@ -2,13 +2,12 @@ package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donation;
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
-import io.github.danarrigo.if20502026k01g1doneate.entities.Dish;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
-import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -21,59 +20,30 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
 import java.io.File;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 public class DonationDetailUI extends UI {
 
     private Donation donation;
+    private HBox topBar;
 
     private final String DARK_GREEN = "#0F5B21";
     private final String LIGHT_GREEN = "#D2F4D6";
     private final String TEXT_GRAY = "#757575";
     private final String BORDER_COLOR = "#E0E0E0";
     private final String BG_COLOR = "#F5F5F5";
-    private final String RED = "#C0392B";
 
     public DonationDetailUI(User user, Donation donation) {
         super(user);
         this.donation = donation;
     }
 
-    public static void main(String[] args) {
-        // Mock data for testing
-        Dish mockDish = new Dish("Chicken & Avocado Fresh Salad", "src/main/resources/mock_salad.jpg");
-        Donation mockDonation = new Donation(mockDish, LocalDateTime.now(), LocalDateTime.now().minusHours(2),
-                "Tersedia", null);
-
-        // Test with a Recipient user to see the Claim Button
-        Recipient mockRecipient = new Recipient();
-        mockRecipient.setUsername("RecipientAlice");
-
-        DonationDetailUI ui = new DonationDetailUI(mockRecipient, mockDonation);
-        ui.showUI();
-    }
-
     @Override
-    public void showUI() {
-        initJFX();
-        Platform.runLater(this::createAndShowStage);
-    }
-
-    private void createAndShowStage() {
-        Stage stage = new Stage();
-        stage.setTitle("DONE-ATE - Detail Donasi");
-        stage.setFullScreen(true);
-
+    public Parent getSceneContent(Stage stage) {
         VBox root = new VBox();
         root.setStyle("-fx-background-color: " + BG_COLOR + ";");
 
         // --- TOP BAR ---
-        HBox topBar = new HBox(15);
+        topBar = new HBox(15);
         topBar.setAlignment(Pos.CENTER_LEFT);
         topBar.setPadding(new Insets(15, 25, 15, 25));
         topBar.setStyle("-fx-background-color: white;");
@@ -82,7 +52,13 @@ public class DonationDetailUI extends UI {
         backArrow.setFont(Font.font("System", FontWeight.BOLD, 20));
         backArrow.setTextFill(Color.web(DARK_GREEN));
         backArrow.setStyle("-fx-cursor: hand;");
-        backArrow.setOnMouseClicked(e -> stage.close());
+        backArrow.setOnMouseClicked(e -> {
+            if (getUser() instanceof Donator) {
+                Navigator.navigate(stage, new CatalogUI(getUser()));
+            } else {
+                Navigator.navigate(stage, new ClaimDonationUI(getUser()));
+            }
+        });
 
         Label logoLabel = new Label("DONE-ATE");
         logoLabel.setFont(Font.font("System", FontWeight.BOLD, 18));
@@ -91,9 +67,7 @@ public class DonationDetailUI extends UI {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        // Profile placeholder
         Circle profileCircle = new Circle(18, Color.web("#E0E0E0"));
-
         topBar.getChildren().addAll(backArrow, logoLabel, spacer, profileCircle);
 
         // --- CONTENT AREA (SCROLLABLE) ---
@@ -106,7 +80,7 @@ public class DonationDetailUI extends UI {
         heroSection.setMaxHeight(300);
 
         ImageView foodImg = new ImageView();
-        foodImg.setFitWidth(800); // Fixed width for mobile-like feel or adjust as needed
+        foodImg.setFitWidth(800); 
         foodImg.setFitHeight(300);
         foodImg.setPreserveRatio(false);
 
@@ -116,250 +90,89 @@ public class DonationDetailUI extends UI {
                 if (file.exists()) {
                     foodImg.setImage(new Image(file.toURI().toString()));
                 }
-            } catch (Exception e) {
-                // Fallback or ignore
-            }
+            } catch (Exception e) {}
         }
+        heroSection.getChildren().add(foodImg);
 
-        // Status Badge Overlay
-        HBox statusBadge = new HBox(5);
-        statusBadge.setAlignment(Pos.CENTER);
-        statusBadge.setPadding(new Insets(5, 12, 5, 12));
-        statusBadge.setStyle("-fx-background-color: " + DARK_GREEN + "; -fx-background-radius: 20px;");
-        Label statusIcon = new Label("✓");
-        statusIcon.setTextFill(Color.WHITE);
-        Label statusText = new Label(donation != null ? donation.getStatus() : "Tersedia");
-        statusText.setTextFill(Color.WHITE);
-        statusText.setFont(Font.font("System", FontWeight.BOLD, 12));
-        statusBadge.getChildren().addAll(statusIcon, statusText);
+        // Info Card
+        VBox infoCard = new VBox(25);
+        infoCard.setPadding(new Insets(30, 40, 30, 40));
+        infoCard.setStyle("-fx-background-color: white; -fx-background-radius: 20 20 0 0; -fx-translate-y: -20;");
+        infoCard.setMaxWidth(800);
 
-        StackPane.setAlignment(statusBadge, Pos.TOP_RIGHT);
-        StackPane.setMargin(statusBadge, new Insets(20));
+        Label title = new Label(donation != null && donation.getDish() != null ? donation.getDish().getName() : "Donasi Makanan");
+        title.setFont(Font.font("System", FontWeight.BOLD, 28));
+        title.setWrapText(true);
 
-        heroSection.getChildren().addAll(foodImg, statusBadge);
+        Label statusBadge = new Label(donation != null ? donation.getStatus().toUpperCase() : "AKTIF");
+        statusBadge.setStyle("-fx-background-color: " + LIGHT_GREEN + "; -fx-text-fill: " + DARK_GREEN + "; -fx-padding: 5 12; -fx-background-radius: 20; -fx-font-weight: bold; -fx-font-size: 12;");
 
-        // Main Detail Card
-        VBox card = new VBox(20);
-        card.setMaxWidth(750);
-        card.setPadding(new Insets(30));
-        card.setStyle(
-                "-fx-background-color: white; -fx-background-radius: 20px 20px 0 0; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, -5);");
-        VBox.setMargin(card, new Insets(-30, 0, 0, 0)); // Negative margin to overlap
+        HBox titleRow = new HBox(15, title, statusBadge);
+        titleRow.setAlignment(Pos.CENTER_LEFT);
 
-        // Title and Badges
-        VBox titleArea = new VBox(10);
-        Label titleLabel = new Label(
-                donation != null && donation.getDish() != null ? donation.getDish().getName() : "Nama Hidangan");
-        titleLabel.setFont(Font.font("System", FontWeight.BOLD, 28));
-        titleLabel.setWrapText(true);
+        Label desc = new Label("Donasi ini dibagikan oleh " + (getUser() instanceof Donator ? "Anda" : "Donator Terverifikasi") + ". Makanan ini telah melewati pengecekan kualitas standar DONE-ATE.");
+        desc.setFont(Font.font(14));
+        desc.setTextFill(Color.web(TEXT_GRAY));
+        desc.setWrapText(true);
 
-        HBox badgeContainer = new HBox(10);
-        badgeContainer.getChildren().addAll(
-                createBadge("🍽 Perishable", "#E8F5E9", DARK_GREEN),
-                createBadge("🌱 Vegetarian Option", "#E8F5E9", DARK_GREEN));
+        // Details Grid
+        GridPane grid = new GridPane();
+        grid.setHgap(40);
+        grid.setVgap(20);
+        
+        grid.add(detailItem("🕒 Waktu Masak", "2 Jam yang lalu"), 0, 0);
+        grid.add(detailItem("⌛ Kedaluwarsa", "6 Jam lagi"), 1, 0);
+        grid.add(detailItem("📍 Lokasi", "Sukajadi, Bandung"), 0, 1);
+        grid.add(detailItem("📦 Porsi", "5 Orang"), 1, 1);
 
-        titleArea.getChildren().addAll(titleLabel, badgeContainer);
+        Separator sep = new Separator();
+        sep.setPadding(new Insets(10, 0, 10, 0));
 
-        // Info Boxes
-        HBox infoBoxes = new HBox(15);
-        infoBoxes.setAlignment(Pos.CENTER);
+        infoCard.getChildren().addAll(titleRow, desc, grid, sep);
 
-        VBox locationBox = createInfoBox("LOKASI DONASI", "Jl. Tubagus Ismail no 2c", "2.4 km dari lokasi Anda", "📍");
-        VBox expiryBox = createInfoBox("WAKTU KADALUARSA", "Berakhir dalam 3 jam", "Hingga 21:00 WIB Hari Ini", "⏲");
-        HBox.setHgrow(locationBox, Priority.ALWAYS);
-        HBox.setHgrow(expiryBox, Priority.ALWAYS);
-
-        infoBoxes.getChildren().addAll(locationBox, expiryBox);
-
-        card.getChildren().addAll(titleArea, infoBoxes);
-
-        // Verification Code Section (Only for Donators)
-        if (getUser() instanceof Donator) {
-            VBox verifCard = new VBox(10);
-            verifCard.setAlignment(Pos.CENTER);
-            verifCard.setPadding(new Insets(20));
-            verifCard.setStyle("-fx-border-color: " + DARK_GREEN
-                    + "; -fx-border-radius: 12px; -fx-background-color: #FAFAFA; -fx-background-radius: 12px;");
-
-            Label verifHeader = new Label("KODE VERIFIKASI ANDA");
-            verifHeader.setFont(Font.font("System", FontWeight.BOLD, 14));
-            verifHeader.setTextFill(Color.web(DARK_GREEN));
-
-            Label codeLabel = new Label("D N 8 A X 2");
-            codeLabel.setFont(Font.font("System", FontWeight.BOLD, 42));
-            codeLabel.setStyle("-fx-letter-spacing: 5px;");
-
-            Label verifDesc = new Label(
-                    "Tunjukkan kode ini kepada penerima donasi saat pengambilan untuk memverifikasi transaksi.");
-            verifDesc.setTextFill(Color.web(TEXT_GRAY));
-            verifDesc.setFont(Font.font(12));
-            verifDesc.setAlignment(Pos.CENTER);
-            verifDesc.setWrapText(true);
-
-            verifCard.getChildren().addAll(verifHeader, codeLabel, verifDesc);
-            card.getChildren().add(verifCard);
-        }
-
-        // Action Buttons
-        VBox actionArea = new VBox(15);
-
-        // Claim Button (Only for Recipients and if status is "Tersedia")
-        if (getUser() instanceof Recipient && donation != null && "Tersedia".equalsIgnoreCase(donation.getStatus())) {
-            Button claimBtn = new Button("✓ Klaim Donasi");
+        // Action Buttons based on Role
+        if (getUser() instanceof Recipient) {
+            Button claimBtn = new Button("Klaim Donasi Sekarang");
+            claimBtn.setStyle("-fx-background-color: " + DARK_GREEN + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16; -fx-background-radius: 12; -fx-cursor: hand;");
             claimBtn.setMaxWidth(Double.MAX_VALUE);
-            claimBtn.setPrefHeight(50);
-            claimBtn.setStyle("-fx-background-color: " + DARK_GREEN
-                    + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16px; -fx-background-radius: 8px; -fx-cursor: hand;");
-            actionArea.getChildren().add(claimBtn);
+            claimBtn.setPrefHeight(55);
+            infoCard.getChildren().add(claimBtn);
         }
 
-        Button cancelBtn = new Button("✕ Batal Klaim");
-        cancelBtn.setMaxWidth(Double.MAX_VALUE);
-        cancelBtn.setPrefHeight(50);
-        cancelBtn.setStyle("-fx-background-color: transparent; -fx-border-color: " + RED
-                + "; -fx-border-radius: 8px; -fx-text-fill: " + RED
-                + "; -fx-font-weight: bold; -fx-font-size: 16px; -fx-cursor: hand;");
-        cancelBtn.setOnAction(e -> handleRemoveDonation(stage));
-        actionArea.getChildren().add(cancelBtn);
-
-        if (!actionArea.getChildren().isEmpty()) {
-            card.getChildren().add(actionArea);
-        }
-
-        scrollContent.getChildren().addAll(heroSection, card);
-
+        scrollContent.getChildren().addAll(heroSection, infoCard);
+        
         ScrollPane scrollPane = new ScrollPane(scrollContent);
         scrollPane.setFitToWidth(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setStyle("-fx-background-color: transparent; -fx-background: " + BG_COLOR + ";");
-
-        // --- BOTTOM NAVIGATION ---
-        HBox bottomNav = new HBox();
-        bottomNav.setAlignment(Pos.CENTER);
-        bottomNav.setPadding(new Insets(10));
-        bottomNav.setSpacing(40);
-        bottomNav.setStyle("-fx-background-color: white; -fx-border-color: " + BORDER_COLOR
-                + " transparent transparent transparent;");
-
-        bottomNav.getChildren().addAll(
-                createNavItem("🏠", "Home"),
-                createNavItem("🍱", "Catalog", true),
-                createNavItem("✉", "Inbox"),
-                createNavItem("📜", "History"),
-                createNavItem("👤", "Account"));
-
-        root.getChildren().addAll(topBar, scrollPane, bottomNav);
+        
+        root.getChildren().addAll(topBar, scrollPane);
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
-
-        Scene scene = new Scene(root, 400, 800); // Mobile aspect ratio
-        stage.setScene(scene);
-        stage.show();
+        
+        return root;
     }
 
-    private Label createBadge(String text, String bgColor, String textColor) {
-        Label badge = new Label(text);
-        badge.setPadding(new Insets(4, 10, 4, 10));
-        badge.setStyle("-fx-background-color: " + bgColor + "; -fx-background-radius: 12px;");
-        badge.setTextFill(Color.web(textColor));
-        badge.setFont(Font.font("System", FontWeight.NORMAL, 12));
-        return badge;
-    }
-
-    private VBox createInfoBox(String label, String value, String subValue, String icon) {
-        VBox box = new VBox(5);
-        box.setPadding(new Insets(15));
-        box.setStyle("-fx-background-color: #F8F9FA; -fx-border-color: " + BORDER_COLOR
-                + "; -fx-border-radius: 8px; -fx-background-radius: 8px;");
-
-        HBox header = new HBox(5);
-        Label iconLbl = new Label(icon);
-        Label titleLbl = new Label(label);
-        titleLbl.setFont(Font.font("System", FontWeight.BOLD, 10));
-        titleLbl.setTextFill(Color.web(TEXT_GRAY));
-        header.getChildren().addAll(iconLbl, titleLbl);
-
-        Label valLbl = new Label(value);
-        valLbl.setFont(Font.font("System", FontWeight.BOLD, 13));
-        valLbl.setWrapText(true);
-
-        Label subLbl = new Label(subValue);
-        subLbl.setFont(Font.font("System", 11));
-        subLbl.setTextFill(Color.web(TEXT_GRAY));
-
-        box.getChildren().addAll(header, valLbl, subLbl);
+    private VBox detailItem(String label, String value) {
+        VBox box = new VBox(4);
+        Label lbl = new Label(label);
+        lbl.setFont(Font.font(12));
+        lbl.setTextFill(Color.web(TEXT_GRAY));
+        Label val = new Label(value);
+        val.setFont(Font.font("System", FontWeight.BOLD, 14));
+        box.getChildren().addAll(lbl, val);
         return box;
     }
 
-    private VBox createNavItem(String icon, String label) {
-        return createNavItem(icon, label, false);
-    }
-
-    private VBox createNavItem(String icon, String label, boolean active) {
-        VBox item = new VBox(2);
-        item.setAlignment(Pos.CENTER);
-        item.setPadding(new Insets(5, 10, 5, 10));
-
-        Label iconLbl = new Label(icon);
-        iconLbl.setFont(Font.font(20));
-
-        Label textLbl = new Label(label);
-        textLbl.setFont(Font.font(10));
-
-        if (active) {
-            item.setStyle("-fx-background-color: " + LIGHT_GREEN + "; -fx-background-radius: 8px;");
-            iconLbl.setTextFill(Color.web(DARK_GREEN));
-            textLbl.setTextFill(Color.web(DARK_GREEN));
-            textLbl.setFont(Font.font("System", FontWeight.BOLD, 10));
-        } else {
-            iconLbl.setTextFill(Color.web(TEXT_GRAY));
-            textLbl.setTextFill(Color.web(TEXT_GRAY));
-        }
-
-        item.getChildren().addAll(iconLbl, textLbl);
-        item.setStyle(item.getStyle() + "; -fx-cursor: hand;");
-        return item;
-    }
-
-    private void handleRemoveDonation(Stage stage) {
-        if (donation == null || donation.getDonationId() == null) {
-            showAlert(Alert.AlertType.ERROR, "Error", "ID Donasi tidak ditemukan.");
-            return;
-        }
-
-        String token = SessionManager.getInstance().getToken();
-        UUID donationId = donation.getDonationId();
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("http://localhost:8080/api/donations/" + donationId + "/remove"))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + token)
-                .method("PATCH", HttpRequest.BodyPublishers.noBody())
-                .build();
-
-        client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenAccept(response -> {
-                    Platform.runLater(() -> {
-                        if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                            showAlert(Alert.AlertType.INFORMATION, "Sukses", "Donasi berhasil dibatalkan.");
-                            stage.close();
-                        } else {
-                            showAlert(Alert.AlertType.ERROR, "Gagal", "Gagal membatalkan donasi: " + response.body());
-                        }
-                    });
-                })
-                .exceptionally(ex -> {
-                    Platform.runLater(() -> {
-                        showAlert(Alert.AlertType.ERROR, "Error", "Terjadi kesalahan koneksi: " + ex.getMessage());
-                    });
-                    return null;
-                });
-    }
-
-    private void showAlert(Alert.AlertType type, String title, String content) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
-        alert.showAndWait();
+    @Override
+    public void showUI() {
+        initJFX();
+        Platform.runLater(() -> {
+            Stage stage = new Stage();
+            stage.setTitle("DONE-ATE - Detail Donasi");
+            Scene scene = new Scene(getSceneContent(stage), 1920, 1080);
+            stage.setScene(scene);
+            stage.setFullScreen(true);
+            stage.show();
+        });
     }
 }

@@ -15,6 +15,7 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar.ButtonData;
@@ -59,11 +60,7 @@ public class InboxUI extends UI {
     }
 
     @Override
-    public void showUI() {
-        initJFX();
-        Stage stage = new Stage();
-        stage.setTitle("DONE-ATE - Kotak Masuk");
-
+    public Parent getSceneContent(Stage stage) {
         VBox root = new VBox(20);
         root.setPadding(new Insets(30));
         root.setStyle("-fx-background-color: #FBF9F8;");
@@ -98,6 +95,7 @@ public class InboxUI extends UI {
 
         ScrollPane scrollPane = new ScrollPane(contentWrapper);
         scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
         scrollPane.setStyle("-fx-background-color: transparent; -fx-background: #FAFAFA;");
 
         root.getChildren().addAll(title, subtitle, filterBox, scrollPane);
@@ -107,11 +105,22 @@ public class InboxUI extends UI {
         root.getChildren().add(bottomNav);
 
         fetchNotifications(true);
+        
+        return root;
+    }
 
-        Scene scene = new Scene(root, 600, 700);
-        stage.setScene(scene);
-        stage.setFullScreen(true);
-        stage.show();
+    @Override
+    public void showUI() {
+        initJFX();
+        Platform.runLater(() -> {
+            Stage stage = new Stage();
+            stage.setTitle("DONE-ATE - Kotak Masuk");
+            
+            Scene scene = new Scene(getSceneContent(stage), 1920, 1080);
+            stage.setScene(scene);
+            stage.setFullScreen(true);
+            stage.show();
+        });
     }
 
     private void setupFilterButtons() {

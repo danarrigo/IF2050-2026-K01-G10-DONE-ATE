@@ -2,6 +2,7 @@ package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 import javafx.application.Platform;
+import javafx.scene.Parent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -40,15 +41,8 @@ public class CatalogUI extends UI {
         Platform.runLater(this::createAndShowStage);
     }
 
-    private void createAndShowStage() {
-        Stage stage = new Stage();
-        stage.setTitle("DONE-ATE - Katalog Donasi");
-        stage.setMaximized(true);
-        showCatalogScene(stage);
-        stage.show();
-    }
-
-    private void showCatalogScene(Stage stage) {
+    @Override
+    public Parent getSceneContent(Stage stage) {
         VBox root = new VBox(30);
         root.setPadding(new Insets(50, 80, 50, 80));
         root.setStyle("-fx-background-color: " + BG_COLOR + ";");
@@ -132,18 +126,23 @@ public class CatalogUI extends UI {
 
         ScrollPane scroll = new ScrollPane(mainLayout);
         scroll.setFitToWidth(true);
-
-        Scene scene = stage.getScene();
-        if (scene == null) {
-            scene = new Scene(scroll);
-            stage.setScene(scene);
-            stage.setMaximized(true);
-        } else {
-            scene.setRoot(scroll);
-        }
+        scroll.setFitToHeight(true);
 
         playAnimation(root);
         loadCatalog(username);
+        
+        return scroll;
+    }
+
+    private void createAndShowStage() {
+        Stage stage = new Stage();
+        stage.setTitle("DONE-ATE - Katalog Donasi");
+        stage.setMaximized(true);
+        
+        Scene scene = new Scene(getSceneContent(stage));
+        stage.setScene(scene);
+        stage.setFullScreen(true);
+        stage.show();
     }
 
     // ─── Load catalog from API ─────────────────────────────────────────────────

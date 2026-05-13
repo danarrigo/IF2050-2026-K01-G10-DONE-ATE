@@ -3,6 +3,8 @@ package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donation;
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 import javafx.application.Platform;
+import javafx.scene.Parent;
+import javafx.stage.Stage;
 
 import java.util.List;
 
@@ -44,4 +46,5 @@ public abstract class UI {
     }
 
     public abstract void showUI();
+    public abstract Parent getSceneContent(Stage stage);
 }

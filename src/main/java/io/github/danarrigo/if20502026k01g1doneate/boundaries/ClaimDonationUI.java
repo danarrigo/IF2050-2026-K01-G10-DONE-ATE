@@ -3,6 +3,7 @@ package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 import javafx.application.Platform;
+import javafx.scene.Parent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -45,15 +46,8 @@ public class ClaimDonationUI extends UI {
         Platform.runLater(this::createAndShowStage);
     }
 
-    private void createAndShowStage() {
-        Stage stage = new Stage();
-        stage.setTitle("DONE-ATE - Klaim & Batal Donasi");
-        stage.setFullScreen(true);
-        showMainScene(stage);
-        stage.show();
-    }
-
-    private void showMainScene(Stage stage) {
+    @Override
+    public Parent getSceneContent(Stage stage) {
         VBox root = new VBox(30);
         root.setPadding(new Insets(50, 80, 50, 80));
         root.setStyle("-fx-background-color: " + BG_COLOR + ";");
@@ -171,28 +165,18 @@ public class ClaimDonationUI extends UI {
         ScrollPane scroll = new ScrollPane(mainLayout);
         scroll.setFitToWidth(true);
         scroll.setFitToHeight(true);
+        
+        return scroll;
+    }
 
-        Scene scene = stage.getScene();
-        if (scene == null) {
-            scene = new Scene(scroll);
-            stage.setScene(scene);
-            stage.setFullScreen(true);
-        } else {
-            scene.setRoot(scroll);
-        }
-
-        // Animations matching template
-        javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(javafx.util.Duration.millis(600),
-                root);
-        ft.setFromValue(0.0);
-        ft.setToValue(1.0);
-        ft.play();
-
-        javafx.animation.TranslateTransition tt = new javafx.animation.TranslateTransition(
-                javafx.util.Duration.millis(600), root);
-        tt.setFromY(30);
-        tt.setToY(0);
-        tt.play();
+    private void createAndShowStage() {
+        Stage stage = new Stage();
+        stage.setTitle("DONE-ATE - Klaim & Batal Donasi");
+        
+        Scene scene = new Scene(getSceneContent(stage), 1920, 1080);
+        stage.setScene(scene);
+        stage.setFullScreen(true);
+        stage.show();
     }
 
     private void processClaim(String donationId, String recipientUsername) {

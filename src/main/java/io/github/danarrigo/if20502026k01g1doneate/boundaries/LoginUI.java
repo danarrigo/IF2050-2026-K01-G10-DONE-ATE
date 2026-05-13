@@ -46,6 +46,11 @@ public class LoginUI extends UI {
     }
 
     @Override
+    public Parent getSceneContent(Stage stage) {
+        return createContent(stage);
+    }
+
+    @Override
     public void showUI() {
         initJFX();
         Platform.runLater(() -> start(new Stage()));
@@ -292,10 +297,7 @@ public class LoginUI extends UI {
         register.setStyle(
                 "-fx-font-size: 15px; -fx-text-fill: " + GREEN_DARK + ";" +
                         "-fx-font-weight: bold; -fx-border-color: transparent; -fx-padding: 0;");
-        register.setOnAction(e -> {
-            RegisterUI registerUI = new RegisterUI();
-            showWithAnimation(stage, registerUI.createContent(stage));
-        });
+        register.setOnAction(e -> Navigator.navigate(stage, new RegisterUI()));
 
         footer.getChildren().addAll(text, register);
         return footer;
@@ -371,24 +373,20 @@ public class LoginUI extends UI {
             if ("DONATOR".equals(role)) {
                 Platform.runLater(() -> {
                     Stage currentStage = (Stage) loginButton.getScene().getWindow();
-                    currentStage.close();
                     
                     Donator donator = new Donator();
                     donator.setUsername(username);
                     
-                    CatalogUI catalogUI = new CatalogUI(donator);
-                    catalogUI.showUI();
+                    Navigator.navigate(currentStage, new CatalogUI(donator));
                 });
             } else if ("RECIPIENT".equals(role)) {
                 Platform.runLater(() -> {
                     Stage currentStage = (Stage) loginButton.getScene().getWindow();
-                    currentStage.close();
                     
                     Recipient recipient = new Recipient();
                     recipient.setUsername(username);
                     
-                    ClaimDonationUI claimUI = new ClaimDonationUI(recipient);
-                    claimUI.showUI();
+                    Navigator.navigate(currentStage, new ClaimDonationUI(recipient));
                 });
             } else {
                 showError("Login Berhasil! Dashboard untuk " + role + " sedang dalam pengembangan.");
