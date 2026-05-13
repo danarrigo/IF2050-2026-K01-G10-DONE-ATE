@@ -12,9 +12,11 @@ import org.springframework.stereotype.Service;
 @Transactional
 public class UserService {
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, NotificationService notificationService) {
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     public User getProfile(String username) {
@@ -34,6 +36,15 @@ public class UserService {
             donator.setDonatorType(request.getDonatorType());
         }
 
-        return userRepository.save(user);
+        User updatedUser = userRepository.save(user);
+        
+        notificationService.sendNotification(
+            updatedUser, 
+            "Profil Diperbarui", 
+            "Data profil Anda telah berhasil diperbarui pada " + java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
+            io.github.danarrigo.if20502026k01g1doneate.enums.NotificationType.SISTEM
+        );
+
+        return updatedUser;
     }
 }

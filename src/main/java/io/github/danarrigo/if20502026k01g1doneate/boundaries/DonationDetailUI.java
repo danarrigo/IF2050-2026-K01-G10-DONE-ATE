@@ -5,8 +5,10 @@ import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
 import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
+import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
+import javafx.util.Duration;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -37,6 +39,7 @@ public class DonationDetailUI extends UI {
     private HBox topBar;
     private VBox infoCard;
     private boolean isEditMode = false;
+    private Label statusLabel;
 
     private final String DARK_GREEN = "#0F5B21";
     private final String LIGHT_GREEN = "#D2F4D6";
@@ -88,7 +91,11 @@ public class DonationDetailUI extends UI {
         avatarPane.setMinSize(38, 38);
         avatarPane.setStyle("-fx-background-color: " + DARK_GREEN + "; -fx-background-radius: 19px;");
 
-        topBar.getChildren().addAll(backArrow, logoLabel, spacer, avatarPane);
+        statusLabel = new Label();
+        statusLabel.setVisible(false);
+        statusLabel.setManaged(false);
+
+        topBar.getChildren().addAll(backArrow, logoLabel, statusLabel, spacer, avatarPane);
 
         // --- CONTENT AREA (SCROLLABLE) ---
         VBox scrollContent = new VBox();
@@ -280,7 +287,7 @@ public class DonationDetailUI extends UI {
 
     private void handleUpdate(Stage stage, String name, String expires, String timeCooked) {
         if (name.isEmpty() || expires.isEmpty() || timeCooked.isEmpty()) {
-            showAlert("Error", "Harap isi semua field.");
+            showStatus("Harap isi semua field.", true);
             return;
         }
 
@@ -308,18 +315,18 @@ public class DonationDetailUI extends UI {
 
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
-                        showAlert("Sukses", "Donasi berhasil diperbarui.");
+                        showStatus("Donasi berhasil diperbarui.", false);
                         isEditMode = false;
                         // Refresh data locally
                         donation.getDish().setName(name);
                         donation.setTimeCooked(LocalDateTime.parse(finalTime));
                         renderInfoCardContent(stage);
                     } else {
-                        showAlert("Gagal", "Gagal memperbarui donasi.");
+                        showStatus("Gagal memperbarui donasi.", true);
                     }
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> showAlert("Error", "Terjadi kesalahan koneksi."));
+                Platform.runLater(() -> showStatus("Terjadi kesalahan koneksi.", true));
             }
         }).start();
     }
@@ -344,11 +351,11 @@ public class DonationDetailUI extends UI {
                             if (responseApi.statusCode() == 200) {
                                 Navigator.navigate(stage, new CatalogUI(getUser()));
                             } else {
-                                showAlert("Gagal", "Gagal menghapus donasi.");
+                                showStatus("Gagal menghapus donasi.", true);
                             }
                         });
                     } catch (Exception e) {
-                        Platform.runLater(() -> showAlert("Error", "Terjadi kesalahan koneksi."));
+                        Platform.runLater(() -> showStatus("Terjadi kesalahan koneksi.", true));
                     }
                 }).start();
             }
@@ -356,8 +363,7 @@ public class DonationDetailUI extends UI {
     }
 
     private void handleClaim(Stage stage) {
-        // Implementation for claim can go here or redirect to another UI
-        showAlert("Informasi", "Fitur klaim akan segera hadir.");
+        showStatus("Fitur klaim akan segera hadir.", false);
     }
 
     private VBox detailItem(String label, String value) {
@@ -408,15 +414,38 @@ public class DonationDetailUI extends UI {
         tf.setStyle("-fx-background-radius: 10; -fx-border-color: " + BORDER_COLOR + "; -fx-border-radius: 10; -fx-padding: 15; -fx-font-size: 15;");
     }
 
-    private void showAlert(String title, String content) {
+    private void showStatus(String msg, boolean isError) {
+        if (statusLabel == null) return;
         Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle(title);
-            alert.setHeaderText(null);
-            alert.setContentText(content);
-            alert.showAndWait();
+            statusLabel.setText(msg);
+            statusLabel.setStyle("-fx-background-color: " + (isError ? "#FFEBEE" : "#E8F5E9") + "; " +
+                               "-fx-text-fill: " + (isError ? "#C62828" : "#2E7D32") + "; " +
+                               "-fx-padding: 8 16; -fx-background-radius: 8; -fx-font-weight: bold; -fx-font-size: 14px;");
+            statusLabel.setVisible(true);
+            statusLabel.setManaged(true);
+
+            FadeTransition ft = new FadeTransition(Duration.seconds(0.5), statusLabel);
+            ft.setFromValue(0);
+            ft.setToValue(1);
+            ft.play();
+
+            new Thread(() -> {
+                try { Thread.sleep(5000); } catch (InterruptedException ignored) {}
+                Platform.runLater(() -> {
+                    FadeTransition ftOut = new FadeTransition(Duration.seconds(0.5), statusLabel);
+                    ftOut.setFromValue(1);
+                    ftOut.setToValue(0);
+                    ftOut.setOnFinished(ev -> {
+                        statusLabel.setVisible(false);
+                        statusLabel.setManaged(false);
+                    });
+                    ftOut.play();
+                });
+            }).start();
         });
     }
+
+
 
     @Override
     public void showUI() {

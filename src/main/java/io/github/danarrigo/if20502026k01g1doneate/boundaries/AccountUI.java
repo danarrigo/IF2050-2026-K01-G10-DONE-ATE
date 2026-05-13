@@ -40,6 +40,7 @@ public class AccountUI extends UI {
     private boolean isEditMode = false;
     private VBox contentContainer;
     private User fullUser;
+    private Label statusLabel;
 
     public AccountUI(User user) {
         super(user);
@@ -143,6 +144,11 @@ public class AccountUI extends UI {
 
         HBox headerRow = new HBox(20, pageTitle);
         headerRow.setAlignment(Pos.CENTER_LEFT);
+
+        statusLabel = new Label();
+        statusLabel.setVisible(false);
+        statusLabel.setManaged(false);
+        headerRow.getChildren().add(statusLabel);
         
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -249,9 +255,9 @@ public class AccountUI extends UI {
                         }
                         isEditMode = false;
                         refreshContent(stage);
-                        showAlert("Sukses", "Profil berhasil diperbarui.");
+                        showStatus("Profil berhasil diperbarui. Notifikasi telah dikirim ke Inbox.", false);
                     } else {
-                        showAlert("Gagal", "Gagal memperbarui profil.");
+                        showStatus("Gagal memperbarui profil. Silakan coba lagi.", true);
                     }
                 });
             } catch (Exception e) {
@@ -260,12 +266,33 @@ public class AccountUI extends UI {
         }).start();
     }
 
-    private void showAlert(String title, String content) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
-        alert.showAndWait();
+    private void showStatus(String msg, boolean isError) {
+        if (statusLabel == null) return;
+        statusLabel.setText(msg);
+        statusLabel.setStyle("-fx-background-color: " + (isError ? "#FFEBEE" : "#E8F5E9") + "; " +
+                           "-fx-text-fill: " + (isError ? "#C62828" : "#2E7D32") + "; " +
+                           "-fx-padding: 8 16; -fx-background-radius: 8; -fx-font-weight: bold; -fx-font-size: 14px;");
+        statusLabel.setVisible(true);
+        statusLabel.setManaged(true);
+
+        FadeTransition ft = new FadeTransition(Duration.seconds(0.5), statusLabel);
+        ft.setFromValue(0);
+        ft.setToValue(1);
+        ft.play();
+
+        new Thread(() -> {
+            try { Thread.sleep(5000); } catch (InterruptedException ignored) {}
+            Platform.runLater(() -> {
+                FadeTransition ftOut = new FadeTransition(Duration.seconds(0.5), statusLabel);
+                ftOut.setFromValue(1);
+                ftOut.setToValue(0);
+                ftOut.setOnFinished(e -> {
+                    statusLabel.setVisible(false);
+                    statusLabel.setManaged(false);
+                });
+                ftOut.play();
+            });
+        }).start();
     }
 
     private void createAndShowStage() {
