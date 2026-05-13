@@ -20,6 +20,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class ClaimingServiceTest {
@@ -76,7 +78,13 @@ class ClaimingServiceTest {
         verify(transactionRepository, times(1)).save(any(Transaction.class));
         
         // Verifikasi disesuaikan dengan parameter lengkap
-        verify(notificationService, times(1)).sendNotification(donator, "Klaim Donasi", "Donasi Anda telah diklaim oleh penerima", donationId, NotificationType.DONASI);
+        verify(notificationService, times(1)).sendNotification(
+                eq(donator),
+                eq("Klaim Donasi"),
+                contains("Donasi Anda telah diklaim oleh penerima"),
+                eq(donationId),
+                eq(NotificationType.DONASI)
+        );
     }
 
     @Test
@@ -156,7 +164,13 @@ class ClaimingServiceTest {
         verify(donationRepository, times(1)).save(donation);
         
         // Verifikasi disesuaikan dengan parameter lengkap
-        verify(notificationService, times(1)).sendNotification(donator, "Pembatalan Klaim", "Klaim donasi dibatalkan", donationId, NotificationType.DONASI);
+        verify(notificationService, times(1)).sendNotification(
+                eq(donator),
+                eq("Pembatalan Klaim"),
+                contains("Klaim donasi dibatalkan"),
+                eq(donationId),
+                eq(NotificationType.DONASI)
+        );
     }
 
     @Test
