@@ -130,13 +130,28 @@ public class DonationDetailUI extends UI {
 
         infoCard.getChildren().addAll(titleRow, desc, grid, sep);
 
-        // Action Buttons based on Role
+        // Action Buttons based on Role and Status
         if (getUser() instanceof Recipient) {
-            Button claimBtn = new Button("Klaim Donasi Sekarang");
-            claimBtn.setStyle("-fx-background-color: " + DARK_GREEN + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16; -fx-background-radius: 12; -fx-cursor: hand;");
-            claimBtn.setMaxWidth(Double.MAX_VALUE);
-            claimBtn.setPrefHeight(55);
-            infoCard.getChildren().add(claimBtn);
+            String status = donation != null ? donation.getStatus() : "";
+            if ("CLAIMED".equalsIgnoreCase(status) || "DIKLAIM".equalsIgnoreCase(status)) {
+                Button cancelBtn = new Button("✕ Batalkan Klaim Donasi");
+                cancelBtn.setStyle("-fx-background-color: #C0392B; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16; -fx-background-radius: 12; -fx-cursor: hand;");
+                cancelBtn.setMaxWidth(Double.MAX_VALUE);
+                cancelBtn.setPrefHeight(55);
+                cancelBtn.setOnAction(e -> {
+                    Navigator.navigate(stage, new CancelDonationUI(getUser(), donation));
+                });
+                infoCard.getChildren().add(cancelBtn);
+            } else {
+                Button claimBtn = new Button("Klaim Donasi Sekarang");
+                claimBtn.setStyle("-fx-background-color: " + DARK_GREEN + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16; -fx-background-radius: 12; -fx-cursor: hand;");
+                claimBtn.setMaxWidth(Double.MAX_VALUE);
+                claimBtn.setPrefHeight(55);
+                claimBtn.setOnAction(e -> {
+                    Navigator.navigate(stage, new ClaimDonationUI(getUser(), donation));
+                });
+                infoCard.getChildren().add(claimBtn);
+            }
         }
 
         scrollContent.getChildren().addAll(heroSection, infoCard);
