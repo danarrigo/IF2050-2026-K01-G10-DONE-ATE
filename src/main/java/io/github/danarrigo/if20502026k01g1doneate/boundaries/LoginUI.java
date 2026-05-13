@@ -20,18 +20,37 @@ import java.net.URI;
 import java.net.http.*;
 import java.nio.charset.StandardCharsets;
 
-public class LoginUI extends Application {
+public class LoginUI extends UI {
 
     private static final String BASE_URL   = "http://localhost:8080";
     private static final String GREEN_DARK = "#2a5f2a";
     // private static final String GREEN_LIGHT = "#1a4d1a";
+
+    private static boolean jfxInitialized = false;
 
     private TextField     usernameField;
     private PasswordField passwordField;
     private Label         errorLabel;
     private Button        loginButton;
 
+    public LoginUI() {
+        super(null);
+    }
+
     @Override
+    public void showUI() {
+        if (!jfxInitialized) {
+            try {
+                Platform.startup(() -> {
+                });
+                jfxInitialized = true;
+            } catch (IllegalStateException e) {
+                jfxInitialized = true;
+            }
+        }
+        Platform.runLater(() -> start(new Stage()));
+    }
+
     public void start(Stage stage) {
         HBox root = new HBox();
         root.setPrefSize(1920, 1080);
@@ -330,6 +349,6 @@ public class LoginUI extends Application {
     }
 
     public static void main(String[] args) {
-        launch(args);
+        new LoginUI().showUI();
     }
 }
