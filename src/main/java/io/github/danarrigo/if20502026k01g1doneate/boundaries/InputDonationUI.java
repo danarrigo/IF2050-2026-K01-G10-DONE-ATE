@@ -38,22 +38,13 @@ public class InputDonationUI extends UI {
 
     @Override
     public void showUI() {
-        if (!jfxInitialized) {
-            try {
-                Platform.startup(() -> {
-                });
-                jfxInitialized = true;
-            } catch (IllegalStateException e) {
-                jfxInitialized = true;
-            }
-        }
         Platform.runLater(this::createAndShowStage);
     }
 
     private void createAndShowStage() {
         Stage stage = new Stage();
         stage.setTitle("DONE-ATE - Input Donasi");
-        stage.setMaximized(true);
+        stage.setFullScreen(true);
         showInputDonationScene(stage);
         stage.show();
     }
@@ -202,7 +193,7 @@ public class InputDonationUI extends UI {
         if (scene == null) {
             scene = new Scene(scroll);
             stage.setScene(scene);
-            stage.setMaximized(true);
+            stage.setFullScreen(true);
         } else {
             scene.setRoot(scroll);
         }
@@ -449,7 +440,7 @@ public class InputDonationUI extends UI {
         if (scene == null) {
             scene = new Scene(scroll);
             stage.setScene(scene);
-            stage.setMaximized(true);
+            stage.setFullScreen(true);
         } else {
             scene.setRoot(scroll);
         }

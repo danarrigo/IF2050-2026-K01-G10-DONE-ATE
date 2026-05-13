@@ -12,7 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -38,7 +38,7 @@ public class TransactionService {
         transaction.setTransactionCode(request.transactionCode());
         transaction.setRecipient(recipient);
         transaction.setDonator(donator);
-        transaction.setTransactionTime(LocalTime.now());
+        transaction.setTransactionTime(LocalDateTime.now());
         transaction.setStatus("ACTIVE");
 
         return TransactionResponse.from(transactionRepository.save(transaction));
@@ -53,11 +53,11 @@ public class TransactionService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found"));
     }
 
-    public LocalTime getTransactionTime(UUID id) {
+    public LocalDateTime getTransactionTime(UUID id) {
         return findTransaction(id).getTransactionTime();
     }
 
-    public LocalTime getCancellationTimeLimit(UUID id) {
+    public LocalDateTime getCancellationTimeLimit(UUID id) {
         Transaction transaction = findTransaction(id);
         if (transaction.getTransactionTime() != null) {
             return transaction.getTransactionTime().plusHours(2);

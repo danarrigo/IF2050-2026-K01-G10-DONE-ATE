@@ -6,7 +6,7 @@ import io.github.danarrigo.if20502026k01g1doneate.services.TransactionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @RestController
@@ -32,14 +32,14 @@ public class TransactionController {
     }
 
     @GetMapping("/{id}/time")
-    public ResponseEntity<LocalTime> getTransactionTime(@PathVariable UUID id) {
-        LocalTime transactionTime = transactionService.getTransactionTime(id);
+    public ResponseEntity<LocalDateTime> getTransactionTime(@PathVariable UUID id) {
+        LocalDateTime transactionTime = transactionService.getTransactionTime(id);
         return ResponseEntity.ok(transactionTime);
     }
 
     @GetMapping("/{id}/cancellation-limit")
-    public ResponseEntity<LocalTime> getCancellationTimeLimit(@PathVariable UUID id) {
-        LocalTime limitTime = transactionService.getCancellationTimeLimit(id);
+    public ResponseEntity<LocalDateTime> getCancellationTimeLimit(@PathVariable UUID id) {
+        LocalDateTime limitTime = transactionService.getCancellationTimeLimit(id);
         return ResponseEntity.ok(limitTime);
     }
 }
