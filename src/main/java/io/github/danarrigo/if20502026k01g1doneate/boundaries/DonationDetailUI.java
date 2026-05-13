@@ -56,7 +56,7 @@ public class DonationDetailUI extends UI {
             if (getUser() instanceof Donator) {
                 Navigator.navigate(stage, new CatalogUI(getUser()));
             } else {
-                Navigator.navigate(stage, new ClaimDonationUI(getUser()));
+                Navigator.navigate(stage, new RecipientCatalogUI(getUser()));
             }
         });
 

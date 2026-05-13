@@ -358,8 +358,8 @@ public class RecipientCatalogUI extends UI {
         // Row 4: action button right-aligned
         Region actionSpacer = new Region();
         VBox.setVgrow(actionSpacer, Priority.ALWAYS);
-        Button detailBtn = new Button("Lihat Detail");
-        detailBtn.setStyle(
+        Button claimBtn = new Button("✓ Klaim");
+        claimBtn.setStyle(
                 "-fx-background-color: " + DARK_GREEN + ";" +
                 "-fx-text-fill: white;" +
                 "-fx-font-weight: bold;" +
@@ -368,15 +368,15 @@ public class RecipientCatalogUI extends UI {
                 "-fx-cursor: hand;" +
                 "-fx-padding: 10 22 10 22;"
         );
-        detailBtn.setOnMouseEntered(e -> detailBtn.setStyle(detailBtn.getStyle().replace(DARK_GREEN, "#0a4218")));
-        detailBtn.setOnMouseExited(e -> detailBtn.setStyle(detailBtn.getStyle().replace("#0a4218", DARK_GREEN)));
-        detailBtn.setOnAction(e -> {
-            Stage s = stage != null ? stage : stage(detailBtn);
-            if (s != null) Navigator.navigate(s, new DonationDetailUI(getUser(), buildDonation(item)));
+        claimBtn.setOnMouseEntered(e -> claimBtn.setStyle(claimBtn.getStyle().replace(DARK_GREEN, "#0a4218")));
+        claimBtn.setOnMouseExited(e -> claimBtn.setStyle(claimBtn.getStyle().replace("#0a4218", DARK_GREEN)));
+        claimBtn.setOnAction(e -> {
+            Stage s = stage != null ? stage : stage(claimBtn);
+            if (s != null) Navigator.navigate(s, new ClaimDonationUI(getUser(), buildDonation(item)));
         });
         HBox btnRow = new HBox();
         btnRow.setAlignment(Pos.CENTER_RIGHT);
-        btnRow.getChildren().add(detailBtn);
+        btnRow.getChildren().add(claimBtn);
         btnRow.setPadding(new Insets(10, 0, 0, 0));
 
         info.getChildren().addAll(titleRow, subtitleLabel, timeRow, btnRow);
