@@ -38,6 +38,9 @@ class CatalogServiceTest {
     @Mock
     private DonatorRepository donatorRepository;
 
+    @Mock
+    private NotificationService notificationService;
+
     @InjectMocks
     private CatalogService catalogService;
 
