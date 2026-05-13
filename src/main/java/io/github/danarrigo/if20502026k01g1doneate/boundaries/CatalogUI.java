@@ -1,6 +1,8 @@
 package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
+import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
+import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
 import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.geometry.Insets;
@@ -117,7 +119,8 @@ public class CatalogUI extends UI {
         columns.getChildren().addAll(leftCol, rightCol);
         root.getChildren().addAll(header, columns);
 
-        HBox bottomNav = Navigator.createBottomNav(stage, getUser(), "CATALOG");
+        String activeTab = (getUser() instanceof Donator) ? "HOME" : "CATALOG";
+        HBox bottomNav = Navigator.createBottomNav(stage, getUser(), activeTab);
         VBox mainLayout = new VBox(root, bottomNav);
         VBox.setVgrow(root, Priority.ALWAYS);
 

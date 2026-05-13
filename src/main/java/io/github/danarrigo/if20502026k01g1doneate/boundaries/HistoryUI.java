@@ -2,6 +2,7 @@ package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
 import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
+import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 import javafx.application.Platform;
 import javafx.scene.Parent;

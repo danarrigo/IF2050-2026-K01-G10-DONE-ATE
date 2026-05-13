@@ -30,9 +30,14 @@ public class Navigator {
         nav.setSpacing(35);
         nav.setStyle("-fx-background-color: white; -fx-border-color: " + BORDER_COLOR + " transparent transparent transparent;");
 
+        nav.getChildren().add(createNavItem("🏠", "Home", "HOME".equals(activeTab), currentStage, user));
+
+        // For Donators, Home is already Catalog, so we don't need a separate Catalog tab
+        if (!(user instanceof Donator)) {
+            nav.getChildren().add(createNavItem("🍱", "Catalog", "CATALOG".equals(activeTab), currentStage, user));
+        }
+
         nav.getChildren().addAll(
-                createNavItem("🏠", "Home", "HOME".equals(activeTab), currentStage, user),
-                createNavItem("🍱", "Catalog", "CATALOG".equals(activeTab), currentStage, user),
                 createNavItem("✉", "Inbox", "INBOX".equals(activeTab), currentStage, user),
                 createNavItem("📜", "History", "HISTORY".equals(activeTab), currentStage, user),
                 createNavItem("👤", "Account", "ACCOUNT".equals(activeTab), currentStage, user)
