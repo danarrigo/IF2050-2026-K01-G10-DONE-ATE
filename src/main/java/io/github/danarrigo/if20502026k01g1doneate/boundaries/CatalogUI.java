@@ -1,7 +1,10 @@
 package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
+import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
+import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
 import javafx.application.Platform;
+import javafx.scene.Parent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -18,7 +21,6 @@ import java.nio.charset.StandardCharsets;
 
 public class CatalogUI extends UI {
 
-    private static boolean jfxInitialized = false;
 
     private static final String DARK_GREEN   = "#0F5B21";
     private static final String LIGHT_GREEN  = "#D2F4D6";
@@ -37,26 +39,12 @@ public class CatalogUI extends UI {
 
     @Override
     public void showUI() {
-        if (!jfxInitialized) {
-            try {
-                Platform.startup(() -> {});
-                jfxInitialized = true;
-            } catch (IllegalStateException e) {
-                jfxInitialized = true;
-            }
-        }
+        initJFX();
         Platform.runLater(this::createAndShowStage);
     }
 
-    private void createAndShowStage() {
-        Stage stage = new Stage();
-        stage.setTitle("DONE-ATE - Katalog Donasi");
-        stage.setMaximized(true);
-        showCatalogScene(stage);
-        stage.show();
-    }
-
-    private void showCatalogScene(Stage stage) {
+    @Override
+    public Parent getSceneContent(Stage stage) {
         VBox root = new VBox(30);
         root.setPadding(new Insets(50, 80, 50, 80));
         root.setStyle("-fx-background-color: " + BG_COLOR + ";");
@@ -106,10 +94,7 @@ public class CatalogUI extends UI {
         );
         addBtn.setPrefWidth(Double.MAX_VALUE);
         addBtn.setPrefHeight(52);
-        addBtn.setOnAction(e -> {
-            InputDonationUI inputUI = new InputDonationUI(getUser());
-            inputUI.showUI();
-        });
+        addBtn.setOnAction(e -> Navigator.navigate(stage, new InputDonationUI(getUser())));
 
         VBox infoBox = new VBox(10);
         infoBox.setPadding(new Insets(20));
@@ -134,20 +119,30 @@ public class CatalogUI extends UI {
         columns.getChildren().addAll(leftCol, rightCol);
         root.getChildren().addAll(header, columns);
 
-        ScrollPane scroll = new ScrollPane(root);
-        scroll.setFitToWidth(true);
+        String activeTab = (getUser() instanceof Donator) ? "HOME" : "CATALOG";
+        HBox bottomNav = Navigator.createBottomNav(stage, getUser(), activeTab);
+        VBox mainLayout = new VBox(root, bottomNav);
+        VBox.setVgrow(root, Priority.ALWAYS);
 
-        Scene scene = stage.getScene();
-        if (scene == null) {
-            scene = new Scene(scroll);
-            stage.setScene(scene);
-            stage.setMaximized(true);
-        } else {
-            scene.setRoot(scroll);
-        }
+        ScrollPane scroll = new ScrollPane(mainLayout);
+        scroll.setFitToWidth(true);
+        scroll.setFitToHeight(true);
 
         playAnimation(root);
         loadCatalog(username);
+        
+        return scroll;
+    }
+
+    private void createAndShowStage() {
+        Stage stage = new Stage();
+        stage.setTitle("DONE-ATE - Katalog Donasi");
+        stage.setMaximized(true);
+        
+        Scene scene = new Scene(getSceneContent(stage));
+        stage.setScene(scene);
+        stage.setFullScreen(true);
+        stage.show();
     }
 
     // ─── Load catalog from API ─────────────────────────────────────────────────

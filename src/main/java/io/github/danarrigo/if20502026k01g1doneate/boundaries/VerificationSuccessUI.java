@@ -18,22 +18,19 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
 public class VerificationSuccessUI extends UI {
-    private static boolean jfxInitialized = false;
 
     public VerificationSuccessUI(User user) {
         super(user);
     }
 
     @Override
+    public Parent getSceneContent(Stage stage) {
+        return createContent(stage);
+    }
+
+    @Override
     public void showUI() {
-        if (!jfxInitialized) {
-            try {
-                javafx.application.Platform.startup(() -> {});
-                jfxInitialized = true;
-            } catch (IllegalStateException e) {
-                jfxInitialized = true;
-            }
-        }
+        initJFX();
         javafx.application.Platform.runLater(() -> start(new Stage()));
     }
 
@@ -82,9 +79,7 @@ public class VerificationSuccessUI extends UI {
         // Back to Home Button
         Button btnHome = new Button("Kembali ke Beranda");
         btnHome.setStyle("-fx-background-color: #16A34A; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16px; -fx-padding: 12 30 12 30; -fx-background-radius: 8; -fx-cursor: hand;");
-        btnHome.setOnAction(e -> {
-            stage.close(); // For now, just close the window
-        });
+        btnHome.setOnAction(e -> Navigator.navigate(stage, new CatalogUI(getUser())));
 
         root.getChildren().addAll(iconContainer, titleLabel, descText, btnHome);
         return root;
