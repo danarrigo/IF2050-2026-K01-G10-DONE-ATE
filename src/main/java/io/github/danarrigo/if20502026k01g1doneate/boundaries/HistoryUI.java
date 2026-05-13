@@ -17,14 +17,19 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import javafx.stage.FileChooser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +50,8 @@ public class HistoryUI extends UI {
     private VBox historyContainer;
     private Label statsNum;
     private Stage stage;
+    private TextField dp1;
+    private TextField dp2;
 
     public HistoryUI(User user) {
         super(user);
@@ -100,20 +107,21 @@ public class HistoryUI extends UI {
         HBox statsFilterBox = new HBox(10);
         statsFilterBox.setAlignment(Pos.CENTER);
 
-        VBox filterCard = new VBox(5);
+        VBox filterCard = new VBox(10);
         filterCard.setPadding(new Insets(15));
         filterCard.setStyle("-fx-background-color: white; -fx-background-radius: 8px; -fx-border-color: " + BORDER_COLOR + "; -fx-border-radius: 8px;");
         HBox.setHgrow(filterCard, Priority.ALWAYS);
 
         HBox dateInputs = new HBox(10);
-        dateInputs.setAlignment(Pos.CENTER);
+        dateInputs.setAlignment(Pos.CENTER_LEFT);
         
         VBox startBox = new VBox(2);
         Label startLbl = new Label("Tanggal Mulai");
         startLbl.setFont(Font.font(9));
         startLbl.setTextFill(Color.web(TEXT_GRAY));
-        TextField dp1 = new TextField("mm/dd/yyyy"); 
-        dp1.setPrefWidth(90);
+        dp1 = new TextField(""); 
+        dp1.setPromptText("yyyy-MM-dd");
+        dp1.setPrefWidth(110);
         startBox.getChildren().addAll(startLbl, dp1);
 
         Label arrowLbl = new Label("→");
@@ -123,11 +131,25 @@ public class HistoryUI extends UI {
         Label endLbl = new Label("Tanggal Selesai");
         endLbl.setFont(Font.font(9));
         endLbl.setTextFill(Color.web(TEXT_GRAY));
-        TextField dp2 = new TextField("mm/dd/yyyy");
-        dp2.setPrefWidth(90);
+        dp2 = new TextField("");
+        dp2.setPromptText("yyyy-MM-dd");
+        dp2.setPrefWidth(110);
         endBox.getChildren().addAll(endLbl, dp2);
 
-        dateInputs.getChildren().addAll(startBox, arrowLbl, endBox);
+        // Quick Action Buttons
+        Button weekBtn = new Button("1 Minggu Lalu");
+        styleQuickBtn(weekBtn);
+        weekBtn.setOnAction(e -> {
+            dp1.setText(LocalDate.now().minusWeeks(1).toString());
+        });
+
+        Button todayBtn = new Button("Hari Ini");
+        styleQuickBtn(todayBtn);
+        todayBtn.setOnAction(e -> {
+            dp2.setText(LocalDate.now().toString());
+        });
+
+        dateInputs.getChildren().addAll(startBox, arrowLbl, endBox, new Region(), weekBtn, todayBtn);
         filterCard.getChildren().add(dateInputs);
 
         VBox statsCard = new VBox(5);
@@ -176,6 +198,10 @@ public class HistoryUI extends UI {
         return root;
     }
 
+    private void styleQuickBtn(Button btn) {
+        btn.setStyle("-fx-background-color: " + LIGHT_GREEN + "; -fx-text-fill: " + DARK_GREEN + "; -fx-font-weight: bold; -fx-font-size: 11px; -fx-background-radius: 15px; -fx-cursor: hand;");
+    }
+
     private void fetchHistory() {
         new Thread(() -> {
             try {
@@ -193,8 +219,6 @@ public class HistoryUI extends UI {
 
                 if (response.statusCode() == 200) {
                     renderHistory(response.body());
-                } else {
-                    System.err.println("[DEBUG] History Fetch Failed: " + response.statusCode() + " | " + response.body());
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -245,7 +269,6 @@ public class HistoryUI extends UI {
                 statsNum.setText(String.valueOf(countSelesai));
             } catch (Exception e) {
                 e.printStackTrace();
-                historyContainer.getChildren().add(new Label("Gagal memproses riwayat donasi."));
             }
         });
     }
@@ -284,10 +307,53 @@ public class HistoryUI extends UI {
     }
 
     private void handleDownloadReport() {
-        if (getUser() instanceof Donator) {
-            Donator donator = (Donator) getUser();
-            String url = BASE_URL + "/api/reports/download/" + donator.getDonatorId();
-            System.out.println("Downloading report from: " + url);
+        if (getUser() == null) return;
+        
+        String username = getUser().getUsername();
+        String url = BASE_URL + "/api/reports/download/user/" + username;
+        String token = SessionManager.getInstance().getToken();
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Simpan Laporan Donasi");
+        fileChooser.setInitialFileName("Laporan_Donasi_" + username + ".pdf");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
+        
+        File file = fileChooser.showSaveDialog(stage);
+        if (file != null) {
+            new Thread(() -> {
+                try {
+                    HttpClient client = HttpClient.newHttpClient();
+                    HttpRequest request = HttpRequest.newBuilder()
+                            .uri(URI.create(url))
+                            .header("Authorization", "Bearer " + token)
+                            .GET()
+                            .build();
+
+                    HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+
+                    if (response.statusCode() == 200) {
+                        try (FileOutputStream fos = new FileOutputStream(file)) {
+                            fos.write(response.body());
+                        }
+                        Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                            alert.setTitle("Sukses");
+                            alert.setHeaderText("Laporan Berhasil Diunduh");
+                            alert.setContentText("File disimpan di: " + file.getAbsolutePath());
+                            alert.show();
+                        });
+                    } else {
+                        Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.ERROR);
+                            alert.setTitle("Error");
+                            alert.setContentText("Gagal mengunduh laporan dari server. (Status: " + response.statusCode() + ")");
+                            alert.show();
+                        });
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }).start();
         }
     }
 

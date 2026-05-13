@@ -30,11 +30,26 @@ public class ReportController {
                     .headers(headers)
                     .body(pdfBytes);
         } catch (RuntimeException e) {
-            // Check if it's a "not found" error
             if (e.getMessage() != null && e.getMessage().contains("tidak ditemukan")) {
                 return ResponseEntity.notFound().build();
             }
-            // For other errors, return 500
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/download/user/{username}")
+    public ResponseEntity<byte[]> downloadReportByUsername(@PathVariable String username) {
+        try {
+            byte[] pdfBytes = reportService.generateReportByUsername(username);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "Laporan_Donasi_" + username + ".pdf");
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(pdfBytes);
+        } catch (RuntimeException e) {
             return ResponseEntity.internalServerError().build();
         }
     }

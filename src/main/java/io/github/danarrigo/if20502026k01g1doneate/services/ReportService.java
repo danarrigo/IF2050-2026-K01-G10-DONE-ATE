@@ -31,6 +31,12 @@ public class ReportService {
         this.donatorRepository = donatorRepository;
     }
 
+    public byte[] generateReportByUsername(String username) {
+        Donator donator = donatorRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Donatur tidak ditemukan"));
+        return generateReport(donator.getDonatorId());
+    }
+
     public byte[] generateReport(UUID donatorId) {
         // Fetch data in read-only transaction
         Donator donator = fetchDonator(donatorId);
