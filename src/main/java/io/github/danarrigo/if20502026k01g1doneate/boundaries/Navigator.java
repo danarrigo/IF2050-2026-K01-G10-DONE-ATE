@@ -68,12 +68,13 @@ public class Navigator {
             UI targetUI;
             switch (label) {
                 case "Home":
-                    if (user instanceof Donator) targetUI = new DonatorHomeUI(user);
-                    else if (user instanceof Recipient) targetUI = new ClaimDonationUI(user);
-                    else targetUI = new DonatorHomeUI(user);
+                    if (user instanceof Donator) targetUI = new CatalogUI(user);
+                    else if (user instanceof Recipient) targetUI = new RecipientCatalogUI(user);
+                    else targetUI = new CatalogUI(user);
                     break;
                 case "Catalog":
-                    targetUI = new CatalogUI(user);
+                    if (user instanceof Donator) targetUI = new CatalogUI(user);
+                    else targetUI = new RecipientCatalogUI(user);
                     break;
                 case "Inbox":
                     targetUI = new InboxUI(user);

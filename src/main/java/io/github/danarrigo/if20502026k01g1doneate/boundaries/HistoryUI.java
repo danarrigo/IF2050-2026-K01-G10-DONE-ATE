@@ -5,9 +5,9 @@ import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 import javafx.application.Platform;
-import javafx.scene.Parent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -16,49 +16,45 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.FileChooser;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class HistoryUI extends UI {
 
-    private Stage stage;
-
-    // Design Tokens Figma
-    private final String DARK_GREEN = "#3B7D3B"; // Disesuaikan dengan warna Figma
-    private final String LIGHT_GREEN = "#E8F0E8";
-    private final String BADGE_GREEN = "#E8F5E9";
-    private final String BADGE_RED = "#FFEBEE";
-    private final String BADGE_GRAY = "#F5F5F5";
-    private final String TEXT_GRAY = "#757575";
+    private final String DARK_GREEN   = "#0F5B21";
+    private final String LIGHT_GREEN  = "#D2F4D6";
+    private final String TEXT_GRAY    = "#757575";
     private final String BORDER_COLOR = "#E0E0E0";
-    private final String BG_COLOR = "#FAFAFA"; // Lebih putih sesuai desain
+    private final String BADGE_RED    = "#FEE2E2";
+    private final String BADGE_GREEN  = "#D1FAE5";
+    private final String BADGE_GRAY   = "#F3F4F6";
+    private final String BG_COLOR     = "#F8FAFC";
+    private final String BASE_URL     = "http://localhost:8080";
+
+    private VBox historyContainer;
+    private Label statsNum;
+    private Stage stage;
+    private TextField dp1;
+    private TextField dp2;
 
     public HistoryUI(User user) {
         super(user);
-    }
-
-    public static void main(String[] args) {
-        Donator mockDonator = new Donator();
-        // Menggunakan UUID sesuai keputusanmu
-        mockDonator.setDonatorId(UUID.randomUUID());
-        
-        HistoryUI ui = new HistoryUI(mockDonator);
-        ui.showUI();
-    }
-
-    @Override
-    public void showUI() {
-        initJFX();
-        Platform.runLater(this::createAndShowStage);
     }
 
     @Override
@@ -86,7 +82,7 @@ public class HistoryUI extends UI {
         VBox scrollContent = new VBox(20);
         scrollContent.setPadding(new Insets(20));
 
-        // Header: Title, Subtitle, dan Tombol Unduh
+        // Header
         HBox headerBox = new HBox();
         headerBox.setAlignment(Pos.CENTER_LEFT);
         
@@ -111,21 +107,21 @@ public class HistoryUI extends UI {
         HBox statsFilterBox = new HBox(10);
         statsFilterBox.setAlignment(Pos.CENTER);
 
-        // Kiri: Date Filter Card
-        VBox filterCard = new VBox(5);
+        VBox filterCard = new VBox(10);
         filterCard.setPadding(new Insets(15));
         filterCard.setStyle("-fx-background-color: white; -fx-background-radius: 8px; -fx-border-color: " + BORDER_COLOR + "; -fx-border-radius: 8px;");
         HBox.setHgrow(filterCard, Priority.ALWAYS);
 
         HBox dateInputs = new HBox(10);
-        dateInputs.setAlignment(Pos.CENTER);
+        dateInputs.setAlignment(Pos.CENTER_LEFT);
         
         VBox startBox = new VBox(2);
         Label startLbl = new Label("Tanggal Mulai");
         startLbl.setFont(Font.font(9));
         startLbl.setTextFill(Color.web(TEXT_GRAY));
-        TextField dp1 = new TextField("mm/dd/yyyy"); 
-        dp1.setPrefWidth(90);
+        dp1 = new TextField(""); 
+        dp1.setPromptText("yyyy-MM-dd");
+        dp1.setPrefWidth(110);
         startBox.getChildren().addAll(startLbl, dp1);
 
         Label arrowLbl = new Label("→");
@@ -135,14 +131,27 @@ public class HistoryUI extends UI {
         Label endLbl = new Label("Tanggal Selesai");
         endLbl.setFont(Font.font(9));
         endLbl.setTextFill(Color.web(TEXT_GRAY));
-        TextField dp2 = new TextField("mm/dd/yyyy");
-        dp2.setPrefWidth(90);
+        dp2 = new TextField("");
+        dp2.setPromptText("yyyy-MM-dd");
+        dp2.setPrefWidth(110);
         endBox.getChildren().addAll(endLbl, dp2);
 
-        dateInputs.getChildren().addAll(startBox, arrowLbl, endBox);
+        // Quick Action Buttons
+        Button weekBtn = new Button("1 Minggu Lalu");
+        styleQuickBtn(weekBtn);
+        weekBtn.setOnAction(e -> {
+            dp1.setText(LocalDate.now().minusWeeks(1).toString());
+        });
+
+        Button todayBtn = new Button("Hari Ini");
+        styleQuickBtn(todayBtn);
+        todayBtn.setOnAction(e -> {
+            dp2.setText(LocalDate.now().toString());
+        });
+
+        dateInputs.getChildren().addAll(startBox, arrowLbl, endBox, new Region(), weekBtn, todayBtn);
         filterCard.getChildren().add(dateInputs);
 
-        // Kanan: Total Donasi Card
         VBox statsCard = new VBox(5);
         statsCard.setPadding(new Insets(15));
         statsCard.setStyle("-fx-background-color: " + LIGHT_GREEN + "; -fx-background-radius: 8px;");
@@ -153,7 +162,7 @@ public class HistoryUI extends UI {
         
         HBox statsValueBox = new HBox(3);
         statsValueBox.setAlignment(Pos.BOTTOM_LEFT);
-        Label statsNum = new Label("124");
+        statsNum = new Label("0");
         statsNum.setFont(Font.font("System", FontWeight.BOLD, 24));
         statsNum.setTextFill(Color.web(DARK_GREEN));
         Label statsUnit = new Label("Paket");
@@ -169,27 +178,13 @@ public class HistoryUI extends UI {
         statsCard.getChildren().addAll(statsTitle, statsValueBox, progressBar);
         statsFilterBox.getChildren().addAll(filterCard, statsCard);
 
-        // History List
-        VBox historySection = new VBox(10);
-        historySection.getChildren().addAll(
-            createFigmaHistoryItem("⊗", "Roti Artisan Sisa Hari", "Donasi 24 Pcs Pastry Mix • 08 Okt 2023", "Dibatalkan", BADGE_RED, "#D32F2F", "TX-99185", "Lihat Alasan"),
-            createFigmaHistoryItem("⊘", "Sayuran Segar Organik", "Donasi 5kg Sayur Campur • 05 Okt 2023", "Kadaluwarsa", BADGE_GRAY, TEXT_GRAY, "TX-99042", "Donasi Ulang"),
-            createFigmaHistoryItem("✓", "Lauk Pauk Siap Saji", "Donasi 20 Porsi Ayam Penyet • 02 Okt 2023", "Selesai", BADGE_GREEN, DARK_GREEN, "TX-98912", "Lihat Detail")
-        );
-
-        // Tombol Muat Lebih Banyak
-        Button loadMoreBtn = new Button("Muat Lebih Banyak");
-        loadMoreBtn.setStyle("-fx-background-color: transparent; -fx-border-color: " + DARK_GREEN + "; -fx-border-radius: 20px; -fx-text-fill: " + DARK_GREEN + "; -fx-font-weight: bold;");
-        loadMoreBtn.setPrefWidth(150);
-        HBox loadMoreBox = new HBox(loadMoreBtn);
-        loadMoreBox.setAlignment(Pos.CENTER);
-        loadMoreBox.setPadding(new Insets(10, 0, 0, 0));
-
-        scrollContent.getChildren().addAll(headerBox, statsFilterBox, historySection, loadMoreBox);
+        // History Container
+        historyContainer = new VBox(10);
+        
+        scrollContent.getChildren().addAll(headerBox, statsFilterBox, historyContainer);
 
         ScrollPane scrollPane = new ScrollPane(scrollContent);
         scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setStyle("-fx-background-color: transparent; -fx-background: " + BG_COLOR + ";");
 
@@ -198,28 +193,92 @@ public class HistoryUI extends UI {
         root.getChildren().addAll(topBar, scrollPane, bottomNav);
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
         
+        fetchHistory();
+        
         return root;
     }
 
-    private void createAndShowStage() {
-        stage = new Stage();
-        stage.setTitle("DONE-ATE - Riwayat Donasi");
-        stage.setFullScreen(true);
-        stage.setFullScreenExitHint("");
-        
-        Scene scene = new Scene(getSceneContent(stage), 1920, 1080);
-        stage.setScene(scene);
-        stage.show();
+    private void styleQuickBtn(Button btn) {
+        btn.setStyle("-fx-background-color: " + LIGHT_GREEN + "; -fx-text-fill: " + DARK_GREEN + "; -fx-font-weight: bold; -fx-font-size: 11px; -fx-background-radius: 15px; -fx-cursor: hand;");
     }
 
-    // Pembuatan Card Item persis Figma
-    private HBox createFigmaHistoryItem(String iconTxt, String title, String subtitle, String status, String badgeBg, String badgeTextCol, String txId, String actionTxt) {
+    private void fetchHistory() {
+        new Thread(() -> {
+            try {
+                String token = SessionManager.getInstance().getToken();
+                HttpClient client = HttpClient.newHttpClient();
+                String url = BASE_URL + "/api/catalog/donator/" + getUser().getUsername();
+                
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .header("Authorization", "Bearer " + token)
+                        .GET()
+                        .build();
+
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                if (response.statusCode() == 200) {
+                    renderHistory(response.body());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private void renderHistory(String json) {
+        Platform.runLater(() -> {
+            try {
+                historyContainer.getChildren().clear();
+                
+                ObjectMapper mapper = new ObjectMapper();
+                List<Map<String, Object>> items = mapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
+                
+                if (items.isEmpty()) {
+                    historyContainer.getChildren().add(new Label("Belum ada riwayat donasi."));
+                    return;
+                }
+
+                int countSelesai = 0;
+                for (Map<String, Object> item : items) {
+                    String dishName = String.valueOf(item.get("dishName"));
+                    String status   = String.valueOf(item.get("status"));
+                    String time     = String.valueOf(item.get("timeAdded"));
+                    String dateStr  = (time != null && time.length() >= 10) ? time.substring(0, 10) : "-";
+
+                    String icon = "✓";
+                    String badgeBg = BADGE_GREEN;
+                    String textCol = DARK_GREEN;
+
+                    if ("Selesai".equalsIgnoreCase(status) || "QC Passed".equalsIgnoreCase(status)) {
+                        countSelesai++;
+                    } else if ("Dibatalkan".equalsIgnoreCase(status) || "QC Failed".equalsIgnoreCase(status) || "Removed".equalsIgnoreCase(status)) {
+                        icon = "⊗";
+                        badgeBg = BADGE_RED;
+                        textCol = "#D32F2F";
+                    } else {
+                        icon = "⌛";
+                        badgeBg = BADGE_GRAY;
+                        textCol = TEXT_GRAY;
+                    }
+
+                    historyContainer.getChildren().add(
+                        createFigmaHistoryItem(icon, dishName, "Donasi pada " + dateStr, status, badgeBg, textCol)
+                    );
+                }
+                statsNum.setText(String.valueOf(countSelesai));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private HBox createFigmaHistoryItem(String iconTxt, String title, String subtitle, String status, String badgeBg, String badgeTextCol) {
         HBox item = new HBox(12);
         item.setPadding(new Insets(15));
         item.setAlignment(Pos.CENTER_LEFT);
         item.setStyle("-fx-background-color: white; -fx-background-radius: 8px; -fx-border-color: " + BORDER_COLOR + "; -fx-border-radius: 8px;");
 
-        // Ikon Kiri
         StackPane iconPane = new StackPane();
         Circle bgCircle = new Circle(18, Color.web(badgeBg));
         Label icon = new Label(iconTxt);
@@ -227,109 +286,87 @@ public class HistoryUI extends UI {
         icon.setFont(Font.font("System", FontWeight.BOLD, 14));
         iconPane.getChildren().addAll(bgCircle, icon);
 
-        // Teks Tengah
         VBox textPane = new VBox(3);
         Label titleLbl = new Label(title);
-        titleLbl.setFont(Font.font("System", FontWeight.NORMAL, 13));
+        titleLbl.setFont(Font.font("System", FontWeight.NORMAL, 14));
         Label subLbl = new Label(subtitle);
-        subLbl.setFont(Font.font(10));
+        subLbl.setFont(Font.font(11));
         subLbl.setTextFill(Color.web(TEXT_GRAY));
         textPane.getChildren().addAll(titleLbl, subLbl);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        // Status & Aksi Kanan
-        VBox rightPane = new VBox(5);
-        rightPane.setAlignment(Pos.CENTER_RIGHT);
-        
         Label statusBadge = new Label(status);
-        statusBadge.setFont(Font.font(9));
-        statusBadge.setPadding(new Insets(2, 8, 2, 8));
-        statusBadge.setStyle("-fx-background-color: " + badgeBg + "; -fx-background-radius: 10px;");
-        statusBadge.setTextFill(Color.web(badgeTextCol));
+        statusBadge.setFont(Font.font("System", FontWeight.BOLD, 10));
+        statusBadge.setPadding(new Insets(4, 10, 4, 10));
+        statusBadge.setStyle("-fx-background-color: " + badgeBg + "; -fx-background-radius: 12px; -fx-text-fill: " + badgeTextCol + ";");
 
-        VBox idActionBox = new VBox(0);
-        idActionBox.setAlignment(Pos.CENTER_RIGHT);
-        Label idLbl = new Label("ID: " + txId);
-        idLbl.setFont(Font.font("System", FontWeight.BOLD, 9));
-        Label actionLbl = new Label(actionTxt);
-        actionLbl.setFont(Font.font(9));
-        actionLbl.setTextFill(Color.web(DARK_GREEN));
-        idActionBox.getChildren().addAll(idLbl, actionLbl);
-
-        rightPane.getChildren().addAll(statusBadge, idActionBox);
-
-        item.getChildren().addAll(iconPane, textPane, spacer, rightPane);
+        item.getChildren().addAll(iconPane, textPane, spacer, statusBadge);
         return item;
     }
 
-
-    // Fungsi Panggil API menggunakan UUID
     private void handleDownloadReport() {
-        if (getUser() == null || !(getUser() instanceof Donator)) {
-            showAlert(Alert.AlertType.ERROR, "Error", "Anda harus login sebagai Donatur.");
-            return;
-        }
-
-        // Ekstraksi UUID
-        UUID donatorId = ((Donator) getUser()).getDonatorId();
-
-        // Convert UUID ke String untuk URL
-        String url = "http://localhost:8080/api/reports/download/" + donatorId.toString();
-
+        if (getUser() == null) return;
+        
+        String username = getUser().getUsername();
+        String url = BASE_URL + "/api/reports/download/user/" + username;
         String token = SessionManager.getInstance().getToken();
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("Authorization", "Bearer " + token)
-                .GET()
-                .build();
 
-        client.sendAsync(request, HttpResponse.BodyHandlers.ofByteArray())
-                .thenAccept(response -> {
-                    Platform.runLater(() -> {
-                        if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                            // Show file chooser to save PDF
-                            FileChooser fileChooser = new FileChooser();
-                            fileChooser.setTitle("Simpan Laporan PDF");
-                            fileChooser.setInitialFileName("Laporan_Donasi_" + donatorId + ".pdf");
-                            fileChooser.getExtensionFilters().add(
-                                new FileChooser.ExtensionFilter("PDF Files", "*.pdf")
-                            );
-                            
-                            File file = fileChooser.showSaveDialog(stage);
-                            if (file != null) {
-                                try {
-                                    Path path = file.toPath();
-                                    Files.write(path, response.body());
-                                    showAlert(Alert.AlertType.INFORMATION, "Sukses", 
-                                        "Laporan berhasil disimpan ke: " + file.getAbsolutePath());
-                                } catch (Exception e) {
-                                    showAlert(Alert.AlertType.ERROR, "Gagal", 
-                                        "Gagal menyimpan file: " + e.getMessage());
-                                }
-                            }
-                        } else if (response.statusCode() == 401 || response.statusCode() == 403) {
-                            showAlert(Alert.AlertType.ERROR, "Gagal", "Sesi berakhir atau tidak memiliki izin.");
-                        } else if (response.statusCode() == 404) {
-                            showAlert(Alert.AlertType.ERROR, "Gagal", "Donatur tidak ditemukan.");
-                        } else {
-                            showAlert(Alert.AlertType.ERROR, "Gagal", "Gagal mengunduh laporan.");
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Simpan Laporan Donasi");
+        fileChooser.setInitialFileName("Laporan_Donasi_" + username + ".pdf");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
+        
+        File file = fileChooser.showSaveDialog(stage);
+        if (file != null) {
+            new Thread(() -> {
+                try {
+                    HttpClient client = HttpClient.newHttpClient();
+                    HttpRequest request = HttpRequest.newBuilder()
+                            .uri(URI.create(url))
+                            .header("Authorization", "Bearer " + token)
+                            .GET()
+                            .build();
+
+                    HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+
+                    if (response.statusCode() == 200) {
+                        try (FileOutputStream fos = new FileOutputStream(file)) {
+                            fos.write(response.body());
                         }
-                    });
-                })
-                .exceptionally(ex -> {
-                    Platform.runLater(() -> showAlert(Alert.AlertType.ERROR, "Error", "Koneksi ke server gagal."));
-                    return null;
-                });
+                        Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                            alert.setTitle("Sukses");
+                            alert.setHeaderText("Laporan Berhasil Diunduh");
+                            alert.setContentText("File disimpan di: " + file.getAbsolutePath());
+                            alert.show();
+                        });
+                    } else {
+                        Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.ERROR);
+                            alert.setTitle("Error");
+                            alert.setContentText("Gagal mengunduh laporan dari server. (Status: " + response.statusCode() + ")");
+                            alert.show();
+                        });
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }).start();
+        }
     }
 
-    private void showAlert(Alert.AlertType type, String title, String content) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
-        alert.showAndWait();
+    @Override
+    public void showUI() {
+        initJFX();
+        Platform.runLater(() -> {
+            Stage stage = new Stage();
+            stage.setTitle("DONE-ATE - Riwayat Donasi");
+            Scene scene = new Scene(getSceneContent(stage), 1920, 1080);
+            stage.setScene(scene);
+            stage.setFullScreen(true);
+            stage.show();
+        });
     }
 }
