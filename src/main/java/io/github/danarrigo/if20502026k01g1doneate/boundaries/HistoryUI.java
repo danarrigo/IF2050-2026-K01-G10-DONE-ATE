@@ -70,6 +70,8 @@ public class HistoryUI extends UI {
     private void createAndShowStage() {
         stage = new Stage();
         stage.setTitle("DONE-ATE - Riwayat Donasi");
+        stage.setFullScreen(true);
+        stage.setFullScreenExitHint("");
 
         VBox root = new VBox();
         root.setStyle("-fx-background-color: " + BG_COLOR + ";");

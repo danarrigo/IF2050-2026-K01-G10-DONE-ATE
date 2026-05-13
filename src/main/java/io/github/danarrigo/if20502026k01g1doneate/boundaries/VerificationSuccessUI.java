@@ -1,10 +1,13 @@
 package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
+import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -14,17 +17,42 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
-public class VerificationSuccessUI extends VBox {
+public class VerificationSuccessUI extends UI {
+    private static boolean jfxInitialized = false;
 
-    public VerificationSuccessUI() {
-        this.setAlignment(Pos.CENTER);
-        this.setPadding(new Insets(50));
-        this.setSpacing(20);
-        this.setStyle("-fx-background-color: #F9FAFB;");
-        initializeUI();
+    public VerificationSuccessUI(User user) {
+        super(user);
     }
 
-    private void initializeUI() {
+    @Override
+    public void showUI() {
+        if (!jfxInitialized) {
+            try {
+                javafx.application.Platform.startup(() -> {});
+                jfxInitialized = true;
+            } catch (IllegalStateException e) {
+                jfxInitialized = true;
+            }
+        }
+        javafx.application.Platform.runLater(() -> start(new Stage()));
+    }
+
+    public void start(Stage stage) {
+        stage.setTitle("DONE-ATE - Transaksi Selesai");
+        Scene scene = new Scene(createContent(stage), 1920, 1080);
+        stage.setScene(scene);
+        stage.setFullScreen(true);
+        stage.setFullScreenExitHint("");
+        stage.show();
+    }
+
+    public Parent createContent(Stage stage) {
+        VBox root = new VBox();
+        root.setAlignment(Pos.CENTER);
+        root.setPadding(new Insets(50));
+        root.setSpacing(20);
+        root.setStyle("-fx-background-color: #F9FAFB;");
+
         // Green Checkmark Icon inside a Circle
         VBox iconContainer = new VBox();
         iconContainer.setAlignment(Pos.CENTER);
@@ -36,7 +64,7 @@ public class VerificationSuccessUI extends VBox {
         checkmark.setTextFill(Color.web("#16A34A"));
         checkmark.setFont(Font.font("System", FontWeight.BOLD, 40));
         
-        javafx.scene.layout.StackPane stack = new javafx.scene.layout.StackPane(circle, checkmark);
+        StackPane stack = new StackPane(circle, checkmark);
         iconContainer.getChildren().add(stack);
 
         // Success Title
@@ -55,10 +83,14 @@ public class VerificationSuccessUI extends VBox {
         Button btnHome = new Button("Kembali ke Beranda");
         btnHome.setStyle("-fx-background-color: #16A34A; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16px; -fx-padding: 12 30 12 30; -fx-background-radius: 8; -fx-cursor: hand;");
         btnHome.setOnAction(e -> {
-            Stage stage = (Stage) this.getScene().getWindow();
             stage.close(); // For now, just close the window
         });
 
-        this.getChildren().addAll(iconContainer, titleLabel, descText, btnHome);
+        root.getChildren().addAll(iconContainer, titleLabel, descText, btnHome);
+        return root;
+    }
+
+    public static void main(String[] args) {
+        new VerificationSuccessUI(null).showUI();
     }
 }
