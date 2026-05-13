@@ -1,7 +1,7 @@
 package io.github.danarrigo.if20502026k01g1doneate.controllers;
 
 import io.github.danarrigo.if20502026k01g1doneate.dtos.TransactionCreateRequest;
-import io.github.danarrigo.if20502026k01g1doneate.entities.Transaction;
+import io.github.danarrigo.if20502026k01g1doneate.dtos.TransactionResponse;
 import io.github.danarrigo.if20502026k01g1doneate.services.TransactionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,14 +20,14 @@ public class TransactionController {
     }
 
     @PostMapping
-    public ResponseEntity<Transaction> createTransaction(@RequestBody TransactionCreateRequest request) {
-        Transaction createdTransaction = transactionService.createTransaction(request);
+    public ResponseEntity<TransactionResponse> createTransaction(@RequestBody TransactionCreateRequest request) {
+        TransactionResponse createdTransaction = transactionService.createTransaction(request);
         return ResponseEntity.ok(createdTransaction);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Transaction> getTransactionData(@PathVariable UUID id) {
-        Transaction transaction = transactionService.getTransactionData(id);
+    public ResponseEntity<TransactionResponse> getTransactionData(@PathVariable UUID id) {
+        TransactionResponse transaction = transactionService.getTransactionData(id);
         return ResponseEntity.ok(transaction);
     }
 

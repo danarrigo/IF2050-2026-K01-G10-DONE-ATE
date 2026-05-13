@@ -1,6 +1,7 @@
 package io.github.danarrigo.if20502026k01g1doneate.services;
 
 import io.github.danarrigo.if20502026k01g1doneate.dtos.TransactionCreateRequest;
+import io.github.danarrigo.if20502026k01g1doneate.dtos.TransactionResponse;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Transaction;
@@ -27,7 +28,7 @@ public class TransactionService {
         this.donatorRepository = donatorRepository;
     }
 
-    public Transaction createTransaction(TransactionCreateRequest request) {
+    public TransactionResponse createTransaction(TransactionCreateRequest request) {
         Recipient recipient = recipientRepository.findById(request.recipientUsername())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipient not found: " + request.recipientUsername()));
         Donator donator = donatorRepository.findById(request.donatorUsername())
@@ -40,21 +41,24 @@ public class TransactionService {
         transaction.setTransactionTime(LocalTime.now());
         transaction.setStatus("ACTIVE");
 
-        return transactionRepository.save(transaction);
+        return TransactionResponse.from(transactionRepository.save(transaction));
     }
 
-    public Transaction getTransactionData(UUID id) {
+    public TransactionResponse getTransactionData(UUID id) {
+        return TransactionResponse.from(findTransaction(id));
+    }
+
+    private Transaction findTransaction(UUID id) {
         return transactionRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found"));
     }
 
     public LocalTime getTransactionTime(UUID id) {
-        Transaction transaction = getTransactionData(id);
-        return transaction.getTransactionTime();
+        return findTransaction(id).getTransactionTime();
     }
 
     public LocalTime getCancellationTimeLimit(UUID id) {
-        Transaction transaction = getTransactionData(id);
+        Transaction transaction = findTransaction(id);
         if (transaction.getTransactionTime() != null) {
             return transaction.getTransactionTime().plusHours(2);
         }
