@@ -296,7 +296,8 @@ public class HistoryUI extends UI {
                         historyItem.setOnMouseEntered(e -> historyItem.setStyle(historyItem.getStyle() + "; -fx-background-color: #F0F9FF;"));
                         historyItem.setOnMouseExited(e -> historyItem.setStyle(historyItem.getStyle().replace("; -fx-background-color: #F0F9FF;", "")));
                         historyItem.setOnMouseClicked(e -> {
-                            Navigator.navigate(stage, new VerificationUI(getUser()));
+                            UUID donationId = UUID.fromString(String.valueOf(item.get("donationId")));
+                            Navigator.navigate(stage, new VerificationUI(getUser(), donationId));
                         });
                         
                         Label clickHint = new Label("Klik untuk Verifikasi →");

@@ -26,6 +26,15 @@ public class CatalogController {
         return ResponseEntity.ok(catalogService.getActiveCatalog());
     }
 
+    @GetMapping("/{donationId}")
+    public ResponseEntity<?> getCatalogItem(@PathVariable UUID donationId) {
+        try {
+            return ResponseEntity.ok(catalogService.getCatalogItem(donationId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/donator/{username}")
     public ResponseEntity<?> getDonatorCatalog(@PathVariable String username) {
         try {

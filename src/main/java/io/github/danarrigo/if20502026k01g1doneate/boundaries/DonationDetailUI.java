@@ -441,7 +441,7 @@ public class DonationDetailUI extends UI {
 
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
-                        Navigator.navigate(stage, new VerificationUI(getUser()));
+                        Navigator.navigate(stage, new VerificationUI(getUser(), donation.getDonationId()));
                     } else {
                         showStatus("Klaim gagal: " + response.body(), true);
                     }

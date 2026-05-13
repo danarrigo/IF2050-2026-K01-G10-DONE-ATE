@@ -11,16 +11,22 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.UUID;
 
 public class VerificationUI extends UI {
 
@@ -28,9 +34,23 @@ public class VerificationUI extends UI {
     private HBox successBox;
     private Button btnKonfirmasi;
     private Stage stage;
+    private UUID donationId;
+
+    // UI elements to update dynamically
+    private Label foodNameLabel;
+    private Label donatorNameLabel;
+    private Label locationLabel;
+    private Label timeLabel;
+    private Label trxTagLabel;
+    private ImageView foodImageView;
 
     public VerificationUI(User user) {
         super(user);
+    }
+
+    public VerificationUI(User user, UUID donationId) {
+        super(user);
+        this.donationId = donationId;
     }
 
     @Override
@@ -83,123 +103,177 @@ public class VerificationUI extends UI {
         mainContent.setPadding(new Insets(30));
 
         // --- LEFT COLUMN (Detail Serah Terima) ---
-        VBox leftCol = new VBox(10);
-        leftCol.setPrefWidth(350);
+        VBox leftCol = new VBox(15);
+        leftCol.setPrefWidth(400);
         leftCol.setStyle("-fx-background-color: white; -fx-border-color: #E5E7EB; -fx-border-radius: 10; -fx-background-radius: 10;");
-        leftCol.setPadding(new Insets(20));
+        leftCol.setPadding(new Insets(25));
 
         Label leftTitle = new Label("Detail Serah Terima");
         leftTitle.setFont(Font.font("System", FontWeight.BOLD, 18));
 
-        // Image Placeholder
-        VBox imageBox = new VBox();
-        imageBox.setPrefHeight(150);
-        imageBox.setStyle("-fx-background-color: #0F766E; -fx-background-radius: 8;");
+        // Image Container
+        foodImageView = new ImageView();
+        foodImageView.setFitWidth(350);
+        foodImageView.setFitHeight(200);
+        foodImageView.setPreserveRatio(true);
+        
+        StackPane imageWrapper = new StackPane(foodImageView);
+        imageWrapper.setPrefSize(350, 200);
+        imageWrapper.setStyle("-fx-background-color: #F3F4F6; -fx-background-radius: 8;");
 
         // Tags
         HBox tagsBox = new HBox(10);
         Label tag1 = new Label("Perishable");
         tag1.setStyle("-fx-background-color: #DCFCE7; -fx-text-fill: #15803D; -fx-padding: 3 8 3 8; -fx-background-radius: 15; -fx-font-size: 11px;");
-        Label tag2 = new Label("Donasi #TRX-9821");
-        tag2.setStyle("-fx-background-color: #BBF7D0; -fx-text-fill: #166534; -fx-padding: 3 8 3 8; -fx-background-radius: 15; -fx-font-weight: bold; -fx-font-size: 11px;");
-        tagsBox.getChildren().addAll(tag1, tag2);
-
-        Label foodName = new Label("Paket Bahan Pangan Segar");
-        foodName.setFont(Font.font("System", FontWeight.BOLD, 16));
         
-        Label donatorName = new Label("Donatur: Restoran Hijau Sejahtera");
-        donatorName.setStyle("-fx-text-fill: #6B7280;");
+        trxTagLabel = new Label("Donasi #" + (donationId != null ? donationId.toString().substring(0, 8).toUpperCase() : "TRX-9821"));
+        trxTagLabel.setStyle("-fx-background-color: #BBF7D0; -fx-text-fill: #166534; -fx-padding: 3 8 3 8; -fx-background-radius: 15; -fx-font-weight: bold; -fx-font-size: 11px;");
+        tagsBox.getChildren().addAll(tag1, trxTagLabel);
 
-        VBox locationTimeBox = new VBox(5);
+        foodNameLabel = new Label("Memuat data...");
+        foodNameLabel.setFont(Font.font("System", FontWeight.BOLD, 20));
+        foodNameLabel.setWrapText(true);
+        
+        donatorNameLabel = new Label("Donatur: -");
+        donatorNameLabel.setStyle("-fx-text-fill: #6B7280; -fx-font-size: 14px;");
+
+        VBox locationTimeBox = new VBox(8);
         locationTimeBox.setPadding(new Insets(10, 0, 0, 0));
-        Label locLabel = new Label("📍 Jl. Melati No. 45, Jakarta Pusat");
-        locLabel.setStyle("-fx-text-fill: #4B5563;");
-        Label timeLabel = new Label("🕒 Hari ini, 14:00 - 16:00 WIB");
+        locationLabel = new Label("📍 Lokasi penjemputan...");
+        locationLabel.setStyle("-fx-text-fill: #4B5563;");
+        locationLabel.setWrapText(true);
+        
+        timeLabel = new Label("🕒 Waktu...");
         timeLabel.setStyle("-fx-text-fill: #4B5563;");
-        locationTimeBox.getChildren().addAll(locLabel, timeLabel);
+        locationTimeBox.getChildren().addAll(locationLabel, timeLabel);
 
-        leftCol.getChildren().addAll(leftTitle, imageBox, tagsBox, foodName, donatorName, locationTimeBox);
+        leftCol.getChildren().addAll(leftTitle, imageWrapper, tagsBox, foodNameLabel, donatorNameLabel, locationTimeBox);
 
         // --- RIGHT COLUMN ---
         VBox rightCol = new VBox(20);
-        rightCol.setPrefWidth(450);
+        rightCol.setPrefWidth(500);
 
         // 1. Verifikasi Card
-        VBox verifikasiCard = new VBox(15);
+        VBox verifikasiCard = new VBox(20);
         verifikasiCard.setStyle("-fx-background-color: white; -fx-border-color: #E5E7EB; -fx-border-radius: 10; -fx-background-radius: 10;");
-        verifikasiCard.setPadding(new Insets(25));
+        verifikasiCard.setPadding(new Insets(30));
 
         Label rightTitle = new Label("Verifikasi Serah Terima");
-        rightTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: #166534; -fx-font-size: 22px;");
+        rightTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: #166534; -fx-font-size: 24px;");
         
-        Text descText = new Text("Input Kode Verifikasi yang diterima oleh pihak Donatur atau Penerima untuk menyelesaikan proses.");
-        descText.setFill(javafx.scene.paint.Color.web("#6b7280"));
-        descText.setWrappingWidth(400);
+        Text descText = new Text("Silakan masukkan 6 digit kode verifikasi yang diberikan oleh Donatur saat serah terima makanan dilakukan.");
+        descText.setFill(javafx.scene.paint.Color.web("#6B7280"));
+        descText.setWrappingWidth(440);
+        descText.setFont(Font.font(14));
 
-        Label pinLabel = new Label("Masukkan 6 Digit Kode");
-        pinLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #374151;");
+        Label pinLabel = new Label("KODE VERIFIKASI");
+        pinLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #374151; -fx-font-size: 12px;");
 
         // PIN Inputs
-        HBox pinBox = new HBox(10);
+        HBox pinBox = new HBox(12);
         pinBox.setAlignment(Pos.CENTER);
         for (int i = 0; i < 6; i++) {
             pinFields[i] = new TextField();
-            pinFields[i].setPrefSize(50, 50);
+            pinFields[i].setPrefSize(55, 60);
             pinFields[i].setAlignment(Pos.CENTER);
-            pinFields[i].setStyle("-fx-font-size: 20px; -fx-border-radius: 5;");
+            pinFields[i].setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-border-color: #D1D5DB; -fx-border-radius: 8; -fx-background-radius: 8;");
             pinBox.getChildren().add(pinFields[i]);
         }
-        setupPinLogic(); // Attach listeners
+        setupPinLogic();
 
-        // Success Box (Hidden initially)
+        // Success Box
         successBox = new HBox(10);
-        successBox.setStyle("-fx-background-color: #DCFCE7; -fx-border-color: #BBF7D0; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 10;");
+        successBox.setStyle("-fx-background-color: #DCFCE7; -fx-border-color: #BBF7D0; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 12;");
         successBox.setAlignment(Pos.CENTER_LEFT);
-        Label successLabel = new Label("✅ Kode lengkap. Tekan Konfirmasi untuk verifikasi.");
+        Label successLabel = new Label("✅ Kode lengkap. Silakan tekan konfirmasi.");
         successLabel.setStyle("-fx-text-fill: #166534; -fx-font-weight: bold;");
         successBox.getChildren().add(successLabel);
         successBox.setVisible(false);
         successBox.setManaged(false);
 
         // Submit Button
-        btnKonfirmasi = new Button("Konfirmasi Terima");
+        btnKonfirmasi = new Button("Konfirmasi Terima Donasi");
         btnKonfirmasi.setMaxWidth(Double.MAX_VALUE);
-        btnKonfirmasi.setStyle("-fx-background-color: #14532D; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 12;");
+        btnKonfirmasi.setCursor(javafx.scene.Cursor.HAND);
+        btnKonfirmasi.setStyle("-fx-background-color: #166534; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16px; -fx-padding: 15; -fx-background-radius: 8;");
         btnKonfirmasi.setOnAction(e -> handleKonfirmasi());
 
-        HBox resendBox = new HBox();
-        resendBox.setAlignment(Pos.CENTER);
-        Label resendLabel = new Label("Kirim Ulang Kode (59s)");
-        resendLabel.setStyle("-fx-text-fill: #6B7280;");
-        resendBox.getChildren().add(resendLabel);
+        verifikasiCard.getChildren().addAll(rightTitle, descText, pinLabel, pinBox, successBox, btnKonfirmasi);
 
-        verifikasiCard.getChildren().addAll(rightTitle, descText, pinLabel, pinBox, successBox, btnKonfirmasi, resendBox);
-
-        // 2. Panduan Keamanan Card
-        VBox panduanCard = new VBox(10);
-        panduanCard.setStyle("-fx-background-color: #F3F4F6; -fx-border-color: #166534; -fx-border-width: 0 0 0 4; -fx-background-radius: 0 8 8 0;");
-        panduanCard.setPadding(new Insets(15, 20, 15, 20));
+        // 2. Panduan Card
+        VBox panduanCard = new VBox(12);
+        panduanCard.setStyle("-fx-background-color: #F0FDF4; -fx-border-color: #166534; -fx-border-width: 0 0 0 4; -fx-background-radius: 0 8 8 0;");
+        panduanCard.setPadding(new Insets(20));
         
-        Label panduanTitle = new Label("Panduan Keamanan");
-        panduanTitle.setStyle("-fx-text-fill: #166534; -fx-font-weight: bold;");
+        Label panduanTitle = new Label("🛡 Panduan Keamanan");
+        panduanTitle.setStyle("-fx-text-fill: #166534; -fx-font-weight: bold; -fx-font-size: 15px;");
         
-        Label p1 = new Label("• Pastikan kondisi barang sesuai dengan deskripsi sebelum konfirmasi.");
+        Label p1 = new Label("1. Periksa kesesuaian dan kualitas makanan sebelum menginput kode.");
         p1.setWrapText(true);
-        p1.setStyle("-fx-text-fill: #4B5563;");
+        p1.setStyle("-fx-text-fill: #166534; -fx-font-size: 13px;");
         
-        Label p2 = new Label("• Jangan membagikan kode verifikasi kepada siapapun selain sistem.");
+        Label p2 = new Label("2. Kode verifikasi ini bersifat rahasia dan hanya digunakan untuk menyelesaikan transaksi.");
         p2.setWrapText(true);
-        p2.setStyle("-fx-text-fill: #4B5563;");
+        p2.setStyle("-fx-text-fill: #166534; -fx-font-size: 13px;");
         
         panduanCard.getChildren().addAll(panduanTitle, p1, p2);
 
         rightCol.getChildren().addAll(verifikasiCard, panduanCard);
 
-        // Add both columns to main content
         mainContent.getChildren().addAll(leftCol, rightCol);
         root.setCenter(mainContent);
         
+        if (donationId != null) {
+            fetchDonationData();
+        }
+        
         return root;
+    }
+
+    private void fetchDonationData() {
+        new Thread(() -> {
+            try {
+                String token = SessionManager.getInstance().getToken();
+                HttpClient client = HttpClient.newHttpClient();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create("http://localhost:8080/api/catalog/" + donationId))
+                        .header("Authorization", "Bearer " + token)
+                        .GET()
+                        .build();
+
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                if (response.statusCode() == 200) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode node = mapper.readTree(response.body());
+                    
+                    String name = node.get("dishName").asText();
+                    String donator = node.get("donatorUsername").asText();
+                    String address = node.get("donatorAddress").asText();
+                    String imagePath = node.has("imagePath") ? node.get("imagePath").asText() : null;
+                    
+                    Platform.runLater(() -> {
+                        foodNameLabel.setText(name);
+                        donatorNameLabel.setText("Donatur: " + donator);
+                        locationLabel.setText("📍 " + address);
+                        trxTagLabel.setText("Donasi #" + donationId.toString().substring(0, 8).toUpperCase());
+                        
+                        if (imagePath != null && !imagePath.isEmpty()) {
+                            try {
+                                Image img = imagePath.startsWith("http") 
+                                    ? new Image(imagePath, 350, 200, true, true, true)
+                                    : new Image("file:" + imagePath, 350, 200, true, true, true);
+                                if (!img.isError()) {
+                                    foodImageView.setImage(img);
+                                }
+                            } catch (Exception e) {}
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     private void setupPinLogic() {
@@ -209,9 +283,8 @@ public class VerificationUI extends UI {
             
             currentField.textProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal.length() > 1) {
-                    currentField.setText(newVal.substring(0, 1)); // Limit to 1 character
+                    currentField.setText(newVal.substring(0, 1));
                 }
-                // Auto advance focus to next box
                 if (newVal.length() == 1 && index < 5) {
                     pinFields[index + 1].requestFocus();
                 }
@@ -245,8 +318,6 @@ public class VerificationUI extends UI {
 
         try {
             int transactionCode = Integer.parseInt(fullPin.toString());
-            
-            // Disable button to prevent multiple clicks
             btnKonfirmasi.setDisable(true);
             btnKonfirmasi.setText("Memverifikasi...");
             
@@ -265,21 +336,20 @@ public class VerificationUI extends UI {
                 .thenAccept(response -> {
                     Platform.runLater(() -> {
                         btnKonfirmasi.setDisable(false);
-                        btnKonfirmasi.setText("Konfirmasi Terima");
+                        btnKonfirmasi.setText("Konfirmasi Terima Donasi");
                         
                         if (response.statusCode() == 200) {
-                            // Show Success UI
                             Navigator.navigate(stage, new VerificationSuccessUI(getUser()));
                         } else {
-                            showAlert(Alert.AlertType.ERROR, "Error", response.body()); 
+                            showAlert(Alert.AlertType.ERROR, "Verifikasi Gagal", "Kode yang Anda masukkan salah atau sudah tidak aktif."); 
                         }
                     });
                 })
                 .exceptionally(ex -> {
                     Platform.runLater(() -> {
                         btnKonfirmasi.setDisable(false);
-                        btnKonfirmasi.setText("Konfirmasi Terima");
-                        showAlert(Alert.AlertType.ERROR, "Error System", "Gagal menghubungi server: " + ex.getMessage());
+                        btnKonfirmasi.setText("Konfirmasi Terima Donasi");
+                        showAlert(Alert.AlertType.ERROR, "Error Sistem", "Gagal menghubungi server.");
                     });
                     return null;
                 });
@@ -295,9 +365,5 @@ public class VerificationUI extends UI {
         alert.setHeaderText(null);
         alert.setContentText(content);
         alert.showAndWait();
-    }
-
-    public static void main(String[] args) {
-        new VerificationUI(null).showUI();
     }
 }

@@ -48,6 +48,12 @@ public class CatalogService {
                 .collect(Collectors.toList());
     }
 
+    public CatalogItemResponse getCatalogItem(UUID donationId) {
+        Donation donation = donationRepository.findById(donationId)
+                .orElseThrow(() -> new RuntimeException("Donation not found: " + donationId));
+        return toResponse(donation);
+    }
+
     public List<CatalogItemResponse> getDonatorCatalog(String username) {
         return donationRepository.findByDonator_Username(username)
                 .stream()
