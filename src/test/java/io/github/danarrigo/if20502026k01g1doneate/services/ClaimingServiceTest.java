@@ -230,10 +230,6 @@ class ClaimingServiceTest {
     void validateTransactionCode_WrongCode() {
         Integer inputCode = 111111;
 
-        Transaction transaction = new Transaction();
-        transaction.setTransactionCode(999999);
-        transaction.setStatus("ACTIVE");
-
         when(transactionRepository.findByTransactionCode(inputCode)).thenReturn(java.util.Optional.empty());
 
         String result = claimingService.validateTransactionCode(inputCode);
