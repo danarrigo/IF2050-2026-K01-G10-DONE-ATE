@@ -1,5 +1,6 @@
 package io.github.danarrigo.if20502026k01g1doneate.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.*;
@@ -11,6 +12,7 @@ import jakarta.persistence.*;
 public abstract class User {
     @Id
     private String username;
+    @JsonIgnore
     private String password;
     private String address;
     private String phoneNumber;
