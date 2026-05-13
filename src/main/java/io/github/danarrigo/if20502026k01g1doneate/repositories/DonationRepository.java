@@ -12,4 +12,5 @@ import java.util.UUID;
 public interface DonationRepository extends JpaRepository<Donation, UUID> {
     public List<Donation> findByOngoing(boolean ongoing);
     public Optional<Donation> findByDish_DishId(UUID dishId);
+    public List<Donation> findByDonator_DonatorId(UUID donatorId);
 }
