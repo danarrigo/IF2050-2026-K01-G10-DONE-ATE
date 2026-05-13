@@ -64,4 +64,10 @@ public class TransactionService {
         }
         return null;
     }
+
+    public TransactionResponse getTransactionByDonationId(UUID donationId) {
+        return transactionRepository.findByDonation_DonationId(donationId)
+                .map(TransactionResponse::from)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found for donation: " + donationId));
+    }
 }
