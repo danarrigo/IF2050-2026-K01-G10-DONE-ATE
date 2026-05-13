@@ -40,6 +40,11 @@ public class ClaimingService {
             return "error";
         }
 
+        // Only allow verification for ACTIVE transactions
+        if (!"ACTIVE".equals(transaction.getStatus())) {
+            return "error";
+        }
+
         // 2. getTransactionData
         Integer transactionDataCode = transaction.getTransactionCode();
 
@@ -47,8 +52,8 @@ public class ClaimingService {
         boolean isValid = verifyCode(inputCode, transactionDataCode);
 
         if (isValid) {
-            // 4. removeClaimability
-            removeClaimability(transaction.getTransactionId());
+            // 4. removeClaimability (reuse already-loaded entity to avoid extra DB roundtrip)
+            removeClaimability(transaction);
 
             // 5. removeDonation (Memanggil DonationService yang mewakili DonationController)
             if (transaction.getDonation() != null) {
@@ -80,12 +85,9 @@ public class ClaimingService {
         return inputCode.equals(transactionDataCode);
     }
 
-    private void removeClaimability(UUID transactionId) {
-        Transaction transaction = transactionRepository.findById(transactionId).orElse(null);
-        if (transaction != null) {
-            transaction.setStatus("COMPLETED"); // Menandakan tidak bisa diklaim lagi
-            transactionRepository.save(transaction);
-        }
+    private void removeClaimability(Transaction transaction) {
+        transaction.setStatus("COMPLETED"); // Menandakan tidak bisa diklaim lagi
+        transactionRepository.save(transaction);
     }
 
     @Transactional

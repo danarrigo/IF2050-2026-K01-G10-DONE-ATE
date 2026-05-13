@@ -46,6 +46,10 @@ public class ClaimingController {
             return ResponseEntity.badRequest().body("Kode tidak boleh kosong");
         }
 
+        if (inputCode < 100000 || inputCode > 999999) {
+            return ResponseEntity.badRequest().body("Kode harus berupa 6 digit angka");
+        }
+
         String result = claimingService.validateTransactionCode(inputCode);
         
         if ("success".equals(result)) {

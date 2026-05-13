@@ -116,7 +116,7 @@ public class VerificationUI extends BorderPane {
         successBox = new HBox(10);
         successBox.setStyle("-fx-background-color: #DCFCE7; -fx-border-color: #BBF7D0; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 10;");
         successBox.setAlignment(Pos.CENTER_LEFT);
-        Label successLabel = new Label("✅ Kode valid. Siap untuk konfirmasi.");
+        Label successLabel = new Label("✅ Kode lengkap. Tekan Konfirmasi untuk verifikasi.");
         successLabel.setStyle("-fx-text-fill: #166534; -fx-font-weight: bold;");
         successBox.getChildren().add(successLabel);
         successBox.setVisible(false);
@@ -216,7 +216,7 @@ public class VerificationUI extends BorderPane {
             String jsonPayload = "{\"inputCode\":" + transactionCode + "}";
 
             java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create("http://localhost:8081/api/claims/verify"))
+                    .uri(java.net.URI.create("http://localhost:8080/api/claims/verify"))
                     .header("Content-Type", "application/json")
                     .POST(java.net.http.HttpRequest.BodyPublishers.ofString(jsonPayload))
                     .build();
