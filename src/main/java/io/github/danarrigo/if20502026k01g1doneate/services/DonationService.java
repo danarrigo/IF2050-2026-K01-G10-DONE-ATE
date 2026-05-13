@@ -37,6 +37,7 @@ public class DonationService {
 
     // CREATE
     public Donation createDonation(Donation donation) {
+        donation.setOngoing(true);
         return donationRepository.save(donation);
     }
 

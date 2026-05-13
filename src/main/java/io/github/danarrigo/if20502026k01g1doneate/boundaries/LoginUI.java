@@ -386,7 +386,7 @@ public class LoginUI extends UI {
                     Recipient recipient = new Recipient();
                     recipient.setUsername(username);
                     
-                    Navigator.navigate(currentStage, new ClaimDonationUI(recipient));
+                    Navigator.navigate(currentStage, new RecipientCatalogUI(recipient));
                 });
             } else {
                 showError("Login Berhasil! Dashboard untuk " + role + " sedang dalam pengembangan.");
