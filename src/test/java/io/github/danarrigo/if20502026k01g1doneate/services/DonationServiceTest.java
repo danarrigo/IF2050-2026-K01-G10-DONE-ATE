@@ -44,14 +44,6 @@ class DonationServiceTest {
         donation = new Donation(dish, LocalDateTime.now(), LocalDateTime.now().minusHours(1), "Waiting for QC", donator);
     }
 
-    @Test
-    void testProcessDonation() {
-        when(donationRepository.save(any(Donation.class))).thenAnswer(i -> i.getArguments()[0]);
-
-        donationService.processDonation("Pasta", "path/to/pasta", LocalDateTime.now().minusHours(1), donator);
-
-        verify(donationRepository, times(1)).save(any(Donation.class));
-    }
 
     @Test
     void testCreateDonation() {

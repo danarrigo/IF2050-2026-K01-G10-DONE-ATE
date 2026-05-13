@@ -24,8 +24,8 @@ public class Donator extends User{
     @OneToMany(mappedBy = "donator", cascade = CascadeType.ALL)
     private List<Donation> donations = new ArrayList<>();
 
-    public Donator(String username, String password, String address, String phoneNumber, String email, List<String> notificationList, DonatorType donatorType) {
-        super(username, password, address, phoneNumber, email, notificationList);
+    public Donator(String username, String password, String address, String phoneNumber, String email, DonatorType donatorType) {
+        super(username, password, address, phoneNumber, email);
         this.donatorType = donatorType;
     }
 
