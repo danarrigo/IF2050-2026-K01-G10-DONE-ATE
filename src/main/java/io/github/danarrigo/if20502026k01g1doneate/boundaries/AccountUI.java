@@ -51,7 +51,7 @@ public class AccountUI extends UI {
         root.setStyle("-fx-background-color: " + BG_COLOR + ";");
 
         VBox sidebar = buildSidebar(stage, username, role);
-        ScrollPane contentScroll = buildContent(username, role, email, phone, address);
+        ScrollPane contentScroll = buildContent(stage, username, role, email, phone, address);
         HBox.setHgrow(contentScroll, Priority.ALWAYS);
 
         root.getChildren().addAll(sidebar, contentScroll);
@@ -155,10 +155,33 @@ public class AccountUI extends UI {
 
     // ─── Main Content ──────────────────────────────────────────────────────────
 
-    private ScrollPane buildContent(String username, String role, String email, String phone, String address) {
+    private ScrollPane buildContent(Stage stage, String username, String role, String email, String phone, String address) {
         VBox content = new VBox(32);
         content.setPadding(new Insets(60, 80, 60, 80));
         content.setStyle("-fx-background-color: " + BG_COLOR + ";");
+
+        // Back Button
+        Button backBtn = new Button("← Kembali");
+        backBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                "-fx-text-fill: " + DARK_GREEN + ";" +
+                "-fx-font-size: 14px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-cursor: hand;" +
+                "-fx-padding: 0;"
+        );
+        backBtn.setOnMouseEntered(e -> backBtn.setStyle(backBtn.getStyle() + "-fx-underline: true;"));
+        backBtn.setOnMouseExited(e -> backBtn.setStyle(backBtn.getStyle().replace("-fx-underline: true;", "")));
+        backBtn.setOnAction(e -> {
+            User user = getUser();
+            UI targetUI;
+            if (user instanceof io.github.danarrigo.if20502026k01g1doneate.entities.Donator) {
+                targetUI = new CatalogUI(user);
+            } else {
+                targetUI = new RecipientCatalogUI(user);
+            }
+            Navigator.navigate(stage, targetUI);
+        });
 
         Label pageTitle = new Label("Profil Saya");
         pageTitle.setFont(Font.font("System", FontWeight.BOLD, 36));
@@ -175,7 +198,7 @@ public class AccountUI extends UI {
                 {"Alamat",          address}
         });
 
-        content.getChildren().addAll(pageTitle, pageSubtitle, profileCard);
+        content.getChildren().addAll(backBtn, pageTitle, pageSubtitle, profileCard);
 
         VBox roleCard = buildRoleCard(role);
         if (roleCard != null) content.getChildren().add(roleCard);

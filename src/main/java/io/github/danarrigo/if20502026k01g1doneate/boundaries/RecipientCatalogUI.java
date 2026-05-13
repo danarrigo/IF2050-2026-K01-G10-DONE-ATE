@@ -78,7 +78,7 @@ public class RecipientCatalogUI extends UI {
         scroll.setStyle("-fx-background-color: " + BG_COLOR + "; -fx-background: " + BG_COLOR + ";");
 
         root.setCenter(scroll);
-        root.setBottom(buildBottomNav(stage));
+        root.setBottom(Navigator.createBottomNav(stage, getUser(), "HOME"));
 
         playAnimation(centerContent);
         loadCatalog();
@@ -480,59 +480,6 @@ public class RecipientCatalogUI extends UI {
 
         row.getChildren().addAll(clockIcon, timeLabel);
         return row;
-    }
-
-    // ─── Bottom Navigation ─────────────────────────────────────────────────────
-
-    private HBox buildBottomNav(Stage stage) {
-        HBox nav = new HBox();
-        nav.setAlignment(Pos.CENTER);
-        nav.setPrefHeight(70);
-        nav.setStyle(
-                "-fx-background-color: white;" +
-                "-fx-border-color: " + BORDER_COLOR + ";" +
-                "-fx-border-width: 1 0 0 0;"
-        );
-
-        String[] labels = {"Home", "Catalog", "Inbox", "History", "Account"};
-        String[] icons  = {"⌂",    "☰",       "✉",     "⟳",       "👤"};
-        boolean[] active = {false, true, false, false, false};
-
-        for (int i = 0; i < labels.length; i++) {
-            VBox item = buildNavItem(icons[i], labels[i], active[i]);
-            HBox.setHgrow(item, Priority.ALWAYS);
-            final int idx = i;
-            item.setOnMouseClicked(e -> handleNavClick(idx, stage));
-            nav.getChildren().add(item);
-        }
-        return nav;
-    }
-
-    private VBox buildNavItem(String icon, String label, boolean active) {
-        VBox item = new VBox(3);
-        item.setAlignment(Pos.CENTER);
-        item.setPadding(new Insets(10, 0, 10, 0));
-        item.setStyle("-fx-cursor: hand;");
-
-        Label iconLabel = new Label(icon);
-        iconLabel.setStyle("-fx-font-size: 22px; -fx-text-fill: " + (active ? DARK_GREEN : TEXT_GRAY) + ";");
-
-        Label textLabel = new Label(label);
-        textLabel.setStyle(
-                "-fx-font-size: 11px;" +
-                "-fx-font-weight: " + (active ? "bold" : "normal") + ";" +
-                "-fx-text-fill: " + (active ? DARK_GREEN : TEXT_GRAY) + ";"
-        );
-
-        item.getChildren().addAll(iconLabel, textLabel);
-        return item;
-    }
-
-    private void handleNavClick(int index, Stage stage) {
-        switch (index) {
-            case 4 -> new AccountUI(getUser()).showUI();
-            // 0 Home, 1 Catalog (current), 2 Inbox, 3 History — wire up when UIs are ready
-        }
     }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
