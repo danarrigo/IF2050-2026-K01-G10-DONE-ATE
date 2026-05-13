@@ -32,9 +32,9 @@ public class ReportService {
         this.donatorRepository = donatorRepository;
     }
 
-public byte[] generateReport(UUID donatorId) {
+    public byte[] generateReport(UUID donatorId) {
 
-    Donator donator = donatorRepository.findById(donatorId)
+        Donator donator = donatorRepository.findByDonatorId(donatorId)
                 .orElseThrow(() -> new RuntimeException("Donatur tidak ditemukan"));
         List<Donation> history = donationRepository.findByDonator_DonatorId(donatorId);
         
@@ -68,7 +68,7 @@ public byte[] generateReport(UUID donatorId) {
             }
 
         } catch (Exception e) {
-            throw new RuntimeException("Gagal bikin PDF: " + e.getMessage());
+            throw new RuntimeException("Gagal bikin PDF", e);
         } finally {
             document.close();
         }
