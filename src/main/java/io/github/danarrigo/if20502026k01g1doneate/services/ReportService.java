@@ -1,5 +1,9 @@
 package io.github.danarrigo.if20502026k01g1doneate.services;
 
+import com.lowagie.text.Document;
+import com.lowagie.text.Font;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfWriter;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donation;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Report;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
@@ -9,9 +13,9 @@ import io.github.danarrigo.if20502026k01g1doneate.repositories.DonatorRepository
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
 import java.util.List;
-import java.io.File;
 import java.util.UUID;
 
 @Service
@@ -28,17 +32,52 @@ public class ReportService {
         this.donatorRepository = donatorRepository;
     }
 
-    public File generateReport(UUID donatorId) {
-        Donator donator = donatorRepository.findById(donatorId)
-                .orElseThrow(() -> new RuntimeException("Data donatur tidak ditemukan."));
+public byte[] generateReport(UUID donatorId) {
 
-        // Menggunakan query langsung ke database berbasis UUID
-        List<Donation> donationHistory = donationRepository.findByDonator_DonatorId(donatorId);
+    Donator donator = donatorRepository.findById(donatorId)
+                .orElseThrow(() -> new RuntimeException("Donatur tidak ditemukan"));
+        List<Donation> history = donationRepository.findByDonator_DonatorId(donatorId);
+        
+        Integer totalRescued = aggregateData(history); 
 
-        Integer totalRescued = aggregateData(donationHistory);
-        Report newReport = createReport(donator, totalRescued);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        Document document = new Document();
+        
+        try {
+            PdfWriter.getInstance(document, outputStream);
+            document.open();
 
-        return generatePDF(newReport);
+            // 3. Tulis isi PDF-nya (Tinggal tambah Paragraph)
+            Font titleFont = new Font(Font.HELVETICA, 18, Font.BOLD);
+            Paragraph title = new Paragraph("LAPORAN DONASI DONE-ATE", titleFont);
+            title.setAlignment(Paragraph.ALIGN_CENTER);
+            title.setSpacingAfter(20);
+            document.add(title);
+
+            document.add(new Paragraph("ID Donatur: " + donator.getDonatorId().toString()));
+            document.add(new Paragraph("Tanggal Cetak: " + LocalDate.now().toString()));
+            document.add(new Paragraph("Total Paket Terselamatkan: " + totalRescued));
+            document.add(new Paragraph("\n")); // Enter kosong
+            
+            document.add(new Paragraph("--- Rincian Riwayat ---", new Font(Font.HELVETICA, 12, Font.BOLD)));
+            
+            // Looping data riwayat
+            for(Donation don : history) {
+                String foodName = don.getDish() != null ? don.getDish().getName() : "Makanan";
+                document.add(new Paragraph("- " + foodName + " | Status: " + don.getStatus()));
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Gagal bikin PDF: " + e.getMessage());
+        } finally {
+            document.close();
+        }
+        
+        Report newReport = new Report(totalRescued, LocalDate.now(), donator);
+        reportRepository.save(newReport);
+
+        // 4. Ubah dokumen jadi aliran byte untuk dikirim ke UI
+        return outputStream.toByteArray(); 
     }
 
     private Integer aggregateData(List<Donation> donationList) {
@@ -53,13 +92,4 @@ public class ReportService {
         return total;
     }
 
-    private Report createReport(Donator donator, Integer totalRescued) {
-        Report newReport = new Report(totalRescued, LocalDate.now(), donator);
-        return reportRepository.save(newReport);
-    }
-
-    private File generatePDF(Report report) {
-        // TODO: Implementasi PDF generator di iterasi berikutnya
-        return new File("Laporan_Donasi.pdf");
-    }
 }
