@@ -62,7 +62,7 @@ public class RecipientCatalogUI extends UI {
 
         VBox centerContent = new VBox(0);
         centerContent.setStyle("-fx-background-color: " + BG_COLOR + ";");
-        centerContent.getChildren().addAll(buildPageHeader(), buildFilterBar());
+        centerContent.getChildren().addAll(buildPageHeader(), buildFilterBar(stage));
 
         VBox listWrapper = new VBox(catalogList);
         listWrapper.setPadding(new Insets(16, 24, 24, 24));
@@ -81,7 +81,7 @@ public class RecipientCatalogUI extends UI {
         root.setBottom(Navigator.createBottomNav(stage, getUser(), "HOME"));
 
         playAnimation(centerContent);
-        loadCatalog();
+        loadCatalog(stage);
         return root;
     }
 
@@ -176,24 +176,24 @@ public class RecipientCatalogUI extends UI {
 
     // ─── Filter Tabs ───────────────────────────────────────────────────────────
 
-    private HBox buildFilterBar() {
+    private HBox buildFilterBar(Stage stage) {
         HBox bar = new HBox(10);
         bar.setPadding(new Insets(14, 28, 14, 28));
         bar.setStyle("-fx-background-color: white; -fx-border-color: " + BORDER_COLOR + "; -fx-border-width: 0 0 1 0;");
 
         String[] filters = {"Semua", "Nasi & Lauk", "Roti & Kue", "Sayuran"};
-        rebuildFilterButtons(bar, filters);
+        rebuildFilterButtons(bar, filters, stage);
         return bar;
     }
 
-    private void rebuildFilterButtons(HBox bar, String[] filters) {
+    private void rebuildFilterButtons(HBox bar, String[] filters, Stage stage) {
         bar.getChildren().clear();
         for (String filter : filters) {
             Button btn = buildFilterButton(filter, filter.equals(activeFilter));
             btn.setOnAction(e -> {
                 activeFilter = filter;
-                rebuildFilterButtons(bar, filters);
-                applyFilter();
+                rebuildFilterButtons(bar, filters, stage);
+                applyFilter(stage);
             });
             bar.getChildren().add(btn);
         }
@@ -215,7 +215,7 @@ public class RecipientCatalogUI extends UI {
         return btn;
     }
 
-    private void applyFilter() {
+    private void applyFilter(Stage stage) {
         catalogList.getChildren().clear();
 
         List<Map<String, String>> filtered;
@@ -243,14 +243,14 @@ public class RecipientCatalogUI extends UI {
             catalogList.getChildren().add(empty);
         } else {
             for (Map<String, String> item : filtered) {
-                catalogList.getChildren().add(buildCatalogCard(item));
+                catalogList.getChildren().add(buildCatalogCard(stage, item));
             }
         }
     }
 
     // ─── Load Catalog from API ─────────────────────────────────────────────────
 
-    private void loadCatalog() {
+    private void loadCatalog(Stage stage) {
         new Thread(() -> {
             try {
                 HttpClient client = HttpClient.newHttpClient();
@@ -263,7 +263,7 @@ public class RecipientCatalogUI extends UI {
 
                 Platform.runLater(() -> {
                     if (response.statusCode() == 200) {
-                        parseResponse(response.body());
+                        parseResponse(response.body(), stage);
                     } else {
                         showEmptyState("Gagal memuat katalog donasi.");
                     }
@@ -274,7 +274,7 @@ public class RecipientCatalogUI extends UI {
         }).start();
     }
 
-    private void parseResponse(String json) {
+    private void parseResponse(String json, Stage stage) {
         allItems.clear();
         if (json == null || json.equals("[]") || json.isEmpty()) {
             showEmptyState("Belum ada donasi yang tersedia saat ini.");
@@ -297,7 +297,7 @@ public class RecipientCatalogUI extends UI {
             item.put("status",           extractValue(entry, "status"));
             allItems.add(item);
         }
-        applyFilter();
+        applyFilter(stage);
     }
 
     private void showEmptyState(String message) {
@@ -310,7 +310,7 @@ public class RecipientCatalogUI extends UI {
 
     // ─── Catalog Card ──────────────────────────────────────────────────────────
 
-    private HBox buildCatalogCard(Map<String, String> item) {
+    private HBox buildCatalogCard(Stage stage, Map<String, String> item) {
         HBox card = new HBox(18);
         card.setPadding(new Insets(18));
         card.setAlignment(Pos.CENTER_LEFT);
@@ -362,6 +362,32 @@ public class RecipientCatalogUI extends UI {
         );
         detailBtn.setOnMouseEntered(e -> detailBtn.setStyle(detailBtn.getStyle().replace(DARK_GREEN, "#0a4218")));
         detailBtn.setOnMouseExited(e -> detailBtn.setStyle(detailBtn.getStyle().replace("#0a4218", DARK_GREEN)));
+        detailBtn.setOnAction(e -> {
+            io.github.danarrigo.if20502026k01g1doneate.entities.Dish dish = new io.github.danarrigo.if20502026k01g1doneate.entities.Dish();
+            dish.setName(item.get("dishName"));
+            dish.setImagePath(item.get("imagePath"));
+            String exp = item.get("expiresInMinutes");
+            if (exp != null && !exp.equals("null") && !exp.isEmpty()) {
+                dish.setExpiresIn(java.time.Duration.ofMinutes(Long.parseLong(exp)));
+            }
+
+            io.github.danarrigo.if20502026k01g1doneate.entities.Donation d = new io.github.danarrigo.if20502026k01g1doneate.entities.Donation();
+            d.setDonationId(java.util.UUID.fromString(item.get("donationId")));
+            d.setDish(dish);
+            d.setStatus(item.get("status"));
+            d.setTaken(false);
+            
+            String tc = item.get("timeCooked");
+            if (tc != null && !tc.equals("null") && !tc.isEmpty()) {
+                d.setTimeCooked(java.time.LocalDateTime.parse(tc));
+            }
+            
+            io.github.danarrigo.if20502026k01g1doneate.entities.Donator donator = new io.github.danarrigo.if20502026k01g1doneate.entities.Donator();
+            donator.setUsername(item.get("donatorUsername"));
+            d.setDonator(donator);
+
+            Navigator.navigate(stage, new DonationDetailUI(getUser(), d));
+        });
 
         HBox btnRow = new HBox();
         btnRow.setAlignment(Pos.CENTER_RIGHT);
