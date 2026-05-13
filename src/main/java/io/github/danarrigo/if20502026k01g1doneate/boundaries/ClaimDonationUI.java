@@ -20,7 +20,6 @@ import java.net.http.HttpResponse;
 
 public class ClaimDonationUI extends UI {
 
-    private static boolean jfxInitialized = false;
 
     // Design Tokens matching team's template
     private final String DARK_GREEN = "#0F5B21";
@@ -42,6 +41,7 @@ public class ClaimDonationUI extends UI {
 
     @Override
     public void showUI() {
+        initJFX();
         Platform.runLater(this::createAndShowStage);
     }
 

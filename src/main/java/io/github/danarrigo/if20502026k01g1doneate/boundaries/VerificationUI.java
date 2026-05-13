@@ -27,7 +27,6 @@ public class VerificationUI extends UI {
     private TextField[] pinFields = new TextField[6];
     private HBox successBox;
     private Button btnKonfirmasi;
-    private static boolean jfxInitialized = false;
     private Stage stage;
 
     public VerificationUI(User user) {
@@ -36,14 +35,7 @@ public class VerificationUI extends UI {
 
     @Override
     public void showUI() {
-        if (!jfxInitialized) {
-            try {
-                Platform.startup(() -> {});
-                jfxInitialized = true;
-            } catch (IllegalStateException e) {
-                jfxInitialized = true;
-            }
-        }
+        initJFX();
         Platform.runLater(() -> start(new Stage()));
     }
 

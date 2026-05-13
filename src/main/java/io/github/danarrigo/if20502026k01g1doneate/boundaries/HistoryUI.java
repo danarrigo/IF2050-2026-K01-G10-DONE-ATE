@@ -28,7 +28,6 @@ import java.util.UUID;
 
 public class HistoryUI extends UI {
 
-    private static boolean jfxInitialized = false;
     private Stage stage;
 
     // Design Tokens Figma
@@ -56,14 +55,7 @@ public class HistoryUI extends UI {
 
     @Override
     public void showUI() {
-        if (!jfxInitialized) {
-            try {
-                Platform.startup(() -> {});
-                jfxInitialized = true;
-            } catch (IllegalStateException e) {
-                jfxInitialized = true;
-            }
-        }
+        initJFX();
         Platform.runLater(this::createAndShowStage);
     }
 

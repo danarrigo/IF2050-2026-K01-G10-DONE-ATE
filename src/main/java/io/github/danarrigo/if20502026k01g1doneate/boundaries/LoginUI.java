@@ -1,5 +1,8 @@
 package io.github.danarrigo.if20502026k01g1doneate.boundaries;
 
+import io.github.danarrigo.if20502026k01g1doneate.entities.User;
+import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
+import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
 import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,7 +35,6 @@ public class LoginUI extends UI {
     private static final String GREEN_DARK = "#2a5f2a";
     // private static final String GREEN_LIGHT = "#1a4d1a";
 
-    private static boolean jfxInitialized = false;
 
     private TextField usernameField;
     private PasswordField passwordField;
@@ -45,6 +47,7 @@ public class LoginUI extends UI {
 
     @Override
     public void showUI() {
+        initJFX();
         Platform.runLater(() -> start(new Stage()));
     }
 
@@ -331,6 +334,9 @@ public class LoginUI extends UI {
 
                 Platform.runLater(() -> {
                     setLoading(false);
+                    System.out.println("[DEBUG] Login Response Status: " + response.statusCode());
+                    System.out.println("[DEBUG] Login Response Body: " + response.body());
+
                     if (response.statusCode() == 200) {
                         onLoginSuccess(response.body());
                     } else {
@@ -339,6 +345,8 @@ public class LoginUI extends UI {
                 });
 
             } catch (Exception ex) {
+                System.err.println("[DEBUG] Login Connection Error: " + ex.getMessage());
+                ex.printStackTrace();
                 Platform.runLater(() -> {
                     setLoading(false);
                     showError("Tidak dapat terhubung ke server. Pastikan aplikasi berjalan.");
@@ -359,12 +367,31 @@ public class LoginUI extends UI {
             // Save to SessionManager
             SessionManager.getInstance().startSession(token, username, role);
 
-            // TODO: Redirect based on role
+            // Redirect based on role
             if ("DONATOR".equals(role)) {
-                showError("Login Berhasil! Membuka dashboard Donator...");
-                // stage.close(); new DonatorDashboardUI().showUI();
+                Platform.runLater(() -> {
+                    Stage currentStage = (Stage) loginButton.getScene().getWindow();
+                    currentStage.close();
+                    
+                    Donator donator = new Donator();
+                    donator.setUsername(username);
+                    
+                    CatalogUI catalogUI = new CatalogUI(donator);
+                    catalogUI.showUI();
+                });
+            } else if ("RECIPIENT".equals(role)) {
+                Platform.runLater(() -> {
+                    Stage currentStage = (Stage) loginButton.getScene().getWindow();
+                    currentStage.close();
+                    
+                    Recipient recipient = new Recipient();
+                    recipient.setUsername(username);
+                    
+                    ClaimDonationUI claimUI = new ClaimDonationUI(recipient);
+                    claimUI.showUI();
+                });
             } else {
-                showError("Login Berhasil! Membuka dashboard Recipient...");
+                showError("Login Berhasil! Dashboard untuk " + role + " sedang dalam pengembangan.");
             }
             
         } catch (Exception e) {

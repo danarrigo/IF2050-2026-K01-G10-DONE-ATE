@@ -18,7 +18,6 @@ import java.nio.charset.StandardCharsets;
 
 public class CatalogUI extends UI {
 
-    private static boolean jfxInitialized = false;
 
     private static final String DARK_GREEN   = "#0F5B21";
     private static final String LIGHT_GREEN  = "#D2F4D6";
@@ -37,14 +36,7 @@ public class CatalogUI extends UI {
 
     @Override
     public void showUI() {
-        if (!jfxInitialized) {
-            try {
-                Platform.startup(() -> {});
-                jfxInitialized = true;
-            } catch (IllegalStateException e) {
-                jfxInitialized = true;
-            }
-        }
+        initJFX();
         Platform.runLater(this::createAndShowStage);
     }
 

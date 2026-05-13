@@ -29,8 +29,6 @@ public class RegisterUI extends UI {
     private static final String GREEN_DARK = "#2a5f2a";
     // private static final String GREEN_LIGHT = "#1a4d1a";
 
-    private static boolean jfxInitialized = false;
-
     private TextField     usernameField;
     private PasswordField passwordField;
     private TextField     emailField;
@@ -56,6 +54,7 @@ public class RegisterUI extends UI {
 
     @Override
     public void showUI() {
+        initJFX();
         Platform.runLater(() -> start(new Stage()));
     }
 

@@ -18,7 +18,6 @@ import java.util.UUID;
 
 public class InputDonationUI extends UI {
 
-    private static boolean jfxInitialized = false;
 
     private final String DARK_GREEN = "#0F5B21";
     private final String LIGHT_GREEN = "#D2F4D6";
@@ -38,6 +37,7 @@ public class InputDonationUI extends UI {
 
     @Override
     public void showUI() {
+        initJFX();
         Platform.runLater(this::createAndShowStage);
     }
 

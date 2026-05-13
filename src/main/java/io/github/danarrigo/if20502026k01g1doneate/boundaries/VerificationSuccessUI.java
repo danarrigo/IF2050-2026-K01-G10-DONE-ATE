@@ -18,7 +18,6 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
 public class VerificationSuccessUI extends UI {
-    private static boolean jfxInitialized = false;
 
     public VerificationSuccessUI(User user) {
         super(user);
@@ -26,14 +25,7 @@ public class VerificationSuccessUI extends UI {
 
     @Override
     public void showUI() {
-        if (!jfxInitialized) {
-            try {
-                javafx.application.Platform.startup(() -> {});
-                jfxInitialized = true;
-            } catch (IllegalStateException e) {
-                jfxInitialized = true;
-            }
-        }
+        initJFX();
         javafx.application.Platform.runLater(() -> start(new Stage()));
     }
 

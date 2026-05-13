@@ -60,6 +60,7 @@ public class InboxUI extends UI {
 
     @Override
     public void showUI() {
+        initJFX();
         Stage stage = new Stage();
         stage.setTitle("DONE-ATE - Kotak Masuk");
 
