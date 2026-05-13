@@ -4,6 +4,7 @@ import io.github.danarrigo.if20502026k01g1doneate.entities.Donation;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Transaction;
 import io.github.danarrigo.if20502026k01g1doneate.enums.NotificationType;
+import io.github.danarrigo.if20502026k01g1doneate.enums.TransactionStatus;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.DonationRepository;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.RecipientRepository;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.TransactionRepository;
@@ -41,7 +42,7 @@ public class ClaimingService {
         }
 
         // Only allow verification for ACTIVE transactions
-        if (!"ACTIVE".equals(transaction.getStatus())) {
+        if (!TransactionStatus.ACTIVE.name().equals(transaction.getStatus())) {
             return "error";
         }
 
@@ -120,8 +121,7 @@ public class ClaimingService {
         transaction.setDonator(donation.getDonator());
         transaction.setDonation(donation);
         transaction.setTransactionTime(LocalTime.now());
-        transaction.setStatus("ACTIVE");
-
+        transaction.setStatus(TransactionStatus.ACTIVE.name());
         transactionRepository.save(transaction);
 
         // Send notification to donator (MENGGUNAKAN FORMAT BARU)
