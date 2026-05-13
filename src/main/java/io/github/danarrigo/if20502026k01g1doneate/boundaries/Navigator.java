@@ -31,11 +31,7 @@ public class Navigator {
         nav.setStyle("-fx-background-color: white; -fx-border-color: " + BORDER_COLOR + " transparent transparent transparent;");
 
         nav.getChildren().add(createNavItem("🏠", "Home", "HOME".equals(activeTab), currentStage, user));
-
-        // For Donators, Home is already Catalog, so we don't need a separate Catalog tab
-        if (!(user instanceof Donator)) {
-            nav.getChildren().add(createNavItem("🍱", "Catalog", "CATALOG".equals(activeTab), currentStage, user));
-        }
+        nav.getChildren().add(createNavItem("🍱", "Catalog", "CATALOG".equals(activeTab), currentStage, user));
 
         nav.getChildren().addAll(
                 createNavItem("✉", "Inbox", "INBOX".equals(activeTab), currentStage, user),
@@ -73,17 +69,21 @@ public class Navigator {
             switch (label) {
                 case "Home":
                     if (user instanceof Donator) targetUI = new CatalogUI(user);
-                    else if (user instanceof Recipient) targetUI = new ClaimDonationUI(user);
+                    else if (user instanceof Recipient) targetUI = new RecipientCatalogUI(user);
                     else targetUI = new CatalogUI(user);
                     break;
                 case "Catalog":
-                    targetUI = new CatalogUI(user);
+                    if (user instanceof Donator) targetUI = new CatalogUI(user);
+                    else targetUI = new RecipientCatalogUI(user);
                     break;
                 case "Inbox":
                     targetUI = new InboxUI(user);
                     break;
                 case "History":
                     targetUI = new HistoryUI(user);
+                    break;
+                case "Account":
+                    targetUI = new AccountUI(user);
                     break;
                 default:
                     return;
