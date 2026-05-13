@@ -2,55 +2,43 @@ package io.github.danarrigo.if20502026k01g1doneate.entities;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Entity
-@Table(name = "tb_report") 
+@Table(name = "reports")
 public class Report {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) 
-    private Integer reportId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID reportId;
 
-    private Integer totalRescuedFood; 
-    private LocalDate generatedDate;
+    private Integer totalRescued;
+    private LocalDate date;
+
     @ManyToOne
-    @JoinColumn(name = "donator_username") 
+    @JoinColumn(name = "donator_id")
     private Donator donator;
 
-    public Report() {
-    }
+    // Constructor Kosong (Wajib untuk JPA)
+    public Report() {}
 
-    public Report(Integer totalRescuedFood, LocalDate generatedDate, Donator donator) {
-        this.totalRescuedFood = totalRescuedFood;
-        this.generatedDate = generatedDate;
+    // Constructor yang kita pakai di Service
+    public Report(Integer totalRescued, LocalDate date, Donator donator) {
+        this.totalRescued = totalRescued;
+        this.date = date;
         this.donator = donator;
     }
 
-    public Integer getReportId() {
-        return reportId;
-    }
+    // Getter dan Setter
+    public UUID getReportId() { return reportId; }
+    public void setReportId(UUID reportId) { this.reportId = reportId; }
 
-    public Integer getTotalRescuedFood() {
-        return totalRescuedFood;
-    }
+    public Integer getTotalRescued() { return totalRescued; }
+    public void setTotalRescued(Integer totalRescued) { this.totalRescued = totalRescued; }
 
-    public void setTotalRescuedFood(Integer totalRescuedFood) {
-        this.totalRescuedFood = totalRescuedFood;
-    }
+    public LocalDate getDate() { return date; }
+    public void setDate(LocalDate date) { this.date = date; }
 
-    public LocalDate getGeneratedDate() {
-        return generatedDate;
-    }
-
-    public void setGeneratedDate(LocalDate generatedDate) {
-        this.generatedDate = generatedDate;
-    }
-
-    public Donator getDonator() {
-        return donator;
-    }
-
-    public void setDonator(Donator donator) {
-        this.donator = donator;
-    }
+    public Donator getDonator() { return donator; }
+    public void setDonator(Donator donator) { this.donator = donator; }
 }

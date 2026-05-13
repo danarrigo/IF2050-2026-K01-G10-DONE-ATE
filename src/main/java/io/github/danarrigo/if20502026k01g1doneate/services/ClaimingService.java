@@ -4,6 +4,7 @@ import io.github.danarrigo.if20502026k01g1doneate.entities.Donation;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Transaction;
 import io.github.danarrigo.if20502026k01g1doneate.enums.NotificationType;
+import io.github.danarrigo.if20502026k01g1doneate.enums.TransactionStatus;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.DonationRepository;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.RecipientRepository;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.TransactionRepository;
@@ -21,12 +22,73 @@ public class ClaimingService {
     private final RecipientRepository recipientRepository;
     private final TransactionRepository transactionRepository;
     private final NotificationService notificationService;
+    private final DonationService donationService; // Ditambahkan untuk memanggil removeDonation
 
-    public ClaimingService(DonationRepository donationRepository, RecipientRepository recipientRepository, TransactionRepository transactionRepository, NotificationService notificationService) {
+    public ClaimingService(DonationRepository donationRepository, RecipientRepository recipientRepository, TransactionRepository transactionRepository, NotificationService notificationService, DonationService donationService) {
         this.donationRepository = donationRepository;
         this.recipientRepository = recipientRepository;
         this.transactionRepository = transactionRepository;
         this.notificationService = notificationService;
+        this.donationService = donationService;
+    }
+
+
+    @Transactional
+    public String validateTransactionCode(Integer inputCode) {
+        // 1. findTransactionByCode
+        Transaction transaction = findTransactionByCode(inputCode);
+        if (transaction == null) {
+            return "error";
+        }
+
+        // Only allow verification for ACTIVE transactions
+        if (!TransactionStatus.ACTIVE.name().equals(transaction.getStatus())) {
+            return "error";
+        }
+
+        // 2. getTransactionData
+        Integer transactionDataCode = transaction.getTransactionCode();
+
+        // 3. verifyCode
+        boolean isValid = verifyCode(inputCode, transactionDataCode);
+
+        if (isValid) {
+            // 4. removeClaimability (reuse already-loaded entity to avoid extra DB roundtrip)
+            removeClaimability(transaction);
+
+            // 5. removeDonation (Memanggil DonationService yang mewakili DonationController)
+            if (transaction.getDonation() != null) {
+                donationService.removeDonation(transaction.getDonation().getDonationId());
+            }
+
+            // 6 & 7. create Notification & sendNotification
+            if (transaction.getDonator() != null) {
+                notificationService.sendNotification(
+                        transaction.getDonator(),
+                        "Serah Terima Sukses",
+                        "Serah terima sukses. Makanan telah diterima oleh Penerima.",
+                        transaction.getDonation() != null ? transaction.getDonation().getDonationId() : null,
+                        NotificationType.DONASI
+                );
+            }
+
+            return "success";
+        } else {
+            return "error";
+        }
+    }
+
+    private Transaction findTransactionByCode(Integer inputCode) {
+        return transactionRepository.findByTransactionCode(inputCode).orElse(null);
+    }
+
+    private boolean verifyCode(Integer inputCode, Integer transactionDataCode) {
+        return inputCode.equals(transactionDataCode);
+    }
+
+    private void removeClaimability(Transaction transaction) {
+        transaction.setStatus("COMPLETED"); // Menandakan tidak bisa diklaim lagi
+        transactionRepository.save(transaction);
     }
 
     @Transactional
@@ -59,8 +121,7 @@ public class ClaimingService {
         transaction.setDonator(donation.getDonator());
         transaction.setDonation(donation);
         transaction.setTransactionTime(LocalTime.now());
-        transaction.setStatus("ACTIVE");
-
+        transaction.setStatus(TransactionStatus.ACTIVE.name());
         transactionRepository.save(transaction);
 
         // Send notification to donator (MENGGUNAKAN FORMAT BARU)

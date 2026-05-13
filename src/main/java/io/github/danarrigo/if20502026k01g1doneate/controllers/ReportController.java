@@ -1,80 +1,41 @@
 package io.github.danarrigo.if20502026k01g1doneate.controllers;
 
-import io.github.danarrigo.if20502026k01g1doneate.entities.Donation;
-import io.github.danarrigo.if20502026k01g1doneate.entities.Report;
-import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
-import io.github.danarrigo.if20502026k01g1doneate.repositories.ReportRepository;
-import io.github.danarrigo.if20502026k01g1doneate.repositories.DonationRepository;
-import io.github.danarrigo.if20502026k01g1doneate.repositories.DonatorRepository;
+import io.github.danarrigo.if20502026k01g1doneate.services.ReportService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDate;
-import java.util.List;
-import java.io.File;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/reports") // Endpoint standar untuk Spring Boot
+@RequestMapping("/api/reports")
 public class ReportController {
 
-    private final ReportRepository reportRepository;
-    private final DonationRepository donationRepository;
-    private final DonatorRepository donatorRepository;
-    
+    private final ReportService reportService;
 
-    // Ini adalah jawaban dari pertanyaanmu sebelumnya!
-    // Spring Boot akan otomatis "mengisi" konstruktor ini dengan repository yang benar.
-    public ReportController(ReportRepository reportRepository, DonationRepository donationRepository, DonatorRepository donatorRepository) {
-        this.reportRepository = reportRepository;
-        this.donationRepository = donationRepository;
-        this.donatorRepository = donatorRepository;
+    public ReportController(ReportService reportService) {
+        this.reportService = reportService;
     }
 
     @GetMapping("/download/{donatorId}")
-    public void downloadReport(@PathVariable String donatorId) {
-        generateReport(donatorId);
-    }
+    public ResponseEntity<byte[]> downloadReport(@PathVariable UUID donatorId) {
+        try {
+            byte[] pdfBytes = reportService.generateReport(donatorId);
 
-public void generateReport(String donatorId) {
-        List<Donation> allDonations = donationRepository.findAll();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "Laporan_Donasi_" + donatorId + ".pdf");
 
-        List<Donation> donationHistory = allDonations.stream()
-                .filter(d -> d.getDonator() != null && d.getDonator().getDonatorId().equals(donatorId))
-                .toList();
-
-        Integer totalRescued = aggregateData(donationHistory);
-
-        Donator donator = donatorRepository.findById(donatorId).orElse(null);
-
-        if (donator == null) {
-            System.out.println("Gagal membuat laporan: Data donatur tidak ditemukan.");
-            return; 
-        }
-
-        Report newReport = createReport(donator, totalRescued);
-
-        File pdfFile = generatePDF(newReport);
-        System.out.println("Laporan berhasil dibuat: " + pdfFile.getAbsolutePath());
-    }
-
-    public Integer aggregateData(List<Donation> donationList) {
-        int total = 0;
-        
-        if (donationList != null) {
-            for (Donation donation : donationList) {
-                if ("Selesai".equals(donation.getStatus()) || donation.isTaken()) {
-                    total += 1;
-                }
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(pdfBytes);
+        } catch (RuntimeException e) {
+            // Check if it's a "not found" error
+            if (e.getMessage() != null && e.getMessage().contains("tidak ditemukan")) {
+                return ResponseEntity.notFound().build();
             }
+            // For other errors, return 500
+            return ResponseEntity.internalServerError().build();
         }
-        return total;
-    }
-
-    public Report createReport(Donator donator, Integer totalRescued) {
-        Report newReport = new Report(totalRescued, LocalDate.now(), donator);
-        reportRepository.save(newReport);
-        return newReport;
-    }
-
-    private File generatePDF(Report report) {
-        return new File("Laporan_Donasi.pdf");
     }
 }

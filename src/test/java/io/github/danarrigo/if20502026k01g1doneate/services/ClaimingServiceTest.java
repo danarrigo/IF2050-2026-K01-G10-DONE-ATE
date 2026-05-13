@@ -36,6 +36,9 @@ class ClaimingServiceTest {
     @Mock
     private NotificationService notificationService;
 
+    @Mock
+    private DonationService donationService;
+
     @InjectMocks
     private ClaimingService claimingService;
 
@@ -187,5 +190,83 @@ class ClaimingServiceTest {
 
         assertEquals("Gagal: Opsi pembatalan terkunci karena melewati batas waktu toleransi", result);
         verify(transactionRepository, never()).delete(any(Transaction.class));
+    }
+
+    @Test
+    void validateTransactionCode_Success() {
+        Integer transactionCode = 123456;
+
+        Donator donator = new Donator();
+        donator.setUsername("restoran_b");
+
+        UUID donationId = UUID.randomUUID();
+        Donation donation = new Donation();
+        donation.setDonationId(donationId);
+
+        Transaction transaction = new Transaction();
+        transaction.setTransactionCode(transactionCode);
+        transaction.setStatus("ACTIVE");
+        transaction.setDonator(donator);
+        transaction.setDonation(donation);
+
+        when(transactionRepository.findByTransactionCode(transactionCode)).thenReturn(java.util.Optional.of(transaction));
+
+        String result = claimingService.validateTransactionCode(transactionCode);
+
+        assertEquals("success", result);
+        assertEquals("COMPLETED", transaction.getStatus());
+        verify(transactionRepository, times(1)).save(transaction);
+        verify(donationService, times(1)).removeDonation(donationId);
+        verify(notificationService, times(1)).sendNotification(
+                donator,
+                "Serah Terima Sukses",
+                "Serah terima sukses. Makanan telah diterima oleh Penerima.",
+                donationId,
+                NotificationType.DONASI
+        );
+    }
+
+    @Test
+    void validateTransactionCode_WrongCode() {
+        Integer inputCode = 111111;
+
+        when(transactionRepository.findByTransactionCode(inputCode)).thenReturn(java.util.Optional.empty());
+
+        String result = claimingService.validateTransactionCode(inputCode);
+
+        assertEquals("error", result);
+        verify(transactionRepository, never()).save(any(Transaction.class));
+        verify(donationService, never()).removeDonation(any(UUID.class));
+        verify(notificationService, never()).sendNotification(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void validateTransactionCode_TransactionNotFound() {
+        Integer transactionCode = 654321;
+
+        when(transactionRepository.findByTransactionCode(transactionCode)).thenReturn(java.util.Optional.empty());
+
+        String result = claimingService.validateTransactionCode(transactionCode);
+
+        assertEquals("error", result);
+        verify(transactionRepository, never()).save(any(Transaction.class));
+        verify(donationService, never()).removeDonation(any(UUID.class));
+    }
+
+    @Test
+    void validateTransactionCode_AlreadyCompleted() {
+        Integer transactionCode = 123456;
+
+        Transaction transaction = new Transaction();
+        transaction.setTransactionCode(transactionCode);
+        transaction.setStatus("COMPLETED");
+
+        when(transactionRepository.findByTransactionCode(transactionCode)).thenReturn(java.util.Optional.of(transaction));
+
+        String result = claimingService.validateTransactionCode(transactionCode);
+
+        assertEquals("error", result);
+        verify(transactionRepository, never()).save(any(Transaction.class));
+        verify(donationService, never()).removeDonation(any(UUID.class));
     }
 }
