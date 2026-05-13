@@ -35,6 +35,15 @@ public class CatalogController {
         }
     }
 
+    @GetMapping("/recipient/{username}")
+    public ResponseEntity<?> getRecipientCatalog(@PathVariable String username) {
+        try {
+            return ResponseEntity.ok(catalogService.getRecipientCatalog(username));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PostMapping("/donator/{username}")
     public ResponseEntity<?> addToCatalog(@PathVariable String username,
                                           @RequestBody CatalogItemRequest request) {

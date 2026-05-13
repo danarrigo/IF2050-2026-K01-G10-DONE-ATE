@@ -36,6 +36,12 @@ public class UserService {
             donator.setDonatorType(request.getDonatorType());
         }
 
+        if (user instanceof Recipient recipient) {
+            if (request.getRecipientType() != null) recipient.setRecipientType(request.getRecipientType());
+            if (request.getOperationalTimeStart() != null) recipient.setOperationalTimeStart(request.getOperationalTimeStart());
+            if (request.getOperationalTimeEnd() != null) recipient.setOperationalTimeEnd(request.getOperationalTimeEnd());
+        }
+
         User updatedUser = userRepository.save(user);
         
         notificationService.sendNotification(

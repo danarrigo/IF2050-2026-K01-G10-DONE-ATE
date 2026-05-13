@@ -207,7 +207,14 @@ public class HistoryUI extends UI {
             try {
                 String token = SessionManager.getInstance().getToken();
                 HttpClient client = HttpClient.newHttpClient();
-                String url = BASE_URL + "/api/catalog/donator/" + getUser().getUsername();
+                
+                String role = SessionManager.getInstance().getRole();
+                String endpoint = "donator";
+                if ("RECIPIENT".equalsIgnoreCase(role)) {
+                    endpoint = "recipient";
+                }
+                
+                String url = BASE_URL + "/api/catalog/" + endpoint + "/" + getUser().getUsername();
                 
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(url))
@@ -245,26 +252,60 @@ public class HistoryUI extends UI {
                     String status   = String.valueOf(item.get("status"));
                     String time     = String.valueOf(item.get("timeAdded"));
                     String dateStr  = (time != null && time.length() >= 10) ? time.substring(0, 10) : "-";
+                    
+                    boolean isTaken = item.get("taken") != null && (boolean)item.get("taken");
+                    boolean isOngoing = item.get("ongoing") != null && (boolean)item.get("ongoing");
 
                     String icon = "✓";
                     String badgeBg = BADGE_GREEN;
                     String textCol = DARK_GREEN;
+                    boolean isClickable = false;
 
-                    if ("Selesai".equalsIgnoreCase(status) || "QC Passed".equalsIgnoreCase(status)) {
-                        countSelesai++;
+                    if ("Selesai".equalsIgnoreCase(status) || "QC Passed".equalsIgnoreCase(status) || "COMPLETED".equalsIgnoreCase(status)) {
+                        // Check if it's really finished for Donators (not taken or finished)
+                        if ("RECIPIENT".equalsIgnoreCase(SessionManager.getInstance().getRole()) || !isOngoing || !isTaken) {
+                            countSelesai++;
+                            status = "Selesai";
+                        } else {
+                            // Donator sees it as Waiting Verification if taken but ongoing
+                            icon = "⌛";
+                            badgeBg = "#E0F2FE";
+                            textCol = "#0284C7";
+                            status = "Menunggu Verifikasi";
+                        }
                     } else if ("Dibatalkan".equalsIgnoreCase(status) || "QC Failed".equalsIgnoreCase(status) || "Removed".equalsIgnoreCase(status)) {
                         icon = "⊗";
                         badgeBg = BADGE_RED;
                         textCol = "#D32F2F";
+                    } else if ("ACTIVE".equalsIgnoreCase(status)) {
+                        icon = "⌛";
+                        badgeBg = "#E0F2FE";
+                        textCol = "#0284C7";
+                        status = "Menunggu Verifikasi";
+                        isClickable = "RECIPIENT".equalsIgnoreCase(SessionManager.getInstance().getRole());
                     } else {
                         icon = "⌛";
                         badgeBg = BADGE_GRAY;
                         textCol = TEXT_GRAY;
                     }
 
-                    historyContainer.getChildren().add(
-                        createFigmaHistoryItem(icon, dishName, "Donasi pada " + dateStr, status, badgeBg, textCol)
-                    );
+                    HBox historyItem = createFigmaHistoryItem(icon, dishName, "Donasi pada " + dateStr, status, badgeBg, textCol);
+                    
+                    if (isClickable) {
+                        historyItem.setStyle(historyItem.getStyle() + "; -fx-cursor: hand;");
+                        historyItem.setOnMouseEntered(e -> historyItem.setStyle(historyItem.getStyle() + "; -fx-background-color: #F0F9FF;"));
+                        historyItem.setOnMouseExited(e -> historyItem.setStyle(historyItem.getStyle().replace("; -fx-background-color: #F0F9FF;", "")));
+                        historyItem.setOnMouseClicked(e -> {
+                            Navigator.navigate(stage, new VerificationUI(getUser()));
+                        });
+                        
+                        Label clickHint = new Label("Klik untuk Verifikasi →");
+                        clickHint.setFont(Font.font(10));
+                        clickHint.setTextFill(Color.web("#0284C7"));
+                        ((VBox)historyItem.getChildren().get(1)).getChildren().add(clickHint);
+                    }
+
+                    historyContainer.getChildren().add(historyItem);
                 }
                 statsNum.setText(String.valueOf(countSelesai));
             } catch (Exception e) {

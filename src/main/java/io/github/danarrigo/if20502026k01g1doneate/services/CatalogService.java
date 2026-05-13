@@ -8,6 +8,8 @@ import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.DishRepository;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.DonationRepository;
 import io.github.danarrigo.if20502026k01g1doneate.repositories.DonatorRepository;
+import io.github.danarrigo.if20502026k01g1doneate.repositories.TransactionRepository;
+import io.github.danarrigo.if20502026k01g1doneate.entities.Transaction;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -25,15 +27,18 @@ public class CatalogService {
     private final DishRepository dishRepository;
     private final DonatorRepository donatorRepository;
     private final NotificationService notificationService;
+    private final TransactionRepository transactionRepository;
 
     public CatalogService(DonationRepository donationRepository,
                           DishRepository dishRepository,
                           DonatorRepository donatorRepository,
-                          NotificationService notificationService) {
+                          NotificationService notificationService,
+                          TransactionRepository transactionRepository) {
         this.donationRepository = donationRepository;
         this.dishRepository = dishRepository;
         this.donatorRepository = donatorRepository;
         this.notificationService = notificationService;
+        this.transactionRepository = transactionRepository;
     }
 
     public List<CatalogItemResponse> getActiveCatalog() {
@@ -47,6 +52,20 @@ public class CatalogService {
         return donationRepository.findByDonator_Username(username)
                 .stream()
                 .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<CatalogItemResponse> getRecipientCatalog(String username) {
+        return transactionRepository.findByRecipient_UsernameOrderByTransactionTimeDesc(username)
+                .stream()
+                .map(transaction -> {
+                    CatalogItemResponse response = toResponse(transaction.getDonation());
+                    // Use transaction status for history clarity
+                    response.setStatus(transaction.getStatus());
+                    // Use transaction time as the reference for recipient history
+                    response.setTimeAdded(transaction.getTransactionTime());
+                    return response;
+                })
                 .collect(Collectors.toList());
     }
 

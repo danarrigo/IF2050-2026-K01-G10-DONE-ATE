@@ -4,6 +4,7 @@ import io.github.danarrigo.if20502026k01g1doneate.entities.Donator;
 import io.github.danarrigo.if20502026k01g1doneate.entities.Recipient;
 import io.github.danarrigo.if20502026k01g1doneate.entities.User;
 import io.github.danarrigo.if20502026k01g1doneate.enums.DonatorType;
+import io.github.danarrigo.if20502026k01g1doneate.enums.RecipientType;
 import io.github.danarrigo.if20502026k01g1doneate.session.SessionManager;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,6 +24,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -113,6 +117,18 @@ public class AccountUI extends UI {
                             r.setEmail(node.has("email") ? node.get("email").asText() : "");
                             r.setPhoneNumber(node.has("phoneNumber") ? node.get("phoneNumber").asText() : "");
                             r.setAddress(node.has("address") ? node.get("address").asText() : "");
+                            if (node.has("fullName") && !node.get("fullName").isNull()) {
+                                r.setFullName(node.get("fullName").asText());
+                            }
+                            if (node.has("recipientType") && !node.get("recipientType").isNull()) {
+                                r.setRecipientType(RecipientType.valueOf(node.get("recipientType").asText()));
+                            }
+                            if (node.has("operationalTimeStart") && !node.get("operationalTimeStart").isNull()) {
+                                r.setOperationalTimeStart(LocalTime.parse(node.get("operationalTimeStart").asText()));
+                            }
+                            if (node.has("operationalTimeEnd") && !node.get("operationalTimeEnd").isNull()) {
+                                r.setOperationalTimeEnd(LocalTime.parse(node.get("operationalTimeEnd").asText()));
+                            }
                             fullUser = r;
                         }
                         setUser(fullUser);
@@ -193,10 +209,20 @@ public class AccountUI extends UI {
         TextArea addrF = new TextArea(fullUser != null ? fullUser.getAddress() : "");
         addrF.setPrefRowCount(3);
         
+        TextField fullNameF = null;
+        if (fullUser instanceof Recipient r) {
+            fullNameF = new TextField(r.getFullName() != null ? r.getFullName() : "");
+            styleControl(fullNameF);
+        }
+        
         styleControl(emailF);
         styleControl(phoneF);
         addrF.setStyle("-fx-background-radius: 10; -fx-border-color: " + BORDER_COLOR + "; -fx-border-radius: 10; -fx-padding: 10;");
 
+        if (fullNameF != null) {
+            card.getChildren().addAll(new Label("Nama Lengkap"), fullNameF);
+        }
+        
         card.getChildren().addAll(
             new Label("Email"), emailF,
             new Label("Nomor Telepon"), phoneF,
@@ -211,11 +237,53 @@ public class AccountUI extends UI {
             card.getChildren().addAll(new Label("Tipe Donator"), typeBox);
         }
 
+        final ComboBox<DonatorType> finalTypeBox = typeBox;
+        
+        ComboBox<RecipientType> rTypeBox = null;
+        TextField startF = null;
+        TextField endF = null;
+        if (fullUser instanceof Recipient r) {
+            rTypeBox = new ComboBox<>(FXCollections.observableArrayList(RecipientType.values()));
+            rTypeBox.setValue(r.getRecipientType());
+            rTypeBox.setMaxWidth(Double.MAX_VALUE);
+            
+            startF = new TextField(r.getOperationalTimeStart() != null ? r.getOperationalTimeStart().toString() : "08:00");
+            endF = new TextField(r.getOperationalTimeEnd() != null ? r.getOperationalTimeEnd().toString() : "17:00");
+            
+            styleControl(startF);
+            styleControl(endF);
+            
+            card.getChildren().addAll(
+                new Label("Tipe Penerima"), rTypeBox,
+                new Label("Jam Operasional (Mulai - Format HH:mm)"), startF,
+                new Label("Jam Operasional (Selesai - Format HH:mm)"), endF
+            );
+        }
+
         Button saveBtn = new Button("Simpan Perubahan");
         saveBtn.setStyle("-fx-background-color: " + DARK_GREEN + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 15 40; -fx-background-radius: 10; -fx-cursor: hand;");
         
-        final ComboBox<DonatorType> finalTypeBox = typeBox;
-        saveBtn.setOnAction(e -> handleUpdateProfile(stage, emailF.getText(), phoneF.getText(), addrF.getText(), finalTypeBox != null ? finalTypeBox.getValue() : null));
+        final ComboBox<RecipientType> finalRTypeBox = rTypeBox;
+        final TextField finalStartF = startF;
+        final TextField finalEndF = endF;
+        final TextField finalFullNameF = fullNameF;
+        
+        saveBtn.setOnAction(e -> {
+            LocalTime start = null;
+            LocalTime end = null;
+            try {
+                if (finalStartF != null) start = LocalTime.parse(finalStartF.getText());
+                if (finalEndF != null) end = LocalTime.parse(finalEndF.getText());
+            } catch (Exception ex) {
+                showStatus("Format jam tidak valid. Gunakan HH:mm", true);
+                return;
+            }
+            handleUpdateProfile(stage, emailF.getText(), phoneF.getText(), addrF.getText(), 
+                               finalTypeBox != null ? finalTypeBox.getValue() : null,
+                               finalFullNameF != null ? finalFullNameF.getText() : null,
+                               finalRTypeBox != null ? finalRTypeBox.getValue() : null,
+                               start, end);
+        });
 
         card.getChildren().add(saveBtn);
         return card;
@@ -226,14 +294,21 @@ public class AccountUI extends UI {
         c.setMaxWidth(Double.MAX_VALUE);
     }
 
-    private void handleUpdateProfile(Stage stage, String email, String phone, String address, DonatorType type) {
+    private void handleUpdateProfile(Stage stage, String email, String phone, String address, DonatorType dType, String fullName, RecipientType rType, LocalTime start, LocalTime end) {
         new Thread(() -> {
             try {
                 String token = SessionManager.getInstance().getToken();
-                String body = String.format("{\"email\":\"%s\",\"phoneNumber\":\"%s\",\"address\":\"%s\"%s}",
-                    email, phone, address, 
-                    type != null ? ",\"donatorType\":\"" + type.name() + "\"" : ""
-                );
+                StringBuilder bodyBuilder = new StringBuilder();
+                bodyBuilder.append("{");
+                bodyBuilder.append(String.format("\"email\":\"%s\",\"phoneNumber\":\"%s\",\"address\":\"%s\"", email, phone, address));
+                if (dType != null) bodyBuilder.append(String.format(",\"donatorType\":\"%s\"", dType.name()));
+                if (fullName != null) bodyBuilder.append(String.format(",\"fullName\":\"%s\"", fullName));
+                if (rType != null) bodyBuilder.append(String.format(",\"recipientType\":\"%s\"", rType.name()));
+                if (start != null) bodyBuilder.append(String.format(",\"operationalTimeStart\":\"%s\"", start.toString()));
+                if (end != null) bodyBuilder.append(String.format(",\"operationalTimeEnd\":\"%s\"", end.toString()));
+                bodyBuilder.append("}");
+
+                String body = bodyBuilder.toString();
 
                 HttpClient client = HttpClient.newHttpClient();
                 HttpRequest request = HttpRequest.newBuilder()
@@ -251,7 +326,13 @@ public class AccountUI extends UI {
                             fullUser.setEmail(email);
                             fullUser.setPhoneNumber(phone);
                             fullUser.setAddress(address);
-                            if (fullUser instanceof Donator d) d.setDonatorType(type);
+                            if (fullUser instanceof Donator d) d.setDonatorType(dType);
+                            if (fullUser instanceof Recipient r) {
+                                r.setFullName(fullName);
+                                r.setRecipientType(rType);
+                                r.setOperationalTimeStart(start);
+                                r.setOperationalTimeEnd(end);
+                            }
                         }
                         isEditMode = false;
                         refreshContent(stage);
@@ -439,8 +520,9 @@ public class AccountUI extends UI {
                     {"Riwayat Donasi", "Lihat di menu Riwayat"}
             });
             case "RECIPIENT" -> buildInfoCard("Informasi Penerima", new String[][]{
-                    {"Tipe Penerima", "-"},
-                    {"Jam Operasional", "-"}
+                    {"Nama Lengkap",    u instanceof Recipient r ? (r.getFullName() != null ? r.getFullName() : "-") : "-"},
+                    {"Tipe Penerima",   u instanceof Recipient r ? (r.getRecipientType() != null ? r.getRecipientType().name() : "-") : "-"},
+                    {"Jam Operasional", u instanceof Recipient r ? (r.getOperationalTimeStart() != null ? r.getOperationalTimeStart() + " - " + r.getOperationalTimeEnd() : "-") : "-"}
             });
             default -> null;
         };

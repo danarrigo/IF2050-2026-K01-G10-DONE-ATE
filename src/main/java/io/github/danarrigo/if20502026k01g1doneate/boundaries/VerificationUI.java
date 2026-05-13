@@ -60,14 +60,21 @@ public class VerificationUI extends UI {
         root.setStyle("-fx-background-color: #F9FAFB;");
 
         // --- TOP HEADER ---
-        HBox header = new HBox();
+        HBox header = new HBox(15);
         header.setStyle("-fx-background-color: white; -fx-border-color: #60A5FA; -fx-border-width: 0 0 4 0;");
         header.setPadding(new Insets(15, 25, 15, 25));
         header.setAlignment(Pos.CENTER_LEFT);
         
+        Label backArrow = new Label("←");
+        backArrow.setFont(Font.font("System", FontWeight.BOLD, 22));
+        backArrow.setStyle("-fx-text-fill: #16A34A; -fx-cursor: hand;");
+        backArrow.setOnMouseClicked(e -> {
+            Navigator.navigate(stage, new RecipientCatalogUI(getUser()));
+        });
+
         Label logoLabel = new Label("DONE-ATE");
         logoLabel.setStyle("-fx-text-fill: #16A34A; -fx-font-weight: bold; -fx-font-size: 20px;");
-        header.getChildren().add(logoLabel);
+        header.getChildren().addAll(backArrow, logoLabel);
         root.setTop(header);
 
         // --- MAIN CONTENT CONTAINER ---

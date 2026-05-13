@@ -41,49 +41,50 @@ public class ClaimingService {
             return "error";
         }
 
-        // Only allow verification for ACTIVE transactions
+        // 2. Only allow verification for ACTIVE transactions
         if (!TransactionStatus.ACTIVE.name().equals(transaction.getStatus())) {
             return "error";
         }
 
-        // 2. getTransactionData
-        Integer transactionDataCode = transaction.getTransactionCode();
+        // 3. Cache donation reference before any modifications
+        Donation donation = transaction.getDonation();
+        UUID donationId = donation != null ? donation.getDonationId() : null;
 
-        // 3. verifyCode
-        boolean isValid = verifyCode(inputCode, transactionDataCode);
+        // 4. removeClaimability — mark transaction as COMPLETED
+        removeClaimability(transaction);
 
-        if (isValid) {
-            // 4. removeClaimability (reuse already-loaded entity to avoid extra DB roundtrip)
-            removeClaimability(transaction);
-
-            // 5. removeDonation (Memanggil DonationService yang mewakili DonationController)
-            if (transaction.getDonation() != null) {
-                donationService.removeDonation(transaction.getDonation().getDonationId());
-            }
-
-            // 6 & 7. create Notification & sendNotification
-            if (transaction.getDonator() != null) {
-                notificationService.sendNotification(
-                        transaction.getDonator(),
-                        "Serah Terima Sukses",
-                        "Serah terima sukses. Makanan telah diterima oleh Penerima.",
-                        transaction.getDonation() != null ? transaction.getDonation().getDonationId() : null,
-                        NotificationType.DONASI
-                );
-            }
-
-            return "success";
-        } else {
-            return "error";
+        // 5. removeDonation — mark donation as "Selesai" and not ongoing
+        if (donationId != null) {
+            donationService.removeDonation(donationId);
         }
+
+        // 6. sendNotification to donator
+        if (transaction.getDonator() != null) {
+            notificationService.sendNotification(
+                    transaction.getDonator(),
+                    "Serah Terima Sukses",
+                    "Serah terima sukses. Makanan telah diterima oleh Penerima.",
+                    donationId,
+                    NotificationType.DONASI
+            );
+        }
+
+        // 7. sendNotification to recipient
+        if (transaction.getRecipient() != null) {
+            notificationService.sendNotification(
+                    transaction.getRecipient(),
+                    "Serah Terima Sukses",
+                    "Verifikasi berhasil! Terima kasih telah mengambil donasi.",
+                    donationId,
+                    NotificationType.DONASI
+            );
+        }
+
+        return "success";
     }
 
     private Transaction findTransactionByCode(Integer inputCode) {
         return transactionRepository.findByTransactionCode(inputCode).orElse(null);
-    }
-
-    private boolean verifyCode(Integer inputCode, Integer transactionDataCode) {
-        return inputCode.equals(transactionDataCode);
     }
 
     private void removeClaimability(Transaction transaction) {
