@@ -220,6 +220,13 @@ public class DonationDetailUI extends UI {
             HBox.setHgrow(claimBtn, Priority.ALWAYS);
             claimBtn.setOnAction(e -> handleClaim(stage));
             actions.getChildren().add(claimBtn);
+        } else if (SessionManager.getInstance().getRole().equalsIgnoreCase("RECIPIENT") && donation.isTaken()) {
+            Button cancelBtn = new Button("✕ Batalkan Klaim Donasi");
+            cancelBtn.setStyle("-fx-background-color: #FADBD8; -fx-text-fill: #C0392B; -fx-font-weight: bold; -fx-font-size: 16; -fx-background-radius: 12; -fx-cursor: hand; -fx-padding: 12 30; -fx-border-color: #C0392B; -fx-border-radius: 12;");
+            cancelBtn.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(cancelBtn, Priority.ALWAYS);
+            cancelBtn.setOnAction(e -> Navigator.navigate(stage, new CancelDonationUI(getUser(), donation)));
+            actions.getChildren().add(cancelBtn);
         } else if (isUserDonatorOfThis()) {
             if (donation.isTaken()) {
                 Button showCodeBtn = new Button("Tampilkan Kode Verifikasi");
