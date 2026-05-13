@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-@Transactional
 public class ReportService {
 
     private final ReportRepository reportRepository;
@@ -33,10 +32,9 @@ public class ReportService {
     }
 
     public byte[] generateReport(UUID donatorId) {
-
-        Donator donator = donatorRepository.findByDonatorId(donatorId)
-                .orElseThrow(() -> new RuntimeException("Donatur tidak ditemukan"));
-        List<Donation> history = donationRepository.findByDonator_DonatorId(donatorId);
+        // Fetch data in read-only transaction
+        Donator donator = fetchDonator(donatorId);
+        List<Donation> history = fetchDonationHistory(donatorId);
         
         Integer totalRescued = aggregateData(history); 
 
@@ -73,11 +71,28 @@ public class ReportService {
             document.close();
         }
         
-        Report newReport = new Report(totalRescued, LocalDate.now(), donator);
-        reportRepository.save(newReport);
+        // Save report in separate transaction
+        saveReport(totalRescued, LocalDate.now(), donator);
 
         // 4. Ubah dokumen jadi aliran byte untuk dikirim ke UI
         return outputStream.toByteArray(); 
+    }
+
+    @Transactional(readOnly = true)
+    protected Donator fetchDonator(UUID donatorId) {
+        return donatorRepository.findByDonatorId(donatorId)
+                .orElseThrow(() -> new RuntimeException("Donatur tidak ditemukan"));
+    }
+
+    @Transactional(readOnly = true)
+    protected List<Donation> fetchDonationHistory(UUID donatorId) {
+        return donationRepository.findByDonator_DonatorId(donatorId);
+    }
+
+    @Transactional
+    protected void saveReport(Integer totalRescued, LocalDate date, Donator donator) {
+        Report newReport = new Report(totalRescued, date, donator);
+        reportRepository.save(newReport);
     }
 
     private Integer aggregateData(List<Donation> donationList) {

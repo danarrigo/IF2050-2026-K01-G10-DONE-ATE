@@ -13,17 +13,22 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.UUID;
 
 public class HistoryUI extends UI {
 
     private static boolean jfxInitialized = false;
+    private Stage stage;
 
     // Design Tokens Figma
     private final String DARK_GREEN = "#3B7D3B"; // Disesuaikan dengan warna Figma
@@ -62,7 +67,7 @@ public class HistoryUI extends UI {
     }
 
     private void createAndShowStage() {
-        Stage stage = new Stage();
+        stage = new Stage();
         stage.setTitle("DONE-ATE - Riwayat Donasi");
 
         VBox root = new VBox();
@@ -311,11 +316,32 @@ public class HistoryUI extends UI {
                 .GET()
                 .build();
 
-        client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+        client.sendAsync(request, HttpResponse.BodyHandlers.ofByteArray())
                 .thenAccept(response -> {
                     Platform.runLater(() -> {
                         if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                            showAlert(Alert.AlertType.INFORMATION, "Sukses", "Laporan berhasil diunduh.");
+                            // Show file chooser to save PDF
+                            FileChooser fileChooser = new FileChooser();
+                            fileChooser.setTitle("Simpan Laporan PDF");
+                            fileChooser.setInitialFileName("Laporan_Donasi_" + donatorId + ".pdf");
+                            fileChooser.getExtensionFilters().add(
+                                new FileChooser.ExtensionFilter("PDF Files", "*.pdf")
+                            );
+                            
+                            File file = fileChooser.showSaveDialog(stage);
+                            if (file != null) {
+                                try {
+                                    Path path = file.toPath();
+                                    Files.write(path, response.body());
+                                    showAlert(Alert.AlertType.INFORMATION, "Sukses", 
+                                        "Laporan berhasil disimpan ke: " + file.getAbsolutePath());
+                                } catch (Exception e) {
+                                    showAlert(Alert.AlertType.ERROR, "Gagal", 
+                                        "Gagal menyimpan file: " + e.getMessage());
+                                }
+                            }
+                        } else if (response.statusCode() == 404) {
+                            showAlert(Alert.AlertType.ERROR, "Gagal", "Donatur tidak ditemukan.");
                         } else {
                             showAlert(Alert.AlertType.ERROR, "Gagal", "Gagal mengunduh laporan.");
                         }

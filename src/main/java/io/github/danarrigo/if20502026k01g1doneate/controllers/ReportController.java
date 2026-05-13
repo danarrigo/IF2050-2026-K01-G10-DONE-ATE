@@ -18,7 +18,7 @@ public class ReportController {
     }
 
     @GetMapping("/download/{donatorId}")
-    public ResponseEntity<?> downloadReport(@PathVariable UUID donatorId) {
+    public ResponseEntity<byte[]> downloadReport(@PathVariable UUID donatorId) {
         try {
             byte[] pdfBytes = reportService.generateReport(donatorId);
 
@@ -30,7 +30,12 @@ public class ReportController {
                     .headers(headers)
                     .body(pdfBytes);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("Gagal: " + e.getMessage());
+            // Check if it's a "not found" error
+            if (e.getMessage() != null && e.getMessage().contains("tidak ditemukan")) {
+                return ResponseEntity.notFound().build();
+            }
+            // For other errors, return 500
+            return ResponseEntity.internalServerError().build();
         }
     }
 }
